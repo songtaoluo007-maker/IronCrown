@@ -1,10 +1,11 @@
 // ============================================================================
 // Domain/Messaging/EventBus.cs — 事件总线（实现 IEventPublisher）
-// 从 Core/EventBus.cs 迁移，删除 static Instance 单例
+// 事件结构体已迁至 Contracts/Events/，IEventPublisher 迁至 Contracts/Abstractions/
 // ============================================================================
 
 using System;
 using System.Collections.Generic;
+using IronCrown.Contracts;
 
 namespace IronCrown.Domain
 {
@@ -45,63 +46,5 @@ namespace IronCrown.Domain
         {
             _handlers.Clear();
         }
-    }
-
-    // ==========================================================================
-    // 预定义事件（随 EventBus 迁入 Domain）
-    // ==========================================================================
-
-    public struct TurnStartEvent
-    {
-        public int TurnNumber;
-    }
-
-    public struct TurnEndEvent
-    {
-        public int TurnNumber;
-    }
-
-    public struct ResourceChangedEvent
-    {
-        public string CountryId;
-        public string ResourceId;
-        public int OldValue;
-        public int NewValue;
-    }
-
-    public struct ProvinceOwnerChangedEvent
-    {
-        public string ProvinceId;
-        public string OldOwner;
-        public string NewOwner;
-    }
-
-    public struct BattleResolvedEvent
-    {
-        public string AttackerId;
-        public string DefenderId;
-        public string ProvinceId;
-        public bool AttackerWon;
-    }
-
-    public struct PolicyChangedEvent
-    {
-        public string CountryId;
-        public string PolicyId;
-        public bool Activated;
-    }
-
-    public struct TechCompletedEvent
-    {
-        public string CountryId;
-        public string TechId;
-    }
-
-    public struct DiplomacyChangedEvent
-    {
-        public string CountryA;
-        public string CountryB;
-        public int OldOpinion;
-        public int NewOpinion;
     }
 }

@@ -1,9 +1,10 @@
 // ============================================================================
-// Bootstrap/GameLifetimeScope.cs — VContainer DI 装配
+// Bootstrap/GameLifetimeScope.cs �?VContainer DI 装配
 // ============================================================================
 
 using IronCrown.Application;
 using IronCrown.Domain;
+using IronCrown.Contracts;
 using IronCrown.Infrastructure;
 using IronCrown.Simulation;
 using UnityEngine;
@@ -46,3 +47,4 @@ namespace IronCrown.Bootstrap
         }
     }
 }
+

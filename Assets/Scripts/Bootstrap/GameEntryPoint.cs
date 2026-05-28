@@ -4,12 +4,13 @@
 
 using IronCrown.Application;
 using IronCrown.Domain;
+using IronCrown.Contracts;
 using IronCrown.Simulation;
-using UnityEngine;
+using VContainer.Unity;
 
 namespace IronCrown.Bootstrap
 {
-    public sealed class GameEntryPoint
+    public sealed class GameEntryPoint : IStartable
     {
         private readonly ITurnClock _clock;
         private readonly IEventPublisher _events;
@@ -51,11 +52,10 @@ namespace IronCrown.Bootstrap
 
         public void Start()
         {
-            _logger.Info("[EntryPoint] 游戏启动");
+            _logger.Info("[EntryPoint] Game started");
 
-            // 加载全部配置
             _configRegistry.LoadAll();
-            _logger.Info("[EntryPoint] 配置加载完成");
+            _logger.Info("[EntryPoint] Config loaded");
 
             StartNewGame();
         }
@@ -64,14 +64,14 @@ namespace IronCrown.Bootstrap
         {
             _clock.Reset(60);
             _world = _worldInitializer.CreateNewGame(_configRegistry);
-            _logger.Info($"[EntryPoint] 新游戏开始 — {_world.countries.Count} 个国家, {_world.provinces.Count} 个省份");
+            _logger.Info($"[EntryPoint] New game: {_world.countries.Count} countries, {_world.provinces.Count} provinces");
         }
 
         public void NextPhase()
         {
             if (_clock.CurrentPhase == GamePhase.GameOver)
             {
-                _logger.Info("[EntryPoint] 游戏已结束");
+                _logger.Info("[EntryPoint] Game over");
                 return;
             }
 
@@ -81,7 +81,7 @@ namespace IronCrown.Bootstrap
             }
 
             _clock.AdvancePhase();
-            _logger.Info($"[EntryPoint] 回合 {_clock.CurrentTurn} - 阶段: {_clock.CurrentPhase}");
+            _logger.Info($"[EntryPoint] Turn {_clock.CurrentTurn} - Phase: {_clock.CurrentPhase}");
         }
 
         public void SaveGame(string slotName)
@@ -97,7 +97,7 @@ namespace IronCrown.Bootstrap
             {
                 _world = SaveMapper.ToRuntime(gameState);
                 _clock.Reset(60);
-                _logger.Info($"[EntryPoint] 读档成功，回合 {gameState.turnNumber}");
+                _logger.Info($"[EntryPoint] Loaded save, turn {gameState.turnNumber}");
             }
         }
     }

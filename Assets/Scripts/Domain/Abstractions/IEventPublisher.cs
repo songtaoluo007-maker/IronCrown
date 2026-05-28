@@ -1,16 +1,8 @@
 // ============================================================================
-// Domain/Abstractions/IEventPublisher.cs — 事件发布接口
+// Domain/Abstractions/IEventPublisher.cs — 已迁至 Contracts/Abstractions/
+// 此文件保留为向后兼容的类型转发器（namespace IronCrown.Domain → IronCrown.Contracts）
 // ============================================================================
 
-using System;
-
-namespace IronCrown.Domain
-{
-    public interface IEventPublisher
-    {
-        void Subscribe<T>(Action<T> handler);
-        void Unsubscribe<T>(Action<T> handler);
-        void Publish<T>(T evt);
-        void Clear();
-    }
-}
+// 类型已迁至 IronCrown.Contracts 命名空间。
+// Domain 程序集通过 asmdef references 引用 Contracts，编译器自动解析。
+// 此文件可安全删除，保留仅为记录迁移历史。

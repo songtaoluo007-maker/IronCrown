@@ -4,6 +4,7 @@
 
 using NUnit.Framework;
 using IronCrown.Domain;
+using IronCrown.Contracts;
 
 namespace IronCrown.Domain.Tests
 {
@@ -58,4 +59,5 @@ namespace IronCrown.Domain.Tests
         }
     }
 }
+
 

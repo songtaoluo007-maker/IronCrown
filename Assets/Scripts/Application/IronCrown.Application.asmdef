@@ -1,17 +1,28 @@
 {
-  "name": "IronCrown.Application",
-  "rootNamespace": "IronCrown.Application",
-  "references": [
-    "IronCrown.Domain",
-    "IronCrown.Simulation"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": true
+    "name":  "IronCrown.Application",
+    "rootNamespace":  "IronCrown.Application",
+    "references":  [
+                       "IronCrown.Domain",
+                       "IronCrown.Simulation",
+                       "IronCrown.Contracts"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "versionDefines":  [
+
+                       ],
+    "noEngineReferences":  true
 }

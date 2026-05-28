@@ -6,6 +6,7 @@
 
 using System;
 using IronCrown.Domain;
+using IronCrown.Contracts;
 
 namespace IronCrown.Simulation
 {

@@ -3,6 +3,8 @@
 // 从 Core/GameClock.cs 迁移，删除 EventBus.Instance 引用
 // ============================================================================
 
+using IronCrown.Contracts;
+
 namespace IronCrown.Domain
 {
     /// <summary>

@@ -2,10 +2,12 @@
   "name": "IronCrown.Bootstrap",
   "rootNamespace": "IronCrown.Bootstrap",
   "references": [
+    "IronCrown.Contracts",
     "IronCrown.Domain",
     "IronCrown.Simulation",
     "IronCrown.Application",
     "IronCrown.Infrastructure",
+    "IronCrown.Presentation",
     "VContainer"
   ],
   "includePlatforms": [],

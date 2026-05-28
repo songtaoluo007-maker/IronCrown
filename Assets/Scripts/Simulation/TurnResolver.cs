@@ -5,6 +5,7 @@
 
 using System.Linq;
 using IronCrown.Domain;
+using IronCrown.Contracts;
 
 namespace IronCrown.Simulation
 {
