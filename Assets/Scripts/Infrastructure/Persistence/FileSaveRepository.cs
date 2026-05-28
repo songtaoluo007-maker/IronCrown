@@ -19,7 +19,7 @@ namespace IronCrown.Infrastructure
             Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
         };
 
-        private string SaveDirectory => Path.Combine(Application.persistentDataPath, "Saves");
+        private string SaveDirectory => Path.Combine(UnityEngine.Application.persistentDataPath, "Saves");
 
         public bool Save(string slot, GameState state)
         {

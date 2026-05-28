@@ -1,0 +1,9 @@
+# Unity generated
+Library/
+Temp/
+Obj/
+Build/
+Logs/
+UserSettings/
+*.csproj
+*.sln

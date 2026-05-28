@@ -1,9 +1,9 @@
 {
-  "name": "IronCrown.Simulation.Tests",
-  "rootNamespace": "IronCrown.Simulation.Tests",
+  "name": "IronCrown.Application.Tests",
+  "rootNamespace": "IronCrown.Application.Tests",
   "references": [
     "IronCrown.Domain",
-    "IronCrown.Simulation"
+    "IronCrown.Application"
   ],
   "includePlatforms": [
     "Editor"
@@ -19,5 +19,6 @@
     "UNITY_INCLUDE_TESTS"
   ],
   "versionDefines": [],
-  "noEngineReferences": true
+  "noEngineReferences": false
 }
+

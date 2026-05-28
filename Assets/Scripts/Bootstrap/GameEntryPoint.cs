@@ -4,6 +4,7 @@
 
 using IronCrown.Application;
 using IronCrown.Domain;
+using IronCrown.Simulation;
 using UnityEngine;
 
 namespace IronCrown.Bootstrap
@@ -18,8 +19,8 @@ namespace IronCrown.Bootstrap
         private readonly IConfigRegistry _configRegistry;
         private readonly WorldInitializer _worldInitializer;
         private readonly TurnResolver _turnResolver;
-        private readonly Simulation.EconomyResolver _economy;
-        private readonly Simulation.PoliticsResolver _politics;
+        private readonly EconomyResolver _economy;
+        private readonly PoliticsResolver _politics;
 
         private WorldState _world;
         private int _initialSeed;
@@ -33,8 +34,8 @@ namespace IronCrown.Bootstrap
             IConfigRegistry configRegistry,
             WorldInitializer worldInitializer,
             TurnResolver turnResolver,
-            Simulation.EconomyResolver economy,
-            Simulation.PoliticsResolver politics)
+            EconomyResolver economy,
+            PoliticsResolver politics)
         {
             _clock = clock;
             _events = events;

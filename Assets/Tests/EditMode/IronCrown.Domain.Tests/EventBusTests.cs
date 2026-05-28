@@ -1,5 +1,5 @@
 // ============================================================================
-// Tests/EditMode/EventBusTests.cs — EventBus 单元测试
+// Tests/EditMode/EventBusTests.cs �?EventBus 单元测试
 // ============================================================================
 
 using NUnit.Framework;
@@ -31,8 +31,8 @@ namespace IronCrown.Domain.Tests
         {
             int received = 0;
             void Handler(TurnStartEvent e) => received = e.TurnNumber;
-            _bus.Subscribe(Handler);
-            _bus.Unsubscribe(Handler);
+            _bus.Subscribe<TurnStartEvent>(Handler);
+            _bus.Unsubscribe<TurnStartEvent>(Handler);
             _bus.Publish(new TurnStartEvent { TurnNumber = 99 });
             Assert.AreEqual(0, received);
         }
@@ -58,3 +58,4 @@ namespace IronCrown.Domain.Tests
         }
     }
 }
+

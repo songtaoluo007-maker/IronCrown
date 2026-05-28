@@ -180,7 +180,7 @@ namespace IronCrown.Config.Validation.Tests
 
         private static List<T> LoadConfig<T>(string name)
         {
-            var path = Path.Combine(Application.dataPath, "StreamingAssets", "Configs", "Json", name + ".json");
+            var path = Path.Combine(UnityEngine.Application.dataPath, "StreamingAssets", "Configs", "Json", name + ".json");
             Assert.IsTrue(File.Exists(path), $"配置文件不存在: {path}");
             var json = File.ReadAllText(path);
             var wrapper = JsonConvert.DeserializeObject<ConfigFile<T>>(json, Settings);

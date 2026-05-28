@@ -6,8 +6,6 @@
     "IronCrown.Simulation",
     "IronCrown.Application",
     "IronCrown.Infrastructure",
-    "IronCrown.Presentation",
-    "IronCrown.Contracts",
     "VContainer"
   ],
   "includePlatforms": [],
@@ -20,3 +18,5 @@
   "versionDefines": [],
   "noEngineReferences": false
 }
+
+

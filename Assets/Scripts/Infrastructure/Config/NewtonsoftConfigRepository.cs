@@ -47,7 +47,7 @@ namespace IronCrown.Infrastructure
                 return cached;
 
             // TODO: Android StreamingAssets via UnityWebRequest
-            var path = Path.Combine(Application.streamingAssetsPath, "Configs", "Json", configName + ".json");
+            var path = Path.Combine(UnityEngine.Application.streamingAssetsPath, "Configs", "Json", configName + ".json");
             if (!File.Exists(path))
             {
                 Debug.LogError($"[Config] 配置文件不存在: {path}");
