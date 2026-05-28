@@ -3,6 +3,7 @@
 // UI 唯一合法入口（规则 4），持有运行时 WorldState
 // ============================================================================
 
+using System;
 using IronCrown.Contracts;
 using IronCrown.Domain;
 using IronCrown.Simulation;
@@ -21,7 +22,7 @@ namespace IronCrown.Application
         private readonly IAppLogger _logger;
 
         private WorldState _world;
-        private int _initialSeed;
+        private int _initialSeed = 12345;
 
         public GameSessionService(
             ITurnClock clock,
@@ -46,8 +47,9 @@ namespace IronCrown.Application
         public void NewGame(int? seed = null)
         {
             if (seed.HasValue)
-                _rng.Reset(seed.Value);
+                _initialSeed = seed.Value;
 
+            _rng.Reset(_initialSeed);
             _config.LoadAll();
             _clock.Reset(60);
             _world = _initializer.CreateNewGame(_config);
@@ -77,7 +79,7 @@ namespace IronCrown.Application
         public bool Save(string slot)
         {
             if (_world == null) return false;
-            var gameState = SaveMapper.ToSave(_world, _initialSeed, _clock.CurrentPhase);
+            var gameState = SaveMapper.ToSave(_world, _initialSeed, _rng.State, _clock.CurrentPhase);
             _save.Save(slot, gameState);
             return true;
         }
@@ -88,8 +90,13 @@ namespace IronCrown.Application
             if (gameState == null) return false;
 
             _world = SaveMapper.ToRuntime(gameState);
-            _clock.Reset(60);
-            _logger.Info($"[Session] Loaded save, turn {gameState.turnNumber}");
+            _initialSeed = gameState.seed;
+            _rng.Reset(gameState.seed);
+            _rng.RestoreState(gameState.rngState);
+            var phase = Enum.Parse<GamePhase>(gameState.phase);
+            _clock.Restore(gameState.turnNumber, phase);
+
+            _logger.Info($"[Session] Loaded save, turn {gameState.turnNumber}, phase {gameState.phase}");
             return true;
         }
 

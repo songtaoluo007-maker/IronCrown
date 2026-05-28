@@ -12,6 +12,9 @@ namespace IronCrown.Application
     public class GameState
     {
         public int turnNumber;
+        public int seed;
+        public ulong rngState;
+        public string phase;
         public string saveTime;
         public CountrySaveData[] countries;
         public ProvinceSaveData[] provinces;

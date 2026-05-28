@@ -1,6 +1,5 @@
 // ============================================================================
-// Tests/EditMode/SaveMapperTests.cs — SaveMapper 往返测试
-// ============================================================================
+// Tests/EditMode/SaveMapperTests.cs �?SaveMapper 往返测�?// ============================================================================
 
 using NUnit.Framework;
 using IronCrown.Domain;
@@ -25,7 +24,7 @@ namespace IronCrown.Application.Tests
             c.completedTechs.Add("tech_x");
             world.countries["c1"] = c;
 
-            var save = SaveMapper.ToSave(world, 42, GamePhase.TurnStart);
+            var save = SaveMapper.ToSave(world, 42, 0UL, GamePhase.TurnStart);
             var restored = SaveMapper.ToRuntime(save);
 
             Assert.IsTrue(restored.countries.ContainsKey("c1"));
@@ -50,7 +49,7 @@ namespace IronCrown.Application.Tests
             };
             world.provinces["p1"] = p;
 
-            var save = SaveMapper.ToSave(world, 42, GamePhase.TurnStart);
+            var save = SaveMapper.ToSave(world, 42, 0UL, GamePhase.TurnStart);
             var restored = SaveMapper.ToRuntime(save);
 
             Assert.IsTrue(restored.provinces.ContainsKey("p1"));
@@ -75,7 +74,7 @@ namespace IronCrown.Application.Tests
             };
             world.units["u1"] = u;
 
-            var save = SaveMapper.ToSave(world, 42, GamePhase.TurnStart);
+            var save = SaveMapper.ToSave(world, 42, 0UL, GamePhase.TurnStart);
             var restored = SaveMapper.ToRuntime(save);
 
             Assert.IsTrue(restored.units.ContainsKey("u1"));
@@ -85,3 +84,4 @@ namespace IronCrown.Application.Tests
         }
     }
 }
+

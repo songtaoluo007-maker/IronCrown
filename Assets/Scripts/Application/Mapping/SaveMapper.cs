@@ -9,11 +9,14 @@ namespace IronCrown.Application
 {
     public static class SaveMapper
     {
-        public static GameState ToSave(WorldState world, int seed, GamePhase phase)
+        public static GameState ToSave(WorldState world, int seed, ulong rngState, GamePhase phase)
         {
             var state = new GameState
             {
                 turnNumber = world.turnNumber,
+                seed = seed,
+                rngState = rngState,
+                phase = phase.ToString(),
                 saveTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 countries = world.countries.Values.Select(c => new CountrySaveData
                 {

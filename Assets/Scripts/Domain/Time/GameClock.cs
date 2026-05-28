@@ -59,6 +59,14 @@ namespace IronCrown.Domain
             CurrentPhase = GamePhase.TurnStart;
             IsPaused = false;
         }
+
+        public void Restore(int turn, GamePhase phase, int maxTurns = 60)
+        {
+            CurrentTurn = turn;
+            MaxTurns = maxTurns;
+            CurrentPhase = phase;
+            IsPaused = false;
+        }
     }
 
     /// <summary>游戏阶段枚举（随 GameClock 迁入 Domain）</summary>
