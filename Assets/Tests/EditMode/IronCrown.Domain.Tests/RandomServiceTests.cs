@@ -70,5 +70,28 @@ namespace IronCrown.Domain.Tests
             var rng = new RandomService(1);
             Assert.IsTrue(rng.Roll(100));
         }
+
+        [Test]
+        public void StateRestore_ProducesSameSequence()
+        {
+            var rng = new RandomService(42);
+
+            // Advance some steps
+            for (int i = 0; i < 10; i++) rng.Next(1000);
+
+            // Save state
+            ulong savedState = rng.State;
+
+            // Advance more
+            var afterSave = new int[5];
+            for (int i = 0; i < 5; i++) afterSave[i] = rng.Next(1000);
+
+            // Restore and re-advance
+            rng.RestoreState(savedState);
+            for (int i = 0; i < 5; i++)
+            {
+                Assert.AreEqual(afterSave[i], rng.Next(1000));
+            }
+        }
     }
 }
