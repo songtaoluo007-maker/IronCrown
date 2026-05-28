@@ -7,3 +7,15 @@ Logs/
 UserSettings/
 *.csproj
 *.sln
+
+# Unity generated / package artifacts
+MobileDependencyResolver/
+Resources/BillingMode.json
+Resources/BillingMode.json.meta
+artifacts/
+*.log
+UserSettings/
+Temp/
+Obj/
+Build/
+Logs/
