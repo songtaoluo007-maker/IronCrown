@@ -1,5 +1,5 @@
 // ============================================================================
-// Bootstrap/GameLifetimeScope.cs �?VContainer DI 装配
+// Bootstrap/GameLifetimeScope.cs �?VContainer DI 装配
 // ============================================================================
 
 using IronCrown.Application;
@@ -32,6 +32,8 @@ namespace IronCrown.Bootstrap
             // === Application 单例 ===
             builder.Register<ConfigRegistry>(Lifetime.Singleton).As<IConfigRegistry>();
             builder.Register<WorldInitializer>(Lifetime.Singleton);
+            builder.Register<ReadModelBuilder>(Lifetime.Singleton);
+            builder.Register<GameSessionService>(Lifetime.Singleton);
 
             // === Simulation 单例 ===
             builder.Register<EconomyResolver>(Lifetime.Singleton);

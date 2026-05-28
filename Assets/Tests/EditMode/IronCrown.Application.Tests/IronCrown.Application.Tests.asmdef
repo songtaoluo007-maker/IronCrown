@@ -1,24 +1,29 @@
 {
-  "name": "IronCrown.Application.Tests",
-  "rootNamespace": "IronCrown.Application.Tests",
-  "references": [
-    "IronCrown.Domain",
-    "IronCrown.Application"
-  ],
-  "includePlatforms": [
-    "Editor"
-  ],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": true,
-  "precompiledReferences": [
-    "nunit.framework.dll"
-  ],
-  "autoReferenced": false,
-  "defineConstraints": [
-    "UNITY_INCLUDE_TESTS"
-  ],
-  "versionDefines": [],
-  "noEngineReferences": false
-}
+    "name":  "IronCrown.Application.Tests",
+    "rootNamespace":  "IronCrown.Application.Tests",
+    "references":  [
+                       "IronCrown.Domain",
+                       "IronCrown.Application",
+                       "IronCrown.Contracts",
+                       "IronCrown.Simulation"
+                   ],
+    "includePlatforms":  [
+                             "Editor"
+                         ],
+    "excludePlatforms":  [
 
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  true,
+    "precompiledReferences":  [
+                                  "nunit.framework.dll"
+                              ],
+    "autoReferenced":  false,
+    "defineConstraints":  [
+                              "UNITY_INCLUDE_TESTS"
+                          ],
+    "versionDefines":  [
+
+                       ],
+    "noEngineReferences":  false
+}
