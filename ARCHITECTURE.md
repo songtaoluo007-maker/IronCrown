@@ -317,19 +317,21 @@ IronCrown/                              # 仓库根
 
 **MVP 目标（垂直切片）**：单一可玩国家 + 数个省份，跑通"资源→工厂生产→结束回合推进→存读档→UI 展示"的**端到端最小闭环**，并以此验证全部分层与确定性。范围刻意收窄（最小代码）。
 
-| # | 任务 | 责任 | 验收标准 | 关联规则 | 依赖 |
-|---|---|---|---|---|---|
-| **T0** | 工程基线：建立 7 个 asmdef 分层骨架；接入 VContainer + Newtonsoft 包；落地目录；搭 CI(EditMode) 脚手架 | Codex 实现 / Claude 审查 | 各程序集按 §2.1 引用关系编译通过；空 CI 跑绿 | 3,4,6,10 | — |
-| **T1** | `Core` 拆分迁移：`EventBus`/`GameClock`/`RandomService`→`Domain`（去 `static Instance`，改注入）；`ConfigLoader`/`SaveSystem`→`Infrastructure`（Newtonsoft + StreamingAssets/persistentDataPath）；定义 Ports(`IConfigRepository`/`ISaveRepository`/`IAppLogger`) 与抽象(`IRandom`/`ITurnClock`/`IEventPublisher`) | Codex / Claude | 无 `*.Instance` 单例；核心层零 `UnityEngine` 引用 | 3,5,9 | T0 |
-| **T2** | 模型定稿：拆分 `Domain/State` 与 `Domain/Config`；建 `Contracts`(enums/ids/readmodels/commands/events)；实现 State↔存档 DTO 映射 | Codex / Claude | Simulation 只依赖运行时 State；映射往返单测无损 | 3,4 | T1 |
-| **T3** | 配置管线 MVP：`resources`/`buildings` JSON 入 StreamingAssets；`NewtonsoftConfigRepository` 加载为不可变 DTO；`Config.Validation.Tests`(唯一 id/外键/范围) 接入 CI 门禁 | Codex / Claude | 校验测试可拦截悬空引用与重复 id | 5,6 | T1 |
-| **T4** | 回合流水线 + 经济结算：`TurnResolver` 编排 §4.2 五阶段（确定性、有序遍历）；`EconomyResolver` 实现工厂产出+资源结算（数值全取 Config）；发 `ResourceChangedEvent` | Codex / Claude | `Simulation.Tests` 验证产出=Config 期望；无魔法数字 | 3,5,6 | T2,T3 |
-| **T5** | 应用层用例：`GameSessionService`(新游戏/推进/存读档)；`CommandDispatcher`+处理器(`EndTurnCommand`/`AllocateFactoryCommand`)；`Queries` 构建 `CountryView`/`ResourcePanelView` | Codex / Claude | 资源不足时命令被拒并返回原因；`Application.Tests` 覆盖 | 4,6 | T4 |
-| **T6** | 表现层垂直切片(UI Toolkit)：资源面板 + "结束回合"按钮 + 一个"工厂分配"面板；ViewModel 订阅事件流；仅经 Service/Command 交互 | Codex / Claude | `Presentation` 不引用 Domain/Simulation 仍可编译；点击端到端生效 | 2,4 | T5 |
-| **T7** | 存读档闭环 + 确定性回放：保存→读取→状态一致；`(种子,命令日志)` 重放状态哈希一致 | Codex / Claude | 回放测试绿；读档后续推与直推一致 | 6 | T4,T5 |
-| **T8** | 集成冒烟(PlayMode)：启动→推进 3 回合→存档→读档→断言（最少量） | Codex / Claude | `Integration.Tests` 绿；进游戏可操作一轮 | 6 | T6,T7 |
+> **编号已按实际推进重排**（2026-05-28 校准）：执行中合并/重排了原计划——T1 吸收了原"装包"与原"运行时模型"；配置归 T2；应用层归 T3。下表为**实际工作单台账**，旧编号仅供对照。
 
-> 执行顺序：T0→T1→T2 为地基，须 Claude 逐项审查通过再进 T3+。每个任务一个特性分支 + PR（规则 10），合入即更新 CHANGELOG（规则 7）。
+| 工作单 | 内容 | 状态 | ≈旧编号 |
+|---|---|---|---|
+| **T0** | asmdef 七层骨架（+过渡性 `IronCrown.Core`，T1 已移除） | ✅ 完成 | T0(部分) |
+| **T1** | Foundation：`Core` 拆分→Domain/Infra、去单例、DI(VContainer)、Newtonsoft、运行时 `WorldState` 与存档 DTO 分离 | ✅ 完成 | T0(包)+T1+T2(模型) |
+| **T2** | 配置管线：`*Config` 归位 `Domain/Config`、表入 `StreamingAssets`、`IConfigRegistry`、`WorldInitializer`、配置校验测试门禁 | ✅ 完成 | T2(配置)+T3 |
+| **T3** | 应用层 + Contracts：事件/`IEventPublisher`→Contracts、`WorldView`/`CountryView`、`ReadModelBuilder`、`GameSessionService` 门面、`GameEntryPoint` 瘦身 | ✅ 完成（已审/手修） | T5+Contracts |
+| **T4** | 确定性与存读档闭环：SplitMix64 PRNG、RNG 状态可序列化、存档持久化 `seed/rngState/phase`、`GameClock.Restore`、回放/续跑等价测试 | 🔄 已签发 | T7 |
+| **T5** | 玩法结算从配置：`EconomyResolver` 真实工厂产出/资源消耗（数值全取 Config）+ 其余 resolver 最小可玩逻辑；命令(`AllocateFactory` 等)+处理器 | ⏳ 待做 · ⚠需人类定经济数值/公式(规则14) | T4 |
+| **T6** | 表现层垂直切片(UI Toolkit)：世界总览 HUD + 推进按钮 + 事件刷新；仅经 `GameSessionService`/ReadModel（规则4 编译期强制）；原创 UI(规则2) | ⏳ 待做 · ⚠体验/视觉=人类验收(规则14) | T6 |
+| **T7** | 集成冒烟(PlayMode)：新游戏→推进数回合→存档→读档→断言，端到端最小闭环 | ⏳ 待做 | T8 |
+
+> **进度**：T0–T3 完成、T4 进行中；到达 MVP 垂直切片**在 T4 之后还需 T5 / T6 / T7 共 3 份工作单**（MVP 合计 T0–T7 = 8 份）。其中 T5(经济数值)、T6(UI 体验) 含规则 14 的人类取舍：结构骨架由 OpenClaw 出，数值与体验由人类拍板，可能多轮迭代。
+> 每个工作单一个特性分支 + PR（规则 10），合入即更新 CHANGELOG（规则 7），Claude 按附录 B 审查。
 
 ---
 

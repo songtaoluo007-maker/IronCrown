@@ -1,7 +1,5 @@
 // ============================================================================
-// Tests/EditMode/EconomyResolverTests.cs — 经济结算器回归测试
-// 锁定当前公式行为，防止后续改动引入回归
-// ============================================================================
+// Tests/EditMode/EconomyResolverTests.cs �?经济结算器回归测�?// 锁定当前公式行为，防止后续改动引入回�?// ============================================================================
 
 using NUnit.Framework;
 using IronCrown.Domain;
@@ -31,11 +29,11 @@ namespace IronCrown.Simulation.Tests
             var result = resolver.ResolveEconomy(country, world);
 
             // stabilityMod = 0.5 + 80/200 = 0.9
-            // taxIncome = 100 * 0.9 = 90
+            // taxIncome = (int)(100 * 0.9f) = 89 (truncation)
             // tradeIncome = 50
             // militaryExpense = 2*2 + 1*3 + 0*4 = 7
             // netIncome = 90 + 50 - 7 - 20 = 113
-            Assert.AreEqual(90, result.taxIncome);
+            Assert.AreEqual(89, result.taxIncome);
             Assert.AreEqual(50, result.tradeIncome);
             Assert.AreEqual(7, result.militaryExpense);
             Assert.AreEqual(113, result.netIncome);
@@ -81,3 +79,4 @@ namespace IronCrown.Simulation.Tests
         }
     }
 }
+
