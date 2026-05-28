@@ -1,0 +1,17 @@
+{
+  "name": "IronCrown.Infrastructure",
+  "rootNamespace": "IronCrown.Infrastructure",
+  "references": [
+    "IronCrown.Application",
+    "IronCrown.Domain"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

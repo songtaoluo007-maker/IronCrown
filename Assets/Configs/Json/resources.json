@@ -1,0 +1,9 @@
+{
+  "items": [
+    { "id": "steel",     "name": "钢铁",     "description": "步兵装备、火炮、坦克、舰船的基础材料", "basePrice": 10 },
+    { "id": "oil",       "name": "石油",     "description": "坦克、飞机、舰队、机械化部队的燃料", "basePrice": 15 },
+    { "id": "rareMetal", "name": "稀有金属", "description": "高级装备、雷达、电子元件、飞机引擎", "basePrice": 25 },
+    { "id": "food",      "name": "粮食",     "description": "人口稳定、军队补给、人力恢复", "basePrice": 5 },
+    { "id": "capital",   "name": "金融资本", "description": "科研、贸易、外交、维护费的通用货币", "basePrice": 1 }
+  ]
+}
