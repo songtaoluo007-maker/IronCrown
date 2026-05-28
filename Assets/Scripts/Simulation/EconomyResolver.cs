@@ -14,7 +14,7 @@ namespace IronCrown.Simulation
             var result = new EconomyResult();
 
             float stabilityMod = 0.5f + (country.stability / 200f);
-            result.taxIncome = (int)(country.taxIncome * stabilityMod);
+            result.taxIncome = (int)System.Math.Round(country.taxIncome * stabilityMod);
             result.tradeIncome = country.tradeIncome;
             result.militaryExpense = CalculateMilitaryExpense(country, world);
             result.civilExpense = country.civilExpense;

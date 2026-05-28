@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="37" result="Passed" total="37" passed="37" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.1274786">
+  <test-suite type="TestSuite" id="1000" name="IronCrown" fullname="IronCrown" runstate="Runnable" testcasecount="37" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.127479" total="37" passed="37" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1005" name="IronCrown.Application.Tests.dll" fullname="E:/IronCrown/Library/ScriptAssemblies/IronCrown.Application.Tests.dll" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.021478" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="31004" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1006" name="IronCrown" fullname="IronCrown" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.021269" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1007" name="Application" fullname="IronCrown.Application" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.021200" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1008" name="Tests" fullname="IronCrown.Application.Tests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.021120" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1001" name="SaveMapperTests" fullname="IronCrown.Application.Tests.SaveMapperTests" classname="IronCrown.Application.Tests.SaveMapperTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.020575" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1002" name="RoundTrip_CountryData_Preserved" fullname="IronCrown.Application.Tests.SaveMapperTests.RoundTrip_CountryData_Preserved" methodname="RoundTrip_CountryData_Preserved" classname="IronCrown.Application.Tests.SaveMapperTests" runstate="Runnable" seed="516543280" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.012249" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1003" name="RoundTrip_ProvinceData_Preserved" fullname="IronCrown.Application.Tests.SaveMapperTests.RoundTrip_ProvinceData_Preserved" methodname="RoundTrip_ProvinceData_Preserved" classname="IronCrown.Application.Tests.SaveMapperTests" runstate="Runnable" seed="1828926847" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000337" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1004" name="RoundTrip_UnitData_Preserved" fullname="IronCrown.Application.Tests.SaveMapperTests.RoundTrip_UnitData_Preserved" methodname="RoundTrip_UnitData_Preserved" classname="IronCrown.Application.Tests.SaveMapperTests" runstate="Runnable" seed="1427246685" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000291" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1027" name="IronCrown.Config.Validation.Tests.dll" fullname="E:/IronCrown/Library/ScriptAssemblies/IronCrown.Config.Validation.Tests.dll" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.090490" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="31004" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1028" name="IronCrown" fullname="IronCrown" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.090148" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1029" name="Config" fullname="IronCrown.Config" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.090078" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1030" name="Validation" fullname="IronCrown.Config.Validation" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.090024" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1031" name="Tests" fullname="IronCrown.Config.Validation.Tests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.089956" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="1009" name="ConfigValidationTests" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.089799" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1025" name="AllTables_IdAndNameNotEmpty" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.AllTables_IdAndNameNotEmpty" methodname="AllTables_IdAndNameNotEmpty" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="2024184578" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000705" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1022" name="Countries_CapitalProvinceExists" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Countries_CapitalProvinceExists" methodname="Countries_CapitalProvinceExists" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="1902561394" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000540" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1026" name="Countries_ClampedValues" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Countries_ClampedValues" methodname="Countries_ClampedValues" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="955579161" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.002297" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1012" name="Countries_HasItems" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Countries_HasItems" methodname="Countries_HasItems" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="953628381" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000136" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1018" name="Countries_IdeologyValid" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Countries_IdeologyValid" methodname="Countries_IdeologyValid" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="1718732822" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000809" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1021" name="Countries_ResourcesKeysExistInResources" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Countries_ResourcesKeysExistInResources" methodname="Countries_ResourcesKeysExistInResources" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="1031841075" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000699" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1016" name="Countries_UniqueIds" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Countries_UniqueIds" methodname="Countries_UniqueIds" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="746092033" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000818" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1013" name="Provinces_HasItems" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Provinces_HasItems" methodname="Provinces_HasItems" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="249630889" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000083" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1023" name="Provinces_OwnerCountryExists" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Provinces_OwnerCountryExists" methodname="Provinces_OwnerCountryExists" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="702292953" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000271" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1024" name="Provinces_ResourceOutputExistsInResources" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Provinces_ResourceOutputExistsInResources" methodname="Provinces_ResourceOutputExistsInResources" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="582418763" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000238" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1019" name="Provinces_TerrainValid" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Provinces_TerrainValid" methodname="Provinces_TerrainValid" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="352884881" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000288" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1017" name="Provinces_UniqueIds" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Provinces_UniqueIds" methodname="Provinces_UniqueIds" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="1253054021" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000121" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1010" name="Resources_HasItems" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Resources_HasItems" methodname="Resources_HasItems" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="608247791" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000067" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1014" name="Resources_UniqueIds" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Resources_UniqueIds" methodname="Resources_UniqueIds" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="1567733816" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000094" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1020" name="Units_CostKeysExistInResources" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Units_CostKeysExistInResources" methodname="Units_CostKeysExistInResources" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="2126259737" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000265" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1011" name="Units_HasItems" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Units_HasItems" methodname="Units_HasItems" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="1354986138" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000070" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1015" name="Units_UniqueIds" fullname="IronCrown.Config.Validation.Tests.ConfigValidationTests.Units_UniqueIds" methodname="Units_UniqueIds" classname="IronCrown.Config.Validation.Tests.ConfigValidationTests" runstate="Runnable" seed="1881635152" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000165" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1049" name="IronCrown.Domain.Tests.dll" fullname="E:/IronCrown/Library/ScriptAssemblies/IronCrown.Domain.Tests.dll" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.008564" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="31004" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1050" name="IronCrown" fullname="IronCrown" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.008331" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1051" name="Domain" fullname="IronCrown.Domain" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.008200" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1052" name="Tests" fullname="IronCrown.Domain.Tests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.008121" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1032" name="EventBusTests" fullname="IronCrown.Domain.Tests.EventBusTests" classname="IronCrown.Domain.Tests.EventBusTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.002594" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1035" name="Clear_RemovesAllSubscriptions" fullname="IronCrown.Domain.Tests.EventBusTests.Clear_RemovesAllSubscriptions" methodname="Clear_RemovesAllSubscriptions" classname="IronCrown.Domain.Tests.EventBusTests" runstate="Runnable" seed="2112072866" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.001318" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1036" name="MultipleSubscribers_AllReceive" fullname="IronCrown.Domain.Tests.EventBusTests.MultipleSubscribers_AllReceive" methodname="MultipleSubscribers_AllReceive" classname="IronCrown.Domain.Tests.EventBusTests" runstate="Runnable" seed="367980961" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000168" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1033" name="Subscribe_Publish_ReceivesEvent" fullname="IronCrown.Domain.Tests.EventBusTests.Subscribe_Publish_ReceivesEvent" methodname="Subscribe_Publish_ReceivesEvent" classname="IronCrown.Domain.Tests.EventBusTests" runstate="Runnable" seed="1464847349" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000127" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1034" name="Unsubscribe_StopsReceiving" fullname="IronCrown.Domain.Tests.EventBusTests.Unsubscribe_StopsReceiving" methodname="Unsubscribe_StopsReceiving" classname="IronCrown.Domain.Tests.EventBusTests" runstate="Runnable" seed="336788762" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000185" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1037" name="RandomServiceTests" fullname="IronCrown.Domain.Tests.RandomServiceTests" classname="IronCrown.Domain.Tests.RandomServiceTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.002656" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1041" name="Range_InBounds" fullname="IronCrown.Domain.Tests.RandomServiceTests.Range_InBounds" methodname="Range_InBounds" classname="IronCrown.Domain.Tests.RandomServiceTests" runstate="Runnable" seed="1215029864" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.001593" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1040" name="Reset_NewSeed_NewSequence" fullname="IronCrown.Domain.Tests.RandomServiceTests.Reset_NewSeed_NewSequence" methodname="Reset_NewSeed_NewSequence" classname="IronCrown.Domain.Tests.RandomServiceTests" runstate="Runnable" seed="685502983" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000192" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1039" name="Reset_RestartsSequence" fullname="IronCrown.Domain.Tests.RandomServiceTests.Reset_RestartsSequence" methodname="Reset_RestartsSequence" classname="IronCrown.Domain.Tests.RandomServiceTests" runstate="Runnable" seed="457632186" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000102" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1043" name="Roll_PercentHundred_AlwaysTrue" fullname="IronCrown.Domain.Tests.RandomServiceTests.Roll_PercentHundred_AlwaysTrue" methodname="Roll_PercentHundred_AlwaysTrue" classname="IronCrown.Domain.Tests.RandomServiceTests" runstate="Runnable" seed="1716258146" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000068" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1042" name="Roll_PercentZero_AlwaysFalse" fullname="IronCrown.Domain.Tests.RandomServiceTests.Roll_PercentZero_AlwaysFalse" methodname="Roll_PercentZero_AlwaysFalse" classname="IronCrown.Domain.Tests.RandomServiceTests" runstate="Runnable" seed="1297131646" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000062" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1038" name="SameSeed_SameSequence" fullname="IronCrown.Domain.Tests.RandomServiceTests.SameSeed_SameSequence" methodname="SameSeed_SameSequence" classname="IronCrown.Domain.Tests.RandomServiceTests" runstate="Runnable" seed="49061962" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000139" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1044" name="WorldStateTests" fullname="IronCrown.Domain.Tests.WorldStateTests" classname="IronCrown.Domain.Tests.WorldStateTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000899" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1045" name="AddCountry_RetrieveById" fullname="IronCrown.Domain.Tests.WorldStateTests.AddCountry_RetrieveById" methodname="AddCountry_RetrieveById" classname="IronCrown.Domain.Tests.WorldStateTests" runstate="Runnable" seed="537012790" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000176" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1047" name="AddTension_CapsAt100" fullname="IronCrown.Domain.Tests.WorldStateTests.AddTension_CapsAt100" methodname="AddTension_CapsAt100" classname="IronCrown.Domain.Tests.WorldStateTests" runstate="Runnable" seed="1867682673" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000105" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1046" name="AddUnit_RemoveUnit" fullname="IronCrown.Domain.Tests.WorldStateTests.AddUnit_RemoveUnit" methodname="AddUnit_RemoveUnit" classname="IronCrown.Domain.Tests.WorldStateTests" runstate="Runnable" seed="724385956" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000102" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1048" name="TensionAllows_Threshold" fullname="IronCrown.Domain.Tests.WorldStateTests.TensionAllows_Threshold" methodname="TensionAllows_Threshold" classname="IronCrown.Domain.Tests.WorldStateTests" runstate="Runnable" seed="1370886061" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000063" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1057" name="IronCrown.Simulation.Tests.dll" fullname="E:/IronCrown/Library/ScriptAssemblies/IronCrown.Simulation.Tests.dll" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.001134" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="31004" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1058" name="IronCrown" fullname="IronCrown" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.001038" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1059" name="Simulation" fullname="IronCrown.Simulation" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000977" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1060" name="Tests" fullname="IronCrown.Simulation.Tests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000913" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1053" name="EconomyResolverTests" fullname="IronCrown.Simulation.Tests.EconomyResolverTests" classname="IronCrown.Simulation.Tests.EconomyResolverTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000835" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1055" name="ResolveEconomy_HighInflation_Penalized" fullname="IronCrown.Simulation.Tests.EconomyResolverTests.ResolveEconomy_HighInflation_Penalized" methodname="ResolveEconomy_HighInflation_Penalized" classname="IronCrown.Simulation.Tests.EconomyResolverTests" runstate="Runnable" seed="1379639269" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000247" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1056" name="ResolveEconomy_InflationDecays" fullname="IronCrown.Simulation.Tests.EconomyResolverTests.ResolveEconomy_InflationDecays" methodname="ResolveEconomy_InflationDecays" classname="IronCrown.Simulation.Tests.EconomyResolverTests" runstate="Runnable" seed="829041998" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000094" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1054" name="ResolveEconomy_StableCountry_PositiveNetIncome" fullname="IronCrown.Simulation.Tests.EconomyResolverTests.ResolveEconomy_StableCountry_PositiveNetIncome" methodname="ResolveEconomy_StableCountry_PositiveNetIncome" classname="IronCrown.Simulation.Tests.EconomyResolverTests" runstate="Runnable" seed="235040990" result="Passed" start-time="2026-05-28 14:20:57Z" end-time="2026-05-28 14:20:57Z" duration="0.000107" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: E:\IronCrown\artifacts\editmode-results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
