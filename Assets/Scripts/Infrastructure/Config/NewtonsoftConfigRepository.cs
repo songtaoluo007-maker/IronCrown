@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using System.IO;
 using IronCrown.Application;
+using IronCrown.Domain;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -30,7 +31,9 @@ namespace IronCrown.Infrastructure
         public List<T> LoadList<T>(string configName) where T : class
         {
             var json = ReadJson(configName);
-            return json == null ? new List<T>() : JsonConvert.DeserializeObject<List<T>>(json, Settings);
+            if (json == null) return new List<T>();
+            var wrapper = JsonConvert.DeserializeObject<ConfigFile<T>>(json, Settings);
+            return wrapper?.items ?? new List<T>();
         }
 
         public void ClearCache()

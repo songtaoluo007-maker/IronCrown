@@ -28,6 +28,10 @@ namespace IronCrown.Bootstrap
             builder.Register<FileSaveRepository>(Lifetime.Singleton).As<ISaveRepository>();
             builder.Register<UnityAppLogger>(Lifetime.Singleton).As<IAppLogger>();
 
+            // === Application 单例 ===
+            builder.Register<ConfigRegistry>(Lifetime.Singleton).As<IConfigRegistry>();
+            builder.Register<WorldInitializer>(Lifetime.Singleton);
+
             // === Simulation 单例 ===
             builder.Register<EconomyResolver>(Lifetime.Singleton);
             builder.Register<PoliticsResolver>(Lifetime.Singleton);

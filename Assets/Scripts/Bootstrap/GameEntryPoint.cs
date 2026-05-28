@@ -1,6 +1,5 @@
 // ============================================================================
 // Bootstrap/GameEntryPoint.cs — 游戏入口（VContainer IStartable）
-// 替代 Infrastructure/GameManager.cs
 // ============================================================================
 
 using IronCrown.Application;
@@ -16,6 +15,8 @@ namespace IronCrown.Bootstrap
         private readonly IConfigRepository _config;
         private readonly ISaveRepository _save;
         private readonly IAppLogger _logger;
+        private readonly IConfigRegistry _configRegistry;
+        private readonly WorldInitializer _worldInitializer;
         private readonly TurnResolver _turnResolver;
         private readonly Simulation.EconomyResolver _economy;
         private readonly Simulation.PoliticsResolver _politics;
@@ -29,6 +30,8 @@ namespace IronCrown.Bootstrap
             IConfigRepository config,
             ISaveRepository save,
             IAppLogger logger,
+            IConfigRegistry configRegistry,
+            WorldInitializer worldInitializer,
             TurnResolver turnResolver,
             Simulation.EconomyResolver economy,
             Simulation.PoliticsResolver politics)
@@ -38,6 +41,8 @@ namespace IronCrown.Bootstrap
             _config = config;
             _save = save;
             _logger = logger;
+            _configRegistry = configRegistry;
+            _worldInitializer = worldInitializer;
             _turnResolver = turnResolver;
             _economy = economy;
             _politics = politics;
@@ -46,15 +51,19 @@ namespace IronCrown.Bootstrap
         public void Start()
         {
             _logger.Info("[EntryPoint] 游戏启动");
+
+            // 加载全部配置
+            _configRegistry.LoadAll();
+            _logger.Info("[EntryPoint] 配置加载完成");
+
             StartNewGame();
         }
 
         public void StartNewGame()
         {
             _clock.Reset(60);
-            _world = new WorldState { worldTension = 10, turnNumber = 1 };
-            // TODO: 从配置初始化国家、省份、单位
-            _logger.Info("[EntryPoint] 新游戏开始");
+            _world = _worldInitializer.CreateNewGame(_configRegistry);
+            _logger.Info($"[EntryPoint] 新游戏开始 — {_world.countries.Count} 个国家, {_world.provinces.Count} 个省份");
         }
 
         public void NextPhase()

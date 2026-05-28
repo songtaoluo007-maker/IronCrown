@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 1,
   "items": [
     { "id": "steel",     "name": "钢铁",     "description": "步兵装备、火炮、坦克、舰船的基础材料", "basePrice": 10 },
     { "id": "oil",       "name": "石油",     "description": "坦克、飞机、舰队、机械化部队的燃料", "basePrice": 15 },

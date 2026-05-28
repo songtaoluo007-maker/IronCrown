@@ -7,6 +7,13 @@
 ## [Unreleased]
 
 ### Added
+- 2026-05-28 [T2] 配置管线（Config Pipeline）完成：
+  - **P1** 配置文件迁移：`resources.json`/`units.json`/`countries.json` 从 `Assets/Configs/Json/` 移至 `Assets/StreamingAssets/Configs/Json/`，统一为 `{ "schemaVersion": 1, "items": [...] }` 格式；新建 `provinces.json`（6 国首都省份占位）。
+  - **P2** 配置 DTO 归位：`ResourceConfig`/`TechConfig`/`TechEffect`/`PolicyConfig`/`PolicyEffect` 从 `Economy.cs` 移出；`UnitConfig` 从 `Unit.cs` 移出；`EventConfig` 系列 + `CommanderConfig` 从 `Politics.cs` 移出；新增 `CountryConfig`、`ProvinceConfig`、`ConfigFile<T>`；全部归入 `Domain/Config/`，命名空间 `IronCrown.Domain`。
+  - **P3** 加载器修复：`NewtonsoftConfigRepository.LoadList<T>` 改为反序列化 `ConfigFile<T>` 并返回 `.items`；新建 `IConfigRegistry` 接口 + `ConfigRegistry` 实现（构造注入 `IConfigRepository`，`LoadAll()` 加载四表并缓存）；DI 注册 `ConfigRegistry` 单例。
+  - **P4** 世界初始化接线：新建 `WorldInitializer.CreateNewGame(IConfigRegistry)` 映射 Config → State；`GameEntryPoint.Start()` 先 `LoadAll()` 再 `CreateNewGame()`，日志输出国家/省份数量。
+  - **P5** 配置校验测试：新建 `IronCrown.Config.Validation.Tests` 程序集，覆盖 schemaVersion、唯一 id、枚举解析、外键完整、必填非空、数值范围。
+  - 零平衡数值改动（规则 9），所有现有数据原样保留。
 - 2026-05-28 [T1] Foundation Migration 完成（规则 3,4,5,6,7）：
   - **Phase 1** 装包：`com.unity.nuget.newtonsoft-json` 3.2.1 + `jp.hadashikick.vcontainer` 1.16.6。
   - **Phase 2** 新增 6 个接口：`IEventPublisher`/`IRandom`/`ITurnClock`（Domain）、`IConfigRepository`/`ISaveRepository`/`IAppLogger`（Application）。
