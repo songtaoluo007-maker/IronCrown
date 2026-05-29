@@ -121,10 +121,44 @@ namespace IronCrown.Application.Tests
         [Test]
         public void SetPlayerCountry_ChangesPlayer()
         {
-            _session.NewGame();
-            var before = _session.PlayerCountryId;
-            _session.SetPlayerCountry("republic_west");
-            Assert.AreEqual("republic_west", _session.PlayerCountryId);
+            // 此测试独立构造 GameSessionService（需要有国家的配置）
+            var config = new TestConfigRegistry();
+            config.Register("empire_north", new CountryConfig
+            {
+                id = "empire_north", name = "北境帝国", ideology = "ImperialOrder",
+                stability = 70, warSupport = 50, treasury = 500,
+                civilianFactories = 2, militaryFactories = 1,
+                resources = new Dictionary<string, int> { { "steel", 50 } }
+            });
+            config.Register("republic_west", new CountryConfig
+            {
+                id = "republic_west", name = "西境共和国", ideology = "FreeRepublic",
+                stability = 60, warSupport = 40, treasury = 300,
+                civilianFactories = 1, militaryFactories = 2,
+                resources = new Dictionary<string, int> { { "steel", 30 } }
+            });
+
+            var clock = new GameClock(new EventBus());
+            var logger = new StubLogger();
+            var rng = new RandomService(42);
+            var initializer = new WorldInitializer(logger);
+            var economy = new EconomyResolver(config, new EventBus());
+            var politics = new PoliticsResolver();
+            var battle = new BattleResolver(rng, new EventBus());
+            var supply = new SupplyResolver();
+            var ai = new AIResolver();
+            var diplomacy = new DiplomacyResolver();
+            var construction = new ConstructionResolver();
+            var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction);
+            var saveRepo = new InMemorySaveRepository();
+            var builder = new ReadModelBuilder();
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, saveRepo, rng, builder, logger);
+
+            session.NewGame(playerCountryId: "empire_north");
+            Assert.AreEqual("empire_north", session.PlayerCountryId);
+
+            session.SetPlayerCountry("republic_west");
+            Assert.AreEqual("republic_west", session.PlayerCountryId);
         }
     }
 }

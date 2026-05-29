@@ -24,6 +24,15 @@ namespace IronCrown.PlayMode.Tests
             for (int i = 0; i < 10; i++) yield return null;
         }
 
+        /// <summary>渲染前提断言：UIDocument 必须有 PanelSettings + Theme + UXML</summary>
+        private static void AssertRenderPrerequisites(UIDocument uiDoc)
+        {
+            Assert.IsNotNull(uiDoc, "UIDocument 必须存在于场景中");
+            Assert.IsNotNull(uiDoc.panelSettings, "UIDocument.panelSettings 不能为空 —— 否则 UI 不渲染（黑屏）");
+            Assert.IsNotNull(uiDoc.panelSettings.themeStyleSheet, "PanelSettings.themeStyleSheet 不能为空 —— 否则 UI 不渲染");
+            Assert.IsNotNull(uiDoc.visualTreeAsset, "UIDocument.visualTreeAsset 不能为空 —— 否则无 UI 内容");
+        }
+
         [UnityTest]
         public IEnumerator MainScene_Loads_WithoutErrors()
         {
@@ -39,7 +48,7 @@ namespace IronCrown.PlayMode.Tests
             yield return LoadMainScene();
 
             var uiDoc = Object.FindObjectOfType<UIDocument>();
-            Assert.IsNotNull(uiDoc, "UIDocument 必须存在于场景中");
+            AssertRenderPrerequisites(uiDoc);
 
             var turnLabel = uiDoc.rootVisualElement.Q<Label>("turn-label");
             Assert.IsNotNull(turnLabel, "turn-label 必须存在于 UXML 中");
@@ -53,7 +62,7 @@ namespace IronCrown.PlayMode.Tests
             yield return LoadMainScene();
 
             var uiDoc = Object.FindObjectOfType<UIDocument>();
-            Assert.IsNotNull(uiDoc, "UIDocument 必须存在于场景中");
+            AssertRenderPrerequisites(uiDoc);
 
             var advanceBtn = uiDoc.rootVisualElement.Q<Button>("advance-btn");
             Assert.IsNotNull(advanceBtn, "advance-btn 必须存在于 UXML 中");
@@ -65,7 +74,7 @@ namespace IronCrown.PlayMode.Tests
             yield return LoadMainScene();
 
             var uiDoc = Object.FindObjectOfType<UIDocument>();
-            Assert.IsNotNull(uiDoc, "UIDocument 必须存在于场景中");
+            AssertRenderPrerequisites(uiDoc);
 
             var countryList = uiDoc.rootVisualElement.Q<ScrollView>("country-list");
             Assert.IsNotNull(countryList, "country-list 必须存在于 UXML 中");
@@ -85,7 +94,7 @@ namespace IronCrown.PlayMode.Tests
             yield return LoadMainScene();
 
             var uiDoc = Object.FindObjectOfType<UIDocument>();
-            Assert.IsNotNull(uiDoc, "UIDocument 必须存在于场景中");
+            AssertRenderPrerequisites(uiDoc);
 
             var turnLabel = uiDoc.rootVisualElement.Q<Label>("turn-label");
             Assert.IsNotNull(turnLabel, "turn-label 必须存在");

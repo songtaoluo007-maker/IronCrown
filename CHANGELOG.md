@@ -12,6 +12,10 @@
 
 ### Added
 - 2026-05-28 [B1 签发] `WorkOrders/B1-command-pipeline.md`（执行方 OpenClaw）：命令管线骨架 + 新游戏选 1 国 + 唯一命令「建造工厂」端到端（`GameCommand`/`CommandResult` 入 Contracts、`ConstructionResolver` 入 Simulation、多回合建造、存档纳入在建队列）。B 阶段（可玩性）拆为 B1（本单，地基+建厂）/ B1.5（调生产·税收民生）/ B2（2D 地图）/ B3（AI 行动）；科技树待人类单独设计。人类决策：玩家操作四类全要但分批、新游戏选 1 国。
+- 2026-05-28 [B1 审查] 核心实现**通过**：`ConstructionResolver`（入队/每回合推进/完工+1，确定性）、`SaveMapper`（含 constructionQueue/resources/工厂数，续跑完整）、`TurnResolver` 结算接线、命令经 Simulation 执行——规则 3/4/5 守住。发现收尾问题→签发 `WorkOrders/B1-fixes.md`：
+  - **[看不到 UI·根因]** 用户反馈"看不到画面"。真因：① 场景 UIDocument 的 `PanelSettings = None`；② `SetupScene.cs` 把 `themeStyleSheet = null` → UI Toolkit 运行时无主题不渲染（黑屏）。**之前 PlayMode 绿是盲区**：测试只查内存 VisualElement 树，未验证"真渲染到屏幕"（PanelSettings/theme 存在）。**Claude 手修** `SetupScene.cs`：themeStyleSheet 加载 `UnityDefaultRuntimeTheme.tss`。需用户重跑 `IronCrown > Setup Main Scene` 重建场景。
+  - **[测试 bug]** `SetPlayerCountry_ChangesPlayer` 红：测试用空 `StubConfigRepository` 建世界却 `SetPlayerCountry("republic_west")`，而产品代码正确校验"国家须存在"→ 空世界拒绝设置。产品对、测试错，待 OpenClaw 修。
+  - **[认知澄清]** 项目当前**无地图**（地图是 B2）；现阶段画面 = UI HUD。
 - 2026-05-28 [数值·Claude 代拟] B1 建造数值写入 `economy.json`：`civilianFactoryBuildCost=30`/`militaryFactoryBuildCost=40`（资本）/`factoryBuildTurns=3`（规则 14 人类可调）。
 - 2026-05-28 [数值·Claude 代拟] 经人类授权，Claude 写入初版经济数值：`StreamingAssets/Configs/Json/economy.json`（`EconomyConfig` 常量：省份产出/装备配方/工厂维护）+ 填实 `provinces.json`（6 省 `resourceOutput`/基建/人口等，原创、过校验）。规则 14：人类保留最终调整权。
 - 2026-05-28 [T4] 确定性与存读档闭环 完成（规则 6,7）：

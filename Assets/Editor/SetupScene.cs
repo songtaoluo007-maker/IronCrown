@@ -18,7 +18,13 @@ namespace IronCrown.Editor
             // 1. 创建 PanelSettings
             var panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
             panelSettings.name = "MainPanelSettings";
-            panelSettings.themeStyleSheet = null; // 使用默认主题
+            // 必须赋主题样式表，否则运行时 UI 不渲染（黑屏）。用 Unity 默认运行时主题。
+            var theme = AssetDatabase.LoadAssetAtPath<ThemeStyleSheet>(
+                "Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss");
+            if (theme != null)
+                panelSettings.themeStyleSheet = theme;
+            else
+                Debug.LogError("[SetupScene] 未找到 UnityDefaultRuntimeTheme.tss —— UI 将不渲染。");
 
             if (!AssetDatabase.IsValidFolder("Assets/UI/Settings"))
                 AssetDatabase.CreateFolder("Assets/UI", "Settings");
