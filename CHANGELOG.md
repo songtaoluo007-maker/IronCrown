@@ -16,6 +16,7 @@
   - **[看不到 UI·根因]** 用户反馈"看不到画面"。真因：① 场景 UIDocument 的 `PanelSettings = None`；② `SetupScene.cs` 把 `themeStyleSheet = null` → UI Toolkit 运行时无主题不渲染（黑屏）。**之前 PlayMode 绿是盲区**：测试只查内存 VisualElement 树，未验证"真渲染到屏幕"（PanelSettings/theme 存在）。**Claude 手修** `SetupScene.cs`：themeStyleSheet 加载 `UnityDefaultRuntimeTheme.tss`。需用户重跑 `IronCrown > Setup Main Scene` 重建场景。
   - **[测试 bug]** `SetPlayerCountry_ChangesPlayer` 红：测试用空 `StubConfigRepository` 建世界却 `SetPlayerCountry("republic_west")`，而产品代码正确校验"国家须存在"→ 空世界拒绝设置。产品对、测试错，待 OpenClaw 修。
   - **[认知澄清]** 项目当前**无地图**（地图是 B2）；现阶段画面 = UI HUD。
+  - **[文字重叠·根因]** theme 修好后 HUD 显示，但用户实测推进后顶栏/状态文字重叠。根因：`SetupScene` 建的是**无相机空场景** → Game 视图不清屏 → UI Toolkit 动态改 Label.text 后新旧文字网格累积叠加。**Claude 手修** `SetupScene.cs` 新增正交相机（SolidColor 清屏）。需用户重跑 `Setup Main Scene`。功能本身正常（经济结算数字逐回合正确变化）。
 - 2026-05-28 [数值·Claude 代拟] B1 建造数值写入 `economy.json`：`civilianFactoryBuildCost=30`/`militaryFactoryBuildCost=40`（资本）/`factoryBuildTurns=3`（规则 14 人类可调）。
 - 2026-05-28 [数值·Claude 代拟] 经人类授权，Claude 写入初版经济数值：`StreamingAssets/Configs/Json/economy.json`（`EconomyConfig` 常量：省份产出/装备配方/工厂维护）+ 填实 `provinces.json`（6 省 `resourceOutput`/基建/人口等，原创、过校验）。规则 14：人类保留最终调整权。
 - 2026-05-28 [T4] 确定性与存读档闭环 完成（规则 6,7）：

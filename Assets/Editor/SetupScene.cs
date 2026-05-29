@@ -40,6 +40,14 @@ namespace IronCrown.Editor
             var bootstrap = new GameObject("Bootstrap");
             var scope = bootstrap.AddComponent<IronCrown.Bootstrap.GameLifetimeScope>();
 
+            // 3b. 创建相机：负责每帧清屏。无相机时画面不被清除，UI Toolkit 文字会逐次叠加成重叠乱码。
+            var camGo = new GameObject("Main Camera");
+            camGo.tag = "MainCamera";
+            var cam = camGo.AddComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.10f, 0.10f, 0.12f);
+            cam.orthographic = true;   // 2D 游戏，正交相机
+
             // 4. 创建 UIDocument
             var uiRoot = new GameObject("UIDocument");
             var uiDoc = uiRoot.AddComponent<UIDocument>();

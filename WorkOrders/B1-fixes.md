@@ -12,7 +12,10 @@
 B1 命令管线/建厂/存档实现**通过**。但用户实测"看不到任何画面"，且 1 个测试红。本单收尾。
 
 ## 状态：F1 已由 Claude 手修（勿回退）
-- `SetupScene.cs`：`panelSettings.themeStyleSheet` 已改为加载 `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss`（原为 null → 运行时不渲染）。**保留此修改**。
+- `SetupScene.cs`：① `panelSettings.themeStyleSheet` 改为加载 `UnityDefaultRuntimeTheme.tss`（原 null → 不渲染）；② **新增一台正交相机**（`clearFlags=SolidColor`）——原场景无相机 → 画面不清屏 → UI 文字逐次叠加成重叠乱码（用户实测复现）。**保留这两处修改**。
+
+## 附加发现（B1 代码）
+- `MainHudController.Unbind()` 的 `UnregisterCallback(_ => Advance())` 用的是**新 lambda**，与 `Bind` 里 `RegisterCallback` 不是同一引用 → 实际没注销。MVP 单场景影响小，但 OpenClaw 应修：把回调存成字段（如 `EventCallback<ClickEvent> _onAdvance`）再 Register/Unregister 同一引用。
 
 ## 必办项
 
