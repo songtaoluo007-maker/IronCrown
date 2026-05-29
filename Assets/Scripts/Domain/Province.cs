@@ -45,6 +45,10 @@ namespace IronCrown.Domain
         public int victoryPoint;         // 胜利点数
         public bool isCapital;
 
+        // === 地图 ===
+        public int gridX;
+        public int gridY;
+
         // === 方法 ===
 
         /// <summary>计算补给容量</summary>

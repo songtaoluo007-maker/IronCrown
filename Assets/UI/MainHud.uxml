@@ -32,6 +32,18 @@
         <!-- 分隔线 -->
         <ui:VisualElement class="separator" />
 
+        <!-- 地图区 -->
+        <ui:VisualElement name="map-area" class="map-area">
+        </ui:VisualElement>
+
+        <!-- 省份详情栏 -->
+        <ui:VisualElement name="province-detail" class="province-detail">
+            <ui:Label name="province-detail-label" text="点击地图省份查看" class="province-detail-label" />
+        </ui:VisualElement>
+
+        <!-- 分隔线 -->
+        <ui:VisualElement class="separator" />
+
         <!-- 国家列表 -->
         <ui:ScrollView name="country-list" class="country-list">
         </ui:ScrollView>

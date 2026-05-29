@@ -77,7 +77,9 @@ namespace IronCrown.Application
                     airBaseLevel = cfg.airBaseLevel,
                     industrySlots = cfg.industrySlots,
                     resourceOutput = cfg.resourceOutput ?? Array.Empty<string>(),
-                    victoryPoint = cfg.victoryPoint
+                    victoryPoint = cfg.victoryPoint,
+                    gridX = cfg.gridX,
+                    gridY = cfg.gridY
                 };
                 world.provinces[cfg.id] = state;
             }

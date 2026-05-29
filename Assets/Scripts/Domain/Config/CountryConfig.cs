@@ -30,5 +30,6 @@ namespace IronCrown.Domain
         public int manpower;
         public int totalManpower;
         public Dictionary<string, int> resources;
+        public string mapColor;
     }
 }

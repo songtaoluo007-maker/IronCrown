@@ -27,7 +27,8 @@
         "rareMetal": 10,
         "food": 60,
         "capital": 100
-      }
+      },
+      "mapColor": "#8C5AAA"
     },
     {
       "id": "republic_west",
@@ -55,7 +56,8 @@
         "rareMetal": 20,
         "food": 70,
         "capital": 150
-      }
+      },
+      "mapColor": "#4682C8"
     },
     {
       "id": "alliance_east",
@@ -83,7 +85,8 @@
         "rareMetal": 5,
         "food": 90,
         "capital": 60
-      }
+      },
+      "mapColor": "#C84646"
     },
     {
       "id": "kingdom_south",
@@ -111,7 +114,8 @@
         "rareMetal": 15,
         "food": 50,
         "capital": 120
-      }
+      },
+      "mapColor": "#C8A03C"
     },
     {
       "id": "federation_central",
@@ -139,7 +143,8 @@
         "rareMetal": 25,
         "food": 40,
         "capital": 80
-      }
+      },
+      "mapColor": "#50AAAA"
     },
     {
       "id": "steppe_junta",
@@ -167,7 +172,8 @@
         "rareMetal": 3,
         "food": 70,
         "capital": 30
-      }
+      },
+      "mapColor": "#828C46"
     }
   ]
 }

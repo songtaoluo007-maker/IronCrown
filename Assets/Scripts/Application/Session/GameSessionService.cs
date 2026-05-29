@@ -25,6 +25,7 @@ namespace IronCrown.Application
         private WorldState _world;
         private int _initialSeed = 12345;
         private string _playerCountryId;
+        private string _selectedProvinceId;
 
         public string PlayerCountryId => _playerCountryId;
 
@@ -179,7 +180,15 @@ namespace IronCrown.Application
         public WorldView GetWorldView()
         {
             if (_world == null) return null;
-            return _builder.BuildWorldView(_world, _clock, _playerCountryId);
+            return _builder.BuildWorldView(_world, _clock, _playerCountryId, _selectedProvinceId, _config);
+        }
+
+        public void SelectProvince(string provinceId)
+        {
+            if (_world == null) return;
+            if (provinceId != null && !_world.provinces.ContainsKey(provinceId))
+                return;
+            _selectedProvinceId = provinceId;
         }
     }
 }

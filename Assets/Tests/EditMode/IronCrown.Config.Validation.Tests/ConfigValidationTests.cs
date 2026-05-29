@@ -227,6 +227,27 @@ namespace IronCrown.Config.Validation.Tests
             }
         }
 
+        [Test]
+        public void Provinces_HasGridCoordinates()
+        {
+            foreach (var p in _provinces)
+            {
+                Assert.That(p.gridX, Is.InRange(0, 2), $"{p.id} gridX out of range [0,2]");
+                Assert.That(p.gridY, Is.InRange(0, 2), $"{p.id} gridY out of range [0,2]");
+            }
+        }
+
+        [Test]
+        public void Countries_HasMapColor()
+        {
+            var colorRegex = new System.Text.RegularExpressions.Regex("^#[0-9A-Fa-f]{6}$");
+            foreach (var c in _countries)
+            {
+                Assert.IsNotNull(c.mapColor, $"{c.id} mapColor null");
+                Assert.IsTrue(colorRegex.IsMatch(c.mapColor), $"{c.id} mapColor invalid format: {c.mapColor}");
+            }
+        }
+
         // ========== Helper ==========
 
         private static List<T> LoadConfig<T>(string name)

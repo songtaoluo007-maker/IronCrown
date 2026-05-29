@@ -115,5 +115,60 @@ namespace IronCrown.Application.Tests
             country.resources["steel"] = 999;
             Assert.AreEqual(100, view.resources["steel"]);
         }
+
+        [Test]
+        public void BuildWorldView_ProvincesSortedById()
+        {
+            var world = new WorldState();
+            world.provinces["z_city"] = new ProvinceState { id = "z_city", name = "Z", ownerCountry = "a", gridX = 0, gridY = 0 };
+            world.provinces["a_town"] = new ProvinceState { id = "a_town", name = "A", ownerCountry = "a", gridX = 1, gridY = 1 };
+            var clock = new GameClock(new EventBus());
+
+            var view = _builder.BuildWorldView(world, clock);
+
+            Assert.AreEqual(2, view.provinces.Count);
+            Assert.AreEqual("a_town", view.provinces[0].id);
+            Assert.AreEqual("z_city", view.provinces[1].id);
+        }
+
+        [Test]
+        public void BuildWorldView_ProvinceOwnerColor_FromConfig()
+        {
+            var world = new WorldState();
+            world.provinces["p1"] = new ProvinceState
+            {
+                id = "p1", name = "Test",
+                ownerCountry = "empire",
+                gridX = 1, gridY = 0,
+                terrain = TerrainType.Urban
+            };
+
+            var config = new TestConfigRegistry();
+            config.Register("empire", new CountryConfig
+            {
+                id = "empire",
+                name = "Empire",
+                mapColor = "#FF0000",
+                resources = new Dictionary<string, int>()
+            });
+
+            var clock = new GameClock(new EventBus());
+            var view = _builder.BuildWorldView(world, clock, config: config);
+
+            Assert.AreEqual(1, view.provinces.Count);
+            Assert.AreEqual("#FF0000", view.provinces[0].ownerColor);
+        }
+
+        [Test]
+        public void BuildWorldView_SelectedProvinceId_PassedThrough()
+        {
+            var world = new WorldState();
+            world.provinces["p1"] = new ProvinceState { id = "p1", name = "P1", ownerCountry = "x", gridX = 0, gridY = 0 };
+            var clock = new GameClock(new EventBus());
+
+            var view = _builder.BuildWorldView(world, clock, selectedProvinceId: "p1");
+
+            Assert.AreEqual("p1", view.selectedProvinceId);
+        }
     }
 }

@@ -259,7 +259,22 @@ namespace IronCrown.Application.Tests
                 stability = 65, warSupport = 40, legitimacy = 75, corruption = 10, bureaucracy = 50,
                 treasury = 300, taxIncome = 60, tradeIncome = 30, militaryExpense = 20, civilExpense = 25,
                 civilianFactories = 2, militaryFactories = 1, dockyards = 0, manpower = 30000, totalManpower = 150000,
-                resources = new Dictionary<string, int>()
+                resources = new Dictionary<string, int>(),
+                mapColor = "#4682C8"
+            });
+            config.Register("iron_city", new ProvinceConfig
+            {
+                id = "iron_city", name = "铁都", terrain = "Urban",
+                ownerCountry = "empire_north", isCapital = true,
+                gridX = 1, gridY = 0,
+                resourceOutput = new[] { "steel" }
+            });
+            config.Register("liberty_port", new ProvinceConfig
+            {
+                id = "liberty_port", name = "自由港", terrain = "Coastline",
+                ownerCountry = "republic_west", isCapital = true,
+                gridX = 0, gridY = 1,
+                resourceOutput = new[] { "rareMetal" }
             });
             var rng = new RandomService(42);
             var initializer = new WorldInitializer(logger);
@@ -275,6 +290,40 @@ namespace IronCrown.Application.Tests
             var builder = new ReadModelBuilder();
             var session = new GameSessionService(clock, config, initializer, turnResolver, construction, saveRepo, rng, builder, logger);
             return (session, clock);
+        }
+
+        [Test]
+        public void SelectProvince_Valid_SetsSelected()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            session.SelectProvince("iron_city");
+            var view = session.GetWorldView();
+            Assert.AreEqual("iron_city", view.selectedProvinceId);
+        }
+
+        [Test]
+        public void SelectProvince_Invalid_Ignored()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            session.SelectProvince("nonexistent");
+            var view = session.GetWorldView();
+            Assert.IsNull(view.selectedProvinceId);
+        }
+
+        [Test]
+        public void SelectProvince_Null_Deselects()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            session.SelectProvince("iron_city");
+            session.SelectProvince(null);
+            var view = session.GetWorldView();
+            Assert.IsNull(view.selectedProvinceId);
         }
     }
 }

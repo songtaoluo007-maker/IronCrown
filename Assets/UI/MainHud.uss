@@ -3,6 +3,17 @@
 .root {
     flex-grow: 1;
     padding: 12px;
+    color: rgba(236, 238, 245, 1);          /* 全局默认浅色文字（UI Toolkit 中 color 继承给子元素） */
+    background-color: rgba(22, 25, 32, 1);   /* 深蓝灰底板，替代死黑、提升对比 */
+}
+
+/* 顶栏回合标签显式浅色（最顶部，确保可读） */
+.turn-label {
+    color: rgba(255, 255, 255, 1);
+}
+
+.gov-value {
+    color: rgba(236, 238, 245, 1);
 }
 
 /* 顶栏 */
@@ -115,4 +126,54 @@
 
 .gov-spacer {
     width: 24px;
+}
+
+/* 地图区 */
+.map-area {
+    position: relative;
+    height: 340px;
+    margin-bottom: 8px;
+}
+
+/* 省份方块 */
+.province-tile {
+    width: 100px;
+    height: 100px;
+    border-radius: 6px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.2);
+    align-items: center;
+    justify-content: center;
+    margin: 4px;
+}
+
+.province-tile:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.province-tile-selected {
+    border-color: rgba(255, 255, 255, 1);
+    border-width: 3px;
+}
+
+.province-tile-label {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: rgba(255, 255, 255, 1);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.6);
+    text-align: center;
+}
+
+/* 省份详情栏 */
+.province-detail {
+    margin-bottom: 8px;
+    padding: 6px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.province-detail-label {
+    font-size: 13px;
+    color: rgba(236, 238, 245, 1);
 }

@@ -6,6 +6,7 @@
 using System.Text;
 using IronCrown.Application;
 using IronCrown.Contracts;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace IronCrown.Presentation
@@ -27,6 +28,8 @@ namespace IronCrown.Presentation
         private Button _civilDownBtn;
         private Label _taxLevelLabel;
         private Label _civilLevelLabel;
+        private VisualElement _mapArea;
+        private Label _provinceDetailLabel;
         private VisualElement _countryList;
 
         // Stored callbacks for proper Unregister
@@ -58,6 +61,8 @@ namespace IronCrown.Presentation
             _civilDownBtn = root.Q<Button>("civil-down-btn");
             _taxLevelLabel = root.Q<Label>("tax-level-label");
             _civilLevelLabel = root.Q<Label>("civil-level-label");
+            _mapArea = root.Q<VisualElement>("map-area");
+            _provinceDetailLabel = root.Q<Label>("province-detail-label");
             _countryList = root.Q<ScrollView>("country-list");
 
             _onAdvance = _ => Advance();
@@ -179,6 +184,12 @@ namespace IronCrown.Presentation
             Render();
         }
 
+        public void SelectProvince(string provinceId)
+        {
+            _session.SelectProvince(provinceId);
+            Render();
+        }
+
         private void ShowStatus(string msg)
         {
             if (_statusLabel != null)
@@ -208,6 +219,13 @@ namespace IronCrown.Presentation
                     _civilLevelLabel.text = civilNames[System.Math.Clamp(playerView.civilLevel, 0, 2)];
             }
 
+            // 地图渲染
+            RenderMap(vm);
+
+            // 省份详情
+            RenderProvinceDetail(vm);
+
+            // 国家列表
             if (_countryList == null) return;
             _countryList.Clear();
 
@@ -224,6 +242,77 @@ namespace IronCrown.Presentation
                 row.RegisterCallback<ClickEvent>(_ => SelectCountry(countryId));
                 _countryList.Add(row);
             }
+        }
+
+        private void RenderMap(WorldView vm)
+        {
+            if (_mapArea == null || vm.provinces == null) return;
+            _mapArea.Clear();
+
+            const int cellSize = 110;
+
+            foreach (var p in vm.provinces)
+            {
+                var tile = new VisualElement();
+                tile.AddToClassList("province-tile");
+                tile.style.position = Position.Absolute;
+                tile.style.left = p.gridX * cellSize;
+                tile.style.top = p.gridY * cellSize;
+
+                // 解析国家配色
+                if (UnityEngine.ColorUtility.TryParseHtmlString(p.ownerColor, out var color))
+                    tile.style.backgroundColor = color;
+
+                bool isSelected = p.id == vm.selectedProvinceId;
+                if (isSelected)
+                    tile.AddToClassList("province-tile-selected");
+
+                var label = new Label(p.name);
+                label.AddToClassList("province-tile-label");
+                tile.Add(label);
+
+                var provinceId = p.id;
+                tile.RegisterCallback<ClickEvent>(_ => SelectProvince(provinceId));
+                _mapArea.Add(tile);
+            }
+        }
+
+        private void RenderProvinceDetail(WorldView vm)
+        {
+            if (_provinceDetailLabel == null) return;
+
+            if (string.IsNullOrEmpty(vm.selectedProvinceId))
+            {
+                _provinceDetailLabel.text = "点击地图省份查看";
+                return;
+            }
+
+            var pv = vm.provinces.Find(p => p.id == vm.selectedProvinceId);
+            if (pv == null)
+            {
+                _provinceDetailLabel.text = "省份未找到";
+                return;
+            }
+
+            var sb = new StringBuilder();
+            sb.Append(pv.name);
+            if (pv.isCapital) sb.Append(" [首都]");
+            sb.Append($"  |  {pv.terrain}");
+            sb.Append($"  |  归属: {pv.ownerCountry}");
+            sb.Append($"  |  基建: {pv.infrastructure}");
+            sb.Append($"  |  人口: {FormatPopulation(pv.population)}");
+            sb.Append($"  |  胜利点: {pv.victoryPoint}");
+            if (pv.resourceOutput != null && pv.resourceOutput.Length > 0)
+                sb.Append($"  |  产出: {string.Join(", ", pv.resourceOutput)}");
+
+            _provinceDetailLabel.text = sb.ToString();
+        }
+
+        private static string FormatPopulation(int pop)
+        {
+            if (pop >= 1000000) return $"{pop / 1000000.0:F1}M";
+            if (pop >= 1000) return $"{pop / 1000}K";
+            return pop.ToString();
         }
 
         public static string FormatHeader(WorldView w)

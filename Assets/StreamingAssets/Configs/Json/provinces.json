@@ -16,6 +16,8 @@
       "industrySlots": 6,
       "resourceOutput": ["steel"],
       "victoryPoint": 20,
+      "gridX": 1,
+      "gridY": 0,
       "_note": "Claude 初版数值（规则14：人类可调）"
     },
     {
@@ -32,7 +34,9 @@
       "airBaseLevel": 1,
       "industrySlots": 7,
       "resourceOutput": ["rareMetal"],
-      "victoryPoint": 18
+      "victoryPoint": 18,
+      "gridX": 0,
+      "gridY": 1
     },
     {
       "id": "red_plain",
@@ -48,7 +52,9 @@
       "airBaseLevel": 0,
       "industrySlots": 5,
       "resourceOutput": ["food", "oil"],
-      "victoryPoint": 16
+      "victoryPoint": 16,
+      "gridX": 2,
+      "gridY": 1
     },
     {
       "id": "coral_bay",
@@ -64,7 +70,9 @@
       "airBaseLevel": 0,
       "industrySlots": 4,
       "resourceOutput": ["oil"],
-      "victoryPoint": 14
+      "victoryPoint": 14,
+      "gridX": 1,
+      "gridY": 2
     },
     {
       "id": "high_peak",
@@ -80,7 +88,9 @@
       "airBaseLevel": 0,
       "industrySlots": 3,
       "resourceOutput": ["rareMetal"],
-      "victoryPoint": 12
+      "victoryPoint": 12,
+      "gridX": 1,
+      "gridY": 1
     },
     {
       "id": "wind_plain",
@@ -96,7 +106,9 @@
       "airBaseLevel": 0,
       "industrySlots": 4,
       "resourceOutput": ["food"],
-      "victoryPoint": 10
+      "victoryPoint": 10,
+      "gridX": 2,
+      "gridY": 0
     }
   ]
 }

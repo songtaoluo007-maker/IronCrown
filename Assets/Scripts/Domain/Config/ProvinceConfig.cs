@@ -22,5 +22,7 @@ namespace IronCrown.Domain
         public int industrySlots;
         public string[] resourceOutput;
         public int victoryPoint;
+        public int gridX;
+        public int gridY;
     }
 }
