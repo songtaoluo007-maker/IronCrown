@@ -62,6 +62,10 @@ namespace IronCrown.Domain
         // === 建造队列 ===
         public List<ConstructionOrder> constructionQueue = new();
 
+        // === 内政档位 ===
+        public int taxLevel = 1;    // 税率档: 0=低 1=中 2=高
+        public int civilLevel = 1;  // 民生档: 0=紧缩 1=正常 2=宽裕
+
         // === 方法 ===
 
         /// <summary>获取资源数量</summary>

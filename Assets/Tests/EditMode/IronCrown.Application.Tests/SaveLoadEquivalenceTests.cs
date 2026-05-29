@@ -203,7 +203,7 @@ namespace IronCrown.Application.Tests
             var clockA = new GameClock(events);
             var rngA = new RandomService(12345);
             var economyA = new EconomyResolver(config, events);
-            var politicsA = new PoliticsResolver();
+            var politicsA = new PoliticsResolver(config);
             var battleA = new BattleResolver(rngA, events);
             var supplyA = new SupplyResolver();
             var aiA = new AIResolver();
@@ -228,7 +228,7 @@ namespace IronCrown.Application.Tests
 
             var eventsB = new EventBus();
             var economyB = new EconomyResolver(config, eventsB);
-            var politicsB = new PoliticsResolver();
+            var politicsB = new PoliticsResolver(config);
             var battleB = new BattleResolver(rngB, eventsB);
             var supplyB = new SupplyResolver();
             var aiB = new AIResolver();
@@ -244,7 +244,7 @@ namespace IronCrown.Application.Tests
             var clockC = new GameClock(eventsC);
             var rngC = new RandomService(12345);
             var economyC = new EconomyResolver(config, eventsC);
-            var politicsC = new PoliticsResolver();
+            var politicsC = new PoliticsResolver(config);
             var battleC = new BattleResolver(rngC, eventsC);
             var supplyC = new SupplyResolver();
             var aiC = new AIResolver();
@@ -283,7 +283,7 @@ namespace IronCrown.Application.Tests
             var worldA = BuildWorldWithProvinces();
             var eventsA = new EventBus();
             var economyA = new EconomyResolver(config, eventsA);
-            var politicsA = new PoliticsResolver();
+            var politicsA = new PoliticsResolver(config);
             var rngA = new RandomService(42);
             var battleA = new BattleResolver(rngA, eventsA);
             var supplyA = new SupplyResolver();
@@ -296,7 +296,7 @@ namespace IronCrown.Application.Tests
             var worldB = BuildWorldWithProvinces();
             var eventsB = new EventBus();
             var economyB = new EconomyResolver(config, eventsB);
-            var politicsB = new PoliticsResolver();
+            var politicsB = new PoliticsResolver(config);
             var rngB = new RandomService(42);
             var battleB = new BattleResolver(rngB, eventsB);
             var supplyB = new SupplyResolver();
@@ -315,6 +315,63 @@ namespace IronCrown.Application.Tests
 
             Assert.AreEqual(HashWorld(worldA), HashWorld(worldB),
                 "同种子 + 同操作 = 同世界（确定性）");
+        }
+
+        [Test]
+        public void SaveLoadEquivalence_GovernanceLevels_Preserved()
+        {
+            var config = CreateRealConfig();
+            var events = new EventBus();
+
+            var world = BuildWorldWithProvinces();
+            var clock = new GameClock(events);
+            var rng = new RandomService(12345);
+            var economy = new EconomyResolver(config, events);
+            var politics = new PoliticsResolver(config);
+            var battle = new BattleResolver(rng, events);
+            var supply = new SupplyResolver();
+            var ai = new AIResolver();
+            var diplo = new DiplomacyResolver();
+            var construction = new ConstructionResolver();
+            var turn = new TurnResolver(clock, events, economy, politics, battle, supply, ai, diplo, construction);
+
+            // 改档位
+            world.countries["empire_north"].taxLevel = 2;    // 高税
+            world.countries["empire_north"].civilLevel = 0;  // 紧缩
+
+            // 跑 1 回合
+            turn.ExecuteTurn(world);
+            for (int p = 0; p < 5; p++) clock.AdvancePhase();
+
+            // 存
+            var saveData = SaveMapper.ToSave(world, 12345, rng.State, clock.CurrentPhase);
+
+            // 读
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            // 验证档位保留
+            Assert.AreEqual(2, loaded.countries["empire_north"].taxLevel, "taxLevel 应保留");
+            Assert.AreEqual(0, loaded.countries["empire_north"].civilLevel, "civilLevel 应保留");
+
+            // 续跑 1 回合 → 等价
+            var rngL = new RandomService(12345);
+            rngL.RestoreState(saveData.rngState);
+            var clockL = new GameClock(events);
+            clockL.Restore(saveData.turnNumber, System.Enum.Parse<GamePhase>(saveData.phase));
+            var economyL = new EconomyResolver(config, events);
+            var politicsL = new PoliticsResolver(config);
+            var battleL = new BattleResolver(rngL, events);
+            var supplyL = new SupplyResolver();
+            var aiL = new AIResolver();
+            var diploL = new DiplomacyResolver();
+            var constructionL = new ConstructionResolver();
+            var turnL = new TurnResolver(clockL, events, economyL, politicsL, battleL, supplyL, aiL, diploL, constructionL);
+
+            turn.ExecuteTurn(world);
+            turnL.ExecuteTurn(loaded);
+
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "改档→存→读→续跑 应等价");
         }
     }
 }

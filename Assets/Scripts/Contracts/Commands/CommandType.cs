@@ -7,6 +7,8 @@ namespace IronCrown.Contracts
     public enum CommandType
     {
         BuildCivilianFactory,
-        BuildMilitaryFactory
+        BuildMilitaryFactory,
+        SetTaxLevel,
+        SetCivilLevel
     }
 }

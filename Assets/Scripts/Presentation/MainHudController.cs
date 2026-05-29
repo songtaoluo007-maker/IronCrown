@@ -21,7 +21,22 @@ namespace IronCrown.Presentation
         private Button _advanceBtn;
         private Button _buildCivilianBtn;
         private Button _buildMilitaryBtn;
+        private Button _taxUpBtn;
+        private Button _taxDownBtn;
+        private Button _civilUpBtn;
+        private Button _civilDownBtn;
+        private Label _taxLevelLabel;
+        private Label _civilLevelLabel;
         private VisualElement _countryList;
+
+        // Stored callbacks for proper Unregister
+        private EventCallback<ClickEvent> _onAdvance;
+        private EventCallback<ClickEvent> _onBuildCivilian;
+        private EventCallback<ClickEvent> _onBuildMilitary;
+        private EventCallback<ClickEvent> _onTaxUp;
+        private EventCallback<ClickEvent> _onTaxDown;
+        private EventCallback<ClickEvent> _onCivilUp;
+        private EventCallback<ClickEvent> _onCivilDown;
 
         public MainHudController(GameSessionService session, IEventPublisher events)
         {
@@ -37,14 +52,29 @@ namespace IronCrown.Presentation
             _advanceBtn = root.Q<Button>("advance-btn");
             _buildCivilianBtn = root.Q<Button>("build-civilian-btn");
             _buildMilitaryBtn = root.Q<Button>("build-military-btn");
+            _taxUpBtn = root.Q<Button>("tax-up-btn");
+            _taxDownBtn = root.Q<Button>("tax-down-btn");
+            _civilUpBtn = root.Q<Button>("civil-up-btn");
+            _civilDownBtn = root.Q<Button>("civil-down-btn");
+            _taxLevelLabel = root.Q<Label>("tax-level-label");
+            _civilLevelLabel = root.Q<Label>("civil-level-label");
             _countryList = root.Q<ScrollView>("country-list");
 
-            if (_advanceBtn != null)
-                _advanceBtn.RegisterCallback<ClickEvent>(_ => Advance());
-            if (_buildCivilianBtn != null)
-                _buildCivilianBtn.RegisterCallback<ClickEvent>(_ => BuildCivilian());
-            if (_buildMilitaryBtn != null)
-                _buildMilitaryBtn.RegisterCallback<ClickEvent>(_ => BuildMilitary());
+            _onAdvance = _ => Advance();
+            _onBuildCivilian = _ => BuildCivilian();
+            _onBuildMilitary = _ => BuildMilitary();
+            _onTaxUp = _ => SetTax(1);
+            _onTaxDown = _ => SetTax(-1);
+            _onCivilUp = _ => SetCivil(1);
+            _onCivilDown = _ => SetCivil(-1);
+
+            if (_advanceBtn != null) _advanceBtn.RegisterCallback(_onAdvance);
+            if (_buildCivilianBtn != null) _buildCivilianBtn.RegisterCallback(_onBuildCivilian);
+            if (_buildMilitaryBtn != null) _buildMilitaryBtn.RegisterCallback(_onBuildMilitary);
+            if (_taxUpBtn != null) _taxUpBtn.RegisterCallback(_onTaxUp);
+            if (_taxDownBtn != null) _taxDownBtn.RegisterCallback(_onTaxDown);
+            if (_civilUpBtn != null) _civilUpBtn.RegisterCallback(_onCivilUp);
+            if (_civilDownBtn != null) _civilDownBtn.RegisterCallback(_onCivilDown);
 
             _events.Subscribe<TurnStartEvent>(_ => Render());
             _events.Subscribe<TurnEndEvent>(_ => Render());
@@ -54,12 +84,13 @@ namespace IronCrown.Presentation
 
         public void Unbind()
         {
-            if (_advanceBtn != null)
-                _advanceBtn.UnregisterCallback<ClickEvent>(_ => Advance());
-            if (_buildCivilianBtn != null)
-                _buildCivilianBtn.UnregisterCallback<ClickEvent>(_ => BuildCivilian());
-            if (_buildMilitaryBtn != null)
-                _buildMilitaryBtn.UnregisterCallback<ClickEvent>(_ => BuildMilitary());
+            if (_advanceBtn != null) _advanceBtn.UnregisterCallback(_onAdvance);
+            if (_buildCivilianBtn != null) _buildCivilianBtn.UnregisterCallback(_onBuildCivilian);
+            if (_buildMilitaryBtn != null) _buildMilitaryBtn.UnregisterCallback(_onBuildMilitary);
+            if (_taxUpBtn != null) _taxUpBtn.UnregisterCallback(_onTaxUp);
+            if (_taxDownBtn != null) _taxDownBtn.UnregisterCallback(_onTaxDown);
+            if (_civilUpBtn != null) _civilUpBtn.UnregisterCallback(_onCivilUp);
+            if (_civilDownBtn != null) _civilDownBtn.UnregisterCallback(_onCivilDown);
         }
 
         public void Advance()
@@ -96,6 +127,52 @@ namespace IronCrown.Presentation
             Render();
         }
 
+        public void SetTax(int delta)
+        {
+            var view = _session.GetWorldView();
+            if (view == null) return;
+            var player = view.countries.Find(c => c.id == view.playerCountryId);
+            if (player == null) return;
+            int newLevel = System.Math.Clamp(player.taxLevel + delta, 0, 2);
+            var result = _session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.SetTaxLevel,
+                countryId = _session.PlayerCountryId,
+                level = newLevel
+            });
+            if (result.accepted)
+            {
+                string[] names = { "低", "中", "高" };
+                ShowStatus($"税率: {names[newLevel]}");
+            }
+            else
+                ShowStatus($"被拒: {result.reason}");
+            Render();
+        }
+
+        public void SetCivil(int delta)
+        {
+            var view = _session.GetWorldView();
+            if (view == null) return;
+            var player = view.countries.Find(c => c.id == view.playerCountryId);
+            if (player == null) return;
+            int newLevel = System.Math.Clamp(player.civilLevel + delta, 0, 2);
+            var result = _session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.SetCivilLevel,
+                countryId = _session.PlayerCountryId,
+                level = newLevel
+            });
+            if (result.accepted)
+            {
+                string[] names = { "紧缩", "正常", "宽裕" };
+                ShowStatus($"民生: {names[newLevel]}");
+            }
+            else
+                ShowStatus($"被拒: {result.reason}");
+            Render();
+        }
+
         public void SelectCountry(string countryId)
         {
             _session.SetPlayerCountry(countryId);
@@ -118,6 +195,18 @@ namespace IronCrown.Presentation
 
             if (_playerLabel != null)
                 _playerLabel.text = $"玩家: {vm.playerCountryId ?? "(无)"}";
+
+            // 内政档位显示
+            var playerView = vm.countries.Find(c => c.id == vm.playerCountryId);
+            if (playerView != null)
+            {
+                string[] taxNames = { "低", "中", "高" };
+                string[] civilNames = { "紧缩", "正常", "宽裕" };
+                if (_taxLevelLabel != null)
+                    _taxLevelLabel.text = taxNames[System.Math.Clamp(playerView.taxLevel, 0, 2)];
+                if (_civilLevelLabel != null)
+                    _civilLevelLabel.text = civilNames[System.Math.Clamp(playerView.civilLevel, 0, 2)];
+            }
 
             if (_countryList == null) return;
             _countryList.Clear();

@@ -8,5 +8,6 @@ namespace IronCrown.Contracts
     {
         public CommandType commandType;
         public string countryId;
+        public int level;  // 档位 (0-2)，仅 SetTaxLevel/SetCivilLevel 使用
     }
 }

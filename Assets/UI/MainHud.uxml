@@ -13,6 +13,19 @@
         <ui:VisualElement class="command-bar">
             <ui:Button name="build-civilian-btn" text="建民用厂" class="build-btn" />
             <ui:Button name="build-military-btn" text="建军用厂" class="build-btn" />
+        </ui:VisualElement>
+
+        <!-- 内政栏 -->
+        <ui:VisualElement class="gov-bar">
+            <ui:Label text="税率:" class="gov-label" />
+            <ui:Button name="tax-down-btn" text="◀" class="gov-btn" />
+            <ui:Label name="tax-level-label" text="中" class="gov-value" />
+            <ui:Button name="tax-up-btn" text="▶" class="gov-btn" />
+            <ui:VisualElement class="gov-spacer" />
+            <ui:Label text="民生:" class="gov-label" />
+            <ui:Button name="civil-down-btn" text="◀" class="gov-btn" />
+            <ui:Label name="civil-level-label" text="正常" class="gov-value" />
+            <ui:Button name="civil-up-btn" text="▶" class="gov-btn" />
             <ui:Label name="status-label" text="" class="status-label" />
         </ui:VisualElement>
 

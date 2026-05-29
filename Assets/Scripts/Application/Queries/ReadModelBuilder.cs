@@ -46,7 +46,9 @@ namespace IronCrown.Application
                 manpower = c.manpower,
                 equipmentStockpile = c.equipmentStockpile,
                 resources = new Dictionary<string, int>(c.resources),
-                constructionQueueCount = c.constructionQueue.Count
+                constructionQueueCount = c.constructionQueue.Count,
+                taxLevel = c.taxLevel,
+                civilLevel = c.civilLevel
             };
         }
     }

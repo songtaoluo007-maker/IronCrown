@@ -116,7 +116,7 @@ namespace IronCrown.Application.Tests
             var rng = new RandomService(seed);
             var initializer = new WorldInitializer(logger);
             var economy = new EconomyResolver(config, new EventBus());
-            var politics = new PoliticsResolver();
+            var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();
             var ai = new AIResolver();

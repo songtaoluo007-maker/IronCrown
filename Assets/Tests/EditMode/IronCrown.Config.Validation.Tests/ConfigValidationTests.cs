@@ -205,6 +205,28 @@ namespace IronCrown.Config.Validation.Tests
             }
         }
 
+        [Test]
+        public void EconomyConfig_HasGovernanceArrays()
+        {
+            foreach (var e in _economy)
+            {
+                Assert.IsNotNull(e.taxRatePercents, $"{e.id} taxRatePercents null");
+                Assert.AreEqual(3, e.taxRatePercents.Length, $"{e.id} taxRatePercents length != 3");
+                Assert.IsNotNull(e.taxStabilityDeltas, $"{e.id} taxStabilityDeltas null");
+                Assert.AreEqual(3, e.taxStabilityDeltas.Length, $"{e.id} taxStabilityDeltas length != 3");
+                Assert.IsNotNull(e.civilExpensePercents, $"{e.id} civilExpensePercents null");
+                Assert.AreEqual(3, e.civilExpensePercents.Length, $"{e.id} civilExpensePercents length != 3");
+                Assert.IsNotNull(e.civilStabilityDeltas, $"{e.id} civilStabilityDeltas null");
+                Assert.AreEqual(3, e.civilStabilityDeltas.Length, $"{e.id} civilStabilityDeltas length != 3");
+
+                for (int i = 0; i < 3; i++)
+                {
+                    Assert.That(e.taxRatePercents[i], Is.GreaterThanOrEqualTo(0), $"{e.id} taxRatePercents[{i}] < 0");
+                    Assert.That(e.civilExpensePercents[i], Is.GreaterThanOrEqualTo(0), $"{e.id} civilExpensePercents[{i}] < 0");
+                }
+            }
+        }
+
         // ========== Helper ==========
 
         private static List<T> LoadConfig<T>(string name)

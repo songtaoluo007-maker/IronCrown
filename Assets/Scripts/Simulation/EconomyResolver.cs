@@ -74,11 +74,15 @@ namespace IronCrown.Simulation
             var result = new EconomyResult();
             var eco = _config.Get<EconomyConfig>("global");
 
+            int taxLv = Math.Clamp(country.taxLevel, 0, 2);
+            int civLv = Math.Clamp(country.civilLevel, 0, 2);
+
             float stabilityMod = 0.5f + (country.stability / 200f);
-            result.taxIncome = (int)(country.taxIncome * stabilityMod);
+            int baseTax = (int)(country.taxIncome * stabilityMod);
+            result.taxIncome = baseTax * (eco?.taxRatePercents?[taxLv] ?? 100) / 100;
             result.tradeIncome = country.tradeIncome;
             result.militaryExpense = CalculateMilitaryExpense(country, world, eco);
-            result.civilExpense = country.civilExpense;
+            result.civilExpense = country.civilExpense * (eco?.civilExpensePercents?[civLv] ?? 100) / 100;
             result.netIncome = result.taxIncome + result.tradeIncome
                              - result.militaryExpense - result.civilExpense;
 

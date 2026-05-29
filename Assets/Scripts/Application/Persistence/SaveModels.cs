@@ -31,6 +31,8 @@ namespace IronCrown.Application
         public int stability;
         public int warSupport;
         public int equipmentStockpile;
+        public int taxLevel;
+        public int civilLevel;
 
         // 工厂
         public int civilianFactories;

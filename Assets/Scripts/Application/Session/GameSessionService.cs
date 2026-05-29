@@ -112,6 +112,20 @@ namespace IronCrown.Application
                     _logger.Info($"[Session] {cmd.countryId} 开始建造军用厂");
                     return CommandResult.Accept();
 
+                case CommandType.SetTaxLevel:
+                    if (cmd.level < 0 || cmd.level > 2)
+                        return CommandResult.Reject("档位越界");
+                    country.taxLevel = cmd.level;
+                    _logger.Info($"[Session] {cmd.countryId} 税率设为 {cmd.level}");
+                    return CommandResult.Accept();
+
+                case CommandType.SetCivilLevel:
+                    if (cmd.level < 0 || cmd.level > 2)
+                        return CommandResult.Reject("档位越界");
+                    country.civilLevel = cmd.level;
+                    _logger.Info($"[Session] {cmd.countryId} 民生设为 {cmd.level}");
+                    return CommandResult.Accept();
+
                 default:
                     return CommandResult.Reject("未知命令");
             }

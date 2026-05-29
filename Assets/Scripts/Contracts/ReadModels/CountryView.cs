@@ -23,5 +23,7 @@ namespace IronCrown.Contracts
         public int equipmentStockpile;
         public Dictionary<string, int> resources;
         public int constructionQueueCount;
+        public int taxLevel;
+        public int civilLevel;
     }
 }

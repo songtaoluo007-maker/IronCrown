@@ -49,7 +49,7 @@ namespace IronCrown.Application.Tests
             var rng = new RandomService(42);
             var initializer = new WorldInitializer(logger);
             var economy = new EconomyResolver(config, new EventBus());
-            var politics = new PoliticsResolver();
+            var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();
             var ai = new AIResolver();
@@ -143,7 +143,7 @@ namespace IronCrown.Application.Tests
             var rng = new RandomService(42);
             var initializer = new WorldInitializer(logger);
             var economy = new EconomyResolver(config, new EventBus());
-            var politics = new PoliticsResolver();
+            var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();
             var ai = new AIResolver();
@@ -159,6 +159,122 @@ namespace IronCrown.Application.Tests
 
             session.SetPlayerCountry("republic_west");
             Assert.AreEqual("republic_west", session.PlayerCountryId);
+        }
+
+        [Test]
+        public void SetTaxLevel_Valid_AcceptsAndChanges()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            var r1 = session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.SetTaxLevel,
+                countryId = "empire_north",
+                level = 2
+            });
+            Assert.IsTrue(r1.accepted, "SetTaxLevel(2) should be accepted");
+
+            var view = session.GetWorldView();
+            var player = view.countries.Find(c => c.id == "empire_north");
+            Assert.AreEqual(2, player.taxLevel);
+        }
+
+        [Test]
+        public void SetTaxLevel_OutOfRange_Rejects()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            var r = session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.SetTaxLevel,
+                countryId = "empire_north",
+                level = 3
+            });
+            Assert.IsFalse(r.accepted, "level=3 should be rejected");
+        }
+
+        [Test]
+        public void SetCivilLevel_Valid_AcceptsAndChanges()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            var r = session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.SetCivilLevel,
+                countryId = "empire_north",
+                level = 0
+            });
+            Assert.IsTrue(r.accepted, "SetCivilLevel(0) should be accepted");
+
+            var view = session.GetWorldView();
+            var player = view.countries.Find(c => c.id == "empire_north");
+            Assert.AreEqual(0, player.civilLevel);
+        }
+
+        [Test]
+        public void SetTaxLevel_NonPlayerCountry_Rejects()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            var r = session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.SetTaxLevel,
+                countryId = "republic_west",
+                level = 2
+            });
+            Assert.IsFalse(r.accepted, "非玩家国应被拒");
+        }
+
+        private (GameSessionService session, GameClock clock) CreateSessionWithConfig()
+        {
+            var clock = new GameClock(new EventBus());
+            var logger = new StubLogger();
+            var config = new TestConfigRegistry();
+            config.Register("global", new EconomyConfig
+            {
+                id = "global",
+                civilianFactoryBuildCost = 30,
+                militaryFactoryBuildCost = 40,
+                factoryBuildTurns = 3,
+                taxRatePercents = new[] { 70, 100, 130 },
+                taxStabilityDeltas = new[] { 1, 0, -2 },
+                civilExpensePercents = new[] { 50, 100, 150 },
+                civilStabilityDeltas = new[] { -2, 0, 2 }
+            });
+            config.Register("empire_north", new CountryConfig
+            {
+                id = "empire_north", name = "北境帝国", ideology = "ImperialOrder",
+                stability = 60, warSupport = 50, legitimacy = 70, corruption = 15, bureaucracy = 40,
+                treasury = 500, taxIncome = 80, tradeIncome = 20, militaryExpense = 30, civilExpense = 20,
+                civilianFactories = 3, militaryFactories = 2, dockyards = 1, manpower = 50000, totalManpower = 200000,
+                resources = new Dictionary<string, int>()
+            });
+            config.Register("republic_west", new CountryConfig
+            {
+                id = "republic_west", name = "西境共和国", ideology = "FreeRepublic",
+                stability = 65, warSupport = 40, legitimacy = 75, corruption = 10, bureaucracy = 50,
+                treasury = 300, taxIncome = 60, tradeIncome = 30, militaryExpense = 20, civilExpense = 25,
+                civilianFactories = 2, militaryFactories = 1, dockyards = 0, manpower = 30000, totalManpower = 150000,
+                resources = new Dictionary<string, int>()
+            });
+            var rng = new RandomService(42);
+            var initializer = new WorldInitializer(logger);
+            var economy = new EconomyResolver(config, new EventBus());
+            var politics = new PoliticsResolver(config);
+            var battle = new BattleResolver(rng, new EventBus());
+            var supply = new SupplyResolver();
+            var ai = new AIResolver();
+            var diplomacy = new DiplomacyResolver();
+            var construction = new ConstructionResolver();
+            var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction);
+            var saveRepo = new InMemorySaveRepository();
+            var builder = new ReadModelBuilder();
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, saveRepo, rng, builder, logger);
+            return (session, clock);
         }
     }
 }

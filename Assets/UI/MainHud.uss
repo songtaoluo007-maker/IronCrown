@@ -83,3 +83,36 @@
     -unity-font-style: bold;
     color: rgba(100, 200, 255, 1);
 }
+
+/* 内政栏 */
+.gov-bar {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.gov-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-right: 4px;
+}
+
+.gov-value {
+    font-size: 14px;
+    -unity-font-style: bold;
+    width: 36px;
+    text-align: center;
+}
+
+.gov-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.gov-spacer {
+    width: 24px;
+}

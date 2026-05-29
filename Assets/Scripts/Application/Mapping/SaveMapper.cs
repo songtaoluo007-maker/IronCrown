@@ -26,6 +26,8 @@ namespace IronCrown.Application
                     stability = c.stability,
                     warSupport = c.warSupport,
                     equipmentStockpile = c.equipmentStockpile,
+                    taxLevel = c.taxLevel,
+                    civilLevel = c.civilLevel,
                     civilianFactories = c.civilianFactories,
                     militaryFactories = c.militaryFactories,
                     dockyards = c.dockyards,
@@ -99,7 +101,9 @@ namespace IronCrown.Application
                         militaryFactories = cd.militaryFactories,
                         dockyards = cd.dockyards,
                         manpower = cd.manpower,
-                        totalManpower = cd.totalManpower
+                        totalManpower = cd.totalManpower,
+                        taxLevel = cd.taxLevel,
+                        civilLevel = cd.civilLevel
                     };
                     if (cd.resources != null)
                         foreach (var r in cd.resources)

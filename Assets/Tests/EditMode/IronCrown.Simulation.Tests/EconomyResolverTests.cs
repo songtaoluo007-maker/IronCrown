@@ -66,7 +66,11 @@ namespace IronCrown.Simulation.Tests
             equipmentCapitalCost = 1,
             civilianFactoryUpkeep = 2,
             militaryFactoryUpkeep = 3,
-            dockyardUpkeep = 4
+            dockyardUpkeep = 4,
+            taxRatePercents = new[] { 70, 100, 130 },
+            taxStabilityDeltas = new[] { 1, 0, -2 },
+            civilExpensePercents = new[] { 50, 100, 150 },
+            civilStabilityDeltas = new[] { -2, 0, 2 }
         };
 
         [SetUp]
@@ -302,8 +306,8 @@ namespace IronCrown.Simulation.Tests
 
             var result = resolver.ResolveEconomy(country, world);
 
-            // stabilityMod = 0.5 + 80/200 = 0.9
-            // taxIncome = (int)(100 * 0.9f) = 89
+            // baseTax = (int)(100 * 0.9f) = 89 (float precision)
+            // taxIncome = 89 * 100/100 = 89 (taxLevel=1, 100%)
             // tradeIncome = 50
             // militaryExpense = 2*2 + 1*3 + 0*4 = 7
             // netIncome = 89 + 50 - 7 - 20 = 112
@@ -370,6 +374,94 @@ namespace IronCrown.Simulation.Tests
 
             resolver.ResolveEconomy(country, world);
             Assert.AreEqual(29, country.inflation);
+        }
+
+        // ===== B1.5: 税率/民生倍率 =====
+
+        [Test]
+        public void ResolveEconomy_TaxLevel2_HighTaxMultiplier()
+        {
+            var resolver = CreateResolver();
+            var country = new CountryState
+            {
+                id = "test",
+                stability = 80,
+                taxIncome = 100,
+                tradeIncome = 0,
+                civilExpense = 0,
+                taxLevel = 2  // 高税
+            };
+            var world = new WorldState();
+
+            var result = resolver.ResolveEconomy(country, world);
+
+            // baseTax = (int)(100 * 0.9f) = 89
+            // taxIncome = 89 * 130 / 100 = 115
+            Assert.AreEqual(115, result.taxIncome);
+        }
+
+        [Test]
+        public void ResolveEconomy_TaxLevel0_LowTaxMultiplier()
+        {
+            var resolver = CreateResolver();
+            var country = new CountryState
+            {
+                id = "test",
+                stability = 80,
+                taxIncome = 100,
+                tradeIncome = 0,
+                civilExpense = 0,
+                taxLevel = 0  // 低税
+            };
+            var world = new WorldState();
+
+            var result = resolver.ResolveEconomy(country, world);
+
+            // baseTax = (int)(100 * 0.9f) = 89
+            // taxIncome = 89 * 70 / 100 = 62
+            Assert.AreEqual(62, result.taxIncome);
+        }
+
+        [Test]
+        public void ResolveEconomy_CivilLevel2_Expensive()
+        {
+            var resolver = CreateResolver();
+            var country = new CountryState
+            {
+                id = "test",
+                stability = 80,
+                taxIncome = 100,
+                tradeIncome = 0,
+                civilExpense = 20,
+                civilLevel = 2  // 宽裕
+            };
+            var world = new WorldState();
+
+            var result = resolver.ResolveEconomy(country, world);
+
+            // civilExpense = 20 * 150 / 100 = 30
+            Assert.AreEqual(30, result.civilExpense);
+        }
+
+        [Test]
+        public void ResolveEconomy_CivilLevel0_Cheap()
+        {
+            var resolver = CreateResolver();
+            var country = new CountryState
+            {
+                id = "test",
+                stability = 80,
+                taxIncome = 100,
+                tradeIncome = 0,
+                civilExpense = 20,
+                civilLevel = 0  // 紧缩
+            };
+            var world = new WorldState();
+
+            var result = resolver.ResolveEconomy(country, world);
+
+            // civilExpense = 20 * 50 / 100 = 10
+            Assert.AreEqual(10, result.civilExpense);
         }
     }
 }

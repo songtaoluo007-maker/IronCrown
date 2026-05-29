@@ -23,5 +23,11 @@ namespace IronCrown.Domain
         public int civilianFactoryBuildCost;
         public int militaryFactoryBuildCost;
         public int factoryBuildTurns;
+
+        // === 内政档位 ===
+        public int[] taxRatePercents;       // [70,100,130] 税收倍率
+        public int[] taxStabilityDeltas;    // [1,0,-2] 每回合稳定修正
+        public int[] civilExpensePercents;  // [50,100,150] 民生支出倍率
+        public int[] civilStabilityDeltas;  // [-2,0,2] 每回合稳定修正
     }
 }

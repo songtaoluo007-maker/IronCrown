@@ -11,6 +11,7 @@
 - 2026-05-28 🎉 **MVP 垂直切片达成（A 收口完成）**：EditMode 69/69 + PlayMode 5/5 全绿。配置驱动（6 国 6 省）→ 回合推进有可见经济产出 → 存读档确定性一致 → UI Toolkit HUD 可视可操作。T0–T7 + T7-FIX 全部闭合。下一步进入 B（玩家可玩性：命令 + 2D 地图 + AI 行动）。
 
 ### Added
+- 2026-05-28 [B1.5 签发] `WorkOrders/B1.5-governance.md`（执行方 OpenClaw）：内政经营杠杆——税率档 + 民生档（复用 B1 命令管线，`SetTaxLevel`/`SetCivilLevel`、`GameCommand.level`），税收/民生倍率入 `EconomyResolver`、稳定修正入 `PoliticsResolver`（本单给其注入 IConfigRegistry）。**架构师范围判断**：砍掉原计划的"生产分配"——当前无军队、装备产线分配无消耗端无玩家价值，为做而做增复杂度（规则 9），推迟到军事系统之后。数值 Claude 代拟入 `economy.json`：税率 `[70,100,130]%`、税稳 `[+1,0,-2]`、民生支出 `[50,100,150]%`、民生稳 `[-2,0,+2]`（规则 14 人类可调）。
 - 2026-05-28 [B1 签发] `WorkOrders/B1-command-pipeline.md`（执行方 OpenClaw）：命令管线骨架 + 新游戏选 1 国 + 唯一命令「建造工厂」端到端（`GameCommand`/`CommandResult` 入 Contracts、`ConstructionResolver` 入 Simulation、多回合建造、存档纳入在建队列）。B 阶段（可玩性）拆为 B1（本单，地基+建厂）/ B1.5（调生产·税收民生）/ B2（2D 地图）/ B3（AI 行动）；科技树待人类单独设计。人类决策：玩家操作四类全要但分批、新游戏选 1 国。
 - 2026-05-28 [B1 审查] 核心实现**通过**：`ConstructionResolver`（入队/每回合推进/完工+1，确定性）、`SaveMapper`（含 constructionQueue/resources/工厂数，续跑完整）、`TurnResolver` 结算接线、命令经 Simulation 执行——规则 3/4/5 守住。发现收尾问题→签发 `WorkOrders/B1-fixes.md`：
   - **[看不到 UI·根因]** 用户反馈"看不到画面"。真因：① 场景 UIDocument 的 `PanelSettings = None`；② `SetupScene.cs` 把 `themeStyleSheet = null` → UI Toolkit 运行时无主题不渲染（黑屏）。**之前 PlayMode 绿是盲区**：测试只查内存 VisualElement 树，未验证"真渲染到屏幕"（PanelSettings/theme 存在）。**Claude 手修** `SetupScene.cs`：themeStyleSheet 加载 `UnityDefaultRuntimeTheme.tss`。需用户重跑 `IronCrown > Setup Main Scene` 重建场景。
