@@ -48,6 +48,7 @@ namespace IronCrown.Domain
         // === 地图 ===
         public int gridX;
         public int gridY;
+        public string[] neighbors;
 
         // === 方法 ===
 

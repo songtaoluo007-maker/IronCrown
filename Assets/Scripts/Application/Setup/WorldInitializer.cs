@@ -79,12 +79,47 @@ namespace IronCrown.Application
                     resourceOutput = cfg.resourceOutput ?? Array.Empty<string>(),
                     victoryPoint = cfg.victoryPoint,
                     gridX = cfg.gridX,
-                    gridY = cfg.gridY
+                    gridY = cfg.gridY,
+                    neighbors = cfg.neighbors ?? Array.Empty<string>()
                 };
                 world.provinces[cfg.id] = state;
             }
 
-            _logger.Info($"[WorldInitializer] 初始化完成: {world.countries.Count} 个国家, {world.provinces.Count} 个省份");
+            // 初始部队：每国 1 支步兵驻首都
+            var infantryTemplate = config.Get<UnitConfig>("infantry");
+            if (infantryTemplate != null)
+            {
+                foreach (var country in world.countries.Values)
+                {
+                    string unitId = $"{country.id}_inf_1";
+                    var unit = new UnitState
+                    {
+                        id = unitId,
+                        unitType = "infantry",
+                        ownerCountry = country.id,
+                        currentProvinceId = country.capitalProvinceId,
+                        manpower = infantryTemplate.hp,
+                        maxManpower = infantryTemplate.hp,
+                        equipment = infantryTemplate.hp,
+                        maxEquipment = infantryTemplate.hp,
+                        organization = infantryTemplate.organization,
+                        maxOrganization = infantryTemplate.organization,
+                        morale = 50,
+                        experience = 0,
+                        baseAttack = infantryTemplate.attack,
+                        baseDefense = infantryTemplate.defense,
+                        baseBreakthrough = infantryTemplate.breakthrough,
+                        armor = infantryTemplate.armor,
+                        piercing = infantryTemplate.piercing,
+                        speed = infantryTemplate.speed,
+                        movesLeft = infantryTemplate.speed,
+                        supplyConsumption = infantryTemplate.supplyConsumption
+                    };
+                    world.units[unitId] = unit;
+                }
+            }
+
+            _logger.Info($"[WorldInitializer] 初始化完成: {world.countries.Count} 个国家, {world.provinces.Count} 个省份, {world.units.Count} 支部队");
             return world;
         }
     }

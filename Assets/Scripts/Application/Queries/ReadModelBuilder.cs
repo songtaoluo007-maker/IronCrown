@@ -32,7 +32,7 @@ namespace IronCrown.Application
 
             var provinces = world.provinces.Values
                 .OrderBy(p => p.id, System.StringComparer.Ordinal)
-                .Select(p => BuildProvinceView(p, colorMap))
+                .Select(p => BuildProvinceView(p, colorMap, world.units))
                 .ToList();
 
             return new WorldView
@@ -70,11 +70,21 @@ namespace IronCrown.Application
             };
         }
 
-        public ProvinceView BuildProvinceView(ProvinceState p, Dictionary<string, string> colorMap)
+        public ProvinceView BuildProvinceView(ProvinceState p, Dictionary<string, string> colorMap, Dictionary<string, UnitState> units = null)
         {
             string ownerColor = "#808080";
             if (p.ownerCountry != null && colorMap.TryGetValue(p.ownerCountry, out var color))
                 ownerColor = color;
+
+            int garrisonCount = 0;
+            if (units != null)
+            {
+                foreach (var u in units.Values)
+                {
+                    if (u.currentProvinceId == p.id)
+                        garrisonCount++;
+                }
+            }
 
             return new ProvinceView
             {
@@ -89,7 +99,9 @@ namespace IronCrown.Application
                 population = p.population,
                 victoryPoint = p.victoryPoint,
                 isCapital = p.isCapital,
-                resourceOutput = p.resourceOutput
+                resourceOutput = p.resourceOutput,
+                neighbors = p.neighbors ?? System.Array.Empty<string>(),
+                garrisonCount = garrisonCount
             };
         }
     }

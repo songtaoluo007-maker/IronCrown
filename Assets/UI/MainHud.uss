@@ -156,6 +156,19 @@
     border-width: 3px;
 }
 
+.province-garrison-badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 11px;
+    color: #FFD700;
+    -unity-font-style: bold;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding-left: 3px;
+    padding-right: 3px;
+    border-radius: 3px;
+}
+
 .province-tile-label {
     font-size: 13px;
     -unity-font-style: bold;

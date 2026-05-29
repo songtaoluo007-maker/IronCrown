@@ -2,6 +2,7 @@
 // Application/Mapping/SaveMapper.cs — 存档 DTO ↔ 运行时 State 映射
 // ============================================================================
 
+using System;
 using System.Linq;
 using IronCrown.Domain;
 
@@ -61,7 +62,11 @@ namespace IronCrown.Application
                     resistance = p.resistance,
                     compliance = p.compliance,
                     victoryPoint = p.victoryPoint,
-                    isCapital = p.isCapital
+                    isCapital = p.isCapital,
+                    gridX = p.gridX,
+                    gridY = p.gridY,
+                    terrain = p.terrain.ToString(),
+                    neighbors = p.neighbors
                 }).ToArray(),
                 units = world.units.Values.Select(u => new UnitSaveData
                 {
@@ -143,7 +148,11 @@ namespace IronCrown.Application
                         resistance = pd.resistance,
                         compliance = pd.compliance,
                         victoryPoint = pd.victoryPoint,
-                        isCapital = pd.isCapital
+                        isCapital = pd.isCapital,
+                        gridX = pd.gridX,
+                        gridY = pd.gridY,
+                        terrain = string.IsNullOrEmpty(pd.terrain) ? TerrainType.Plain : Enum.Parse<TerrainType>(pd.terrain),
+                        neighbors = pd.neighbors ?? Array.Empty<string>()
                     };
                     world.provinces[p.id] = p;
                 }

@@ -8,9 +8,13 @@
 ## [Unreleased]
 
 ### Milestone
+- 2026-05-28 🎉 **B 阶段收官（可玩性达成）**：B1(命令管线+建厂)→B1.5(税率/民生)→B2(2D方块地图+选省)→B3(AI 自主建厂) 全绿（112 测试）。完整循环：选国→建厂/调税民生→推回合看经济→AI 对手自主发展→存读档。B3 审查通过（TryBuild 重构干净、AI 确定性无随机、playerCountryId 存档同步、规则 3/4/5 守住）。
 - 2026-05-28 🎉 **MVP 垂直切片达成（A 收口完成）**：EditMode 69/69 + PlayMode 5/5 全绿。配置驱动（6 国 6 省）→ 回合推进有可见经济产出 → 存读档确定性一致 → UI Toolkit HUD 可视可操作。T0–T7 + T7-FIX 全部闭合。下一步进入 B（玩家可玩性：命令 + 2D 地图 + AI 行动）。
 
 ### Added
+- 2026-05-28 [记忆/恢复机制] 为解决"跨会话/上下文上限后丢失项目脉络"问题,建立 `PROJECT_STATE.md`(项目恢复入口/状态快照):新会话读它即可重建全局(进度时间线 T0→当前、锁定决策、协作复盘、文件地图、下一步、技术债指针)。原则:**真相源在仓库 git 跟踪文件,非任何人私有记忆**(私有记忆会丢、OpenClaw 读不到)。`PROJECT_RULES.md` 执行约定新增"记忆/恢复机制"条:新会话先读 PROJECT_STATE、每工作单审查通过后更新它。Claude 私有记忆顶部加指针导向 PROJECT_STATE。
+- 2026-05-28 [架构可持续性评估] 应人类要求评估"架构是否利于长期运维/更新"，结论=地基为长期可维护设计(编译期分层/数据驱动/确定性/测试网/Ports)、起点高,但需后续补规模化基础设施。新增 `ARCHITECTURE.md` 附录 C「技术债与未来基础设施清单」(6 项,带触发条件)：C-1 CI 自动门禁(高,减少对人工审查依赖)、C-2 存档迁移(高,上线红线)、C-3 配置工具链、C-4 Presentation 组织(MainHudController 已膨胀)、C-5 移动端性能、C-6 本地化。约定 Claude 审查时若触及触发条件应主动提醒。
+- 2026-05-28 [军事阶段启动 / C1 签发] 人类选定下一主攻方向=军事与领土（规则 14）。军事拆为 C1(领土+驻军地基)→C2(造兵+移动)→C3(战斗+占领)→C4(战争状态+胜负+军事AI)；美术顺延至 D。`WorkOrders/C1-territory-garrison.md`：省份邻接 + 各国初始步兵驻首都 + 地图显示驻军，**不做移动/战斗**，仍用 6 省（先立框架，省份扩充后续）。Claude 代拟邻接表（6 省对称邻接，high_peak 为枢纽）+ 初始部队规则（每国 1 步兵驻首都、取 units.json infantry 模板）。强调存档完整性：ProvinceSaveData 加 neighbors、确认 gridX/gridY 双向映射（防读档丢静态省份数据）。
 - 2026-05-28 [B3 签发] `WorkOrders/B3-ai-actions.md`（执行方 OpenClaw）：B 阶段收官——非玩家国自主经济决策（规则 AI 建厂、阈值、纯确定性无随机）。含**经批准小重构**（规则 9 例外）：建造执行逻辑从 `IssueCommand` 下移到 `ConstructionResolver.TryBuild`，玩家与 AI 共用（规则 3）；`WorldState` 加 `playerCountryId` 使 AI 跳过玩家国。数值 Claude 代拟入 economy.json：`aiBuildCapitalThreshold=60`/`aiMaxCivilianFactories=20`/`aiMaxMilitaryFactories=15`（规则 14 可调）。顺修 B2 地图区高度重叠。
 - 2026-05-28 [B2 审查] **通过**：6 省方块按方位/配色渲染、点击选中+详情栏正确；规则 4 守住（Presentation 零 Domain/Simulation 引用）、`ProvinceView` 已建、数据全取自 config。小瑕疵：地图最下排方块与详情栏轻微重叠（B3 Phase 0 顺修）。
 - 2026-05-28 [B2 签发] `WorkOrders/B2-map-view.md`（执行方 OpenClaw）：文字列表 → 2D 省份方块地图（交互骨架）。UI Toolkit 绝对定位摆 6 省方块、按国 `mapColor` 配色、点击选中→详情栏。新增 `ProvinceView`、`WorldView.provinces/selectedProvinceId`、`GameSessionService.SelectProvince`。**架构师范围**：仅交互骨架（色块粗糙、美术后置 C 阶段），不做邻接/领土/占领/更多省份。Claude 代拟地图数据（6 省 gridX/gridY 方位 + 6 国 hex 配色，规则 14 可调）写为工作单数据表交 OpenClaw 填入 JSON。

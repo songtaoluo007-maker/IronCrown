@@ -170,5 +170,60 @@ namespace IronCrown.Application.Tests
 
             Assert.AreEqual("p1", view.selectedProvinceId);
         }
+
+        [Test]
+        public void BuildProvinceView_GarrisonCount_CapitalHasOne()
+        {
+            var world = new WorldState();
+            world.provinces["capital"] = new ProvinceState
+            {
+                id = "capital", name = "Capital",
+                ownerCountry = "c1", gridX = 1, gridY = 0,
+                terrain = TerrainType.Urban,
+                neighbors = new[] { "other" }
+            };
+            world.provinces["other"] = new ProvinceState
+            {
+                id = "other", name = "Other",
+                ownerCountry = "c1", gridX = 2, gridY = 0,
+                terrain = TerrainType.Plain,
+                neighbors = new[] { "capital" }
+            };
+            world.units["u1"] = new UnitState
+            {
+                id = "u1",
+                unitType = "infantry",
+                ownerCountry = "c1",
+                currentProvinceId = "capital"
+            };
+            var clock = new GameClock(new EventBus());
+
+            var view = _builder.BuildWorldView(world, clock);
+
+            var capitalView = view.provinces.Find(p => p.id == "capital");
+            var otherView = view.provinces.Find(p => p.id == "other");
+            Assert.AreEqual(1, capitalView.garrisonCount);
+            Assert.AreEqual(0, otherView.garrisonCount);
+        }
+
+        [Test]
+        public void BuildProvinceView_Neighbors_Mapped()
+        {
+            var world = new WorldState();
+            world.provinces["p1"] = new ProvinceState
+            {
+                id = "p1", name = "P1",
+                ownerCountry = "x", gridX = 0, gridY = 0,
+                terrain = TerrainType.Plain,
+                neighbors = new[] { "p2", "p3" }
+            };
+            var clock = new GameClock(new EventBus());
+
+            var view = _builder.BuildWorldView(world, clock);
+
+            Assert.AreEqual(2, view.provinces[0].neighbors.Length);
+            Assert.Contains("p2", view.provinces[0].neighbors);
+            Assert.Contains("p3", view.provinces[0].neighbors);
+        }
     }
 }

@@ -41,6 +41,7 @@
 - **重构边界**：规则 9——"大范围重构"指跨层、跨模块或改动公共契约（Contracts / Ports / Config schema）的改动，须先经 Claude 出方案、人类批准。局部实现优化不受限。
 - **去重原则**：规则 8——修 bug 前先定位**既有归属模块**（见 ARCHITECTURE.md §3 模块归属表），在原系统内修复，禁止新建平行系统绕过。
 - **审查门禁**：每个 PR 的验收清单见 [`ARCHITECTURE.md` 附录 B](ARCHITECTURE.md)。
+- **记忆/恢复机制**：[`PROJECT_STATE.md`](PROJECT_STATE.md) 是项目恢复入口——**任何新会话(含换人/换 AI)第一步读它**即可重建全局;**每个工作单审查通过后必须更新它**的当前状态与进度。真相源在仓库 git 跟踪文件(非任何人的私有记忆):宪法见本文件、架构见 ARCHITECTURE、完整时间线见 CHANGELOG、各阶段细节见 WorkOrders/。
 
 ## 已确认技术栈决策（人类 2026-05-28 批准）
 

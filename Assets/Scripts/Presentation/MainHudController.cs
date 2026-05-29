@@ -271,6 +271,14 @@ namespace IronCrown.Presentation
                 label.AddToClassList("province-tile-label");
                 tile.Add(label);
 
+                // 驻军标记
+                if (p.garrisonCount > 0)
+                {
+                    var garrisonBadge = new Label($"⚔{p.garrisonCount}");
+                    garrisonBadge.AddToClassList("province-garrison-badge");
+                    tile.Add(garrisonBadge);
+                }
+
                 var provinceId = p.id;
                 tile.RegisterCallback<ClickEvent>(_ => SelectProvince(provinceId));
                 _mapArea.Add(tile);
@@ -304,6 +312,9 @@ namespace IronCrown.Presentation
             sb.Append($"  |  胜利点: {pv.victoryPoint}");
             if (pv.resourceOutput != null && pv.resourceOutput.Length > 0)
                 sb.Append($"  |  产出: {string.Join(", ", pv.resourceOutput)}");
+            if (pv.neighbors != null && pv.neighbors.Length > 0)
+                sb.Append($"  |  邻接: {string.Join(", ", pv.neighbors)}");
+            sb.Append($"  |  驻军: {pv.garrisonCount} 支");
 
             _provinceDetailLabel.text = sb.ToString();
         }

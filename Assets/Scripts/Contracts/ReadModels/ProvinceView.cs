@@ -19,5 +19,7 @@ namespace IronCrown.Contracts
         public int victoryPoint;
         public bool isCapital;
         public string[] resourceOutput;
+        public string[] neighbors;
+        public int garrisonCount;
     }
 }

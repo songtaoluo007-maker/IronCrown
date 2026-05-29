@@ -18,6 +18,7 @@
       "victoryPoint": 20,
       "gridX": 1,
       "gridY": 0,
+      "neighbors": ["wind_plain", "high_peak"],
       "_note": "Claude 初版数值（规则14：人类可调）"
     },
     {
@@ -36,7 +37,8 @@
       "resourceOutput": ["rareMetal"],
       "victoryPoint": 18,
       "gridX": 0,
-      "gridY": 1
+      "gridY": 1,
+      "neighbors": ["high_peak"]
     },
     {
       "id": "red_plain",
@@ -54,7 +56,8 @@
       "resourceOutput": ["food", "oil"],
       "victoryPoint": 16,
       "gridX": 2,
-      "gridY": 1
+      "gridY": 1,
+      "neighbors": ["wind_plain", "high_peak"]
     },
     {
       "id": "coral_bay",
@@ -72,7 +75,8 @@
       "resourceOutput": ["oil"],
       "victoryPoint": 14,
       "gridX": 1,
-      "gridY": 2
+      "gridY": 2,
+      "neighbors": ["high_peak"]
     },
     {
       "id": "high_peak",
@@ -90,7 +94,8 @@
       "resourceOutput": ["rareMetal"],
       "victoryPoint": 12,
       "gridX": 1,
-      "gridY": 1
+      "gridY": 1,
+      "neighbors": ["iron_city", "coral_bay", "liberty_port", "red_plain"]
     },
     {
       "id": "wind_plain",
@@ -108,7 +113,8 @@
       "resourceOutput": ["food"],
       "victoryPoint": 10,
       "gridX": 2,
-      "gridY": 0
+      "gridY": 0,
+      "neighbors": ["iron_city", "red_plain"]
     }
   ]
 }

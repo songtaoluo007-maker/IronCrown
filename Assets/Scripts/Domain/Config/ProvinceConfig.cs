@@ -24,5 +24,6 @@ namespace IronCrown.Domain
         public int victoryPoint;
         public int gridX;
         public int gridY;
+        public string[] neighbors;
     }
 }

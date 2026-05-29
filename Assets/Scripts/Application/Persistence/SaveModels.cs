@@ -96,6 +96,12 @@ namespace IronCrown.Application
         // 战略
         public int victoryPoint;
         public bool isCapital;
+
+        // 地图
+        public int gridX;
+        public int gridY;
+        public string terrain;
+        public string[] neighbors;
     }
 
     [Serializable]
