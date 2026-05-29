@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:StyleSheet src="project://database/Assets/UI/MainHud.uss" />
+
+    <ui:VisualElement name="root" class="root">
+        <!-- 顶栏 -->
+        <ui:VisualElement class="top-bar">
+            <ui:Label name="turn-label" text="回合 1 · TurnStart" class="turn-label" />
+            <ui:Button name="advance-btn" text="推进" class="advance-btn" />
+        </ui:VisualElement>
+
+        <!-- 分隔线 -->
+        <ui:VisualElement class="separator" />
+
+        <!-- 国家列表 -->
+        <ui:ScrollView name="country-list" class="country-list">
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

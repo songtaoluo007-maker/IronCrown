@@ -6,6 +6,7 @@ using IronCrown.Application;
 using IronCrown.Domain;
 using IronCrown.Contracts;
 using IronCrown.Infrastructure;
+using IronCrown.Presentation;
 using IronCrown.Simulation;
 using UnityEngine;
 using VContainer;
@@ -43,6 +44,9 @@ namespace IronCrown.Bootstrap
             builder.Register<AIResolver>(Lifetime.Singleton);
             builder.Register<DiplomacyResolver>(Lifetime.Singleton);
             builder.Register<TurnResolver>(Lifetime.Singleton);
+
+            // === Presentation 单例 ===
+            builder.Register<MainHudController>(Lifetime.Singleton);
 
             // === Entry Point ===
             builder.RegisterEntryPoint<GameEntryPoint>();

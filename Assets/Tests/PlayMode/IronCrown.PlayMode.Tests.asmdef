@@ -1,0 +1,27 @@
+{
+    "name": "IronCrown.PlayMode.Tests",
+    "rootNamespace": "IronCrown.PlayMode.Tests",
+    "references": [
+        "IronCrown.Domain",
+        "IronCrown.Application",
+        "IronCrown.Contracts",
+        "IronCrown.Simulation",
+        "IronCrown.Presentation",
+        "IronCrown.Bootstrap"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

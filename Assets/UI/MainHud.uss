@@ -1,0 +1,46 @@
+/* MainHud.uss — 中性原创排版（不做美化，仅保证可用） */
+
+.root {
+    flex-grow: 1;
+    padding: 12px;
+}
+
+/* 顶栏 */
+.top-bar {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.turn-label {
+    font-size: 18px;
+    -unity-font-style: bold;
+    flex-grow: 1;
+    padding: 4px 0;
+}
+
+.advance-btn {
+    width: 80px;
+    height: 32px;
+    font-size: 14px;
+    margin-left: 12px;
+}
+
+/* 分隔线 */
+.separator {
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.15);
+    margin-bottom: 8px;
+}
+
+/* 国家列表 */
+.country-list {
+    flex-grow: 1;
+}
+
+.country-row {
+    font-size: 14px;
+    padding: 4px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}

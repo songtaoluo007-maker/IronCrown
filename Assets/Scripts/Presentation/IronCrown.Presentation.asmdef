@@ -1,0 +1,17 @@
+{
+    "name": "IronCrown.Presentation",
+    "rootNamespace": "IronCrown.Presentation",
+    "references": [
+        "IronCrown.Application",
+        "IronCrown.Contracts"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
