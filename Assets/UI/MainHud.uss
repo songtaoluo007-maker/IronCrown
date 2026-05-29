@@ -131,7 +131,7 @@
 /* 地图区 */
 .map-area {
     position: relative;
-    height: 340px;
+    height: 360px;
     margin-bottom: 8px;
 }
 

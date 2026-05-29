@@ -52,9 +52,9 @@ namespace IronCrown.Application.Tests
             var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();
-            var ai = new AIResolver();
-            var diplomacy = new DiplomacyResolver();
             var construction = new ConstructionResolver();
+            var ai = new AIResolver(config, construction);
+            var diplomacy = new DiplomacyResolver();
             var turnResolver = new TurnResolver(_clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
@@ -146,9 +146,9 @@ namespace IronCrown.Application.Tests
             var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();
-            var ai = new AIResolver();
-            var diplomacy = new DiplomacyResolver();
             var construction = new ConstructionResolver();
+            var ai = new AIResolver(config, construction);
+            var diplomacy = new DiplomacyResolver();
             var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
@@ -282,9 +282,9 @@ namespace IronCrown.Application.Tests
             var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();
-            var ai = new AIResolver();
-            var diplomacy = new DiplomacyResolver();
             var construction = new ConstructionResolver();
+            var ai = new AIResolver(config, construction);
+            var diplomacy = new DiplomacyResolver();
             var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();

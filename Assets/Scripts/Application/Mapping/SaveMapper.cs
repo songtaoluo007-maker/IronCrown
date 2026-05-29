@@ -82,7 +82,8 @@ namespace IronCrown.Application
             var world = new WorldState
             {
                 turnNumber = save.turnNumber,
-                worldTension = 0
+                worldTension = 0,
+                playerCountryId = save.playerCountryId
             };
 
             if (save.countries != null)

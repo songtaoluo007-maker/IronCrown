@@ -206,9 +206,9 @@ namespace IronCrown.Application.Tests
             var politicsA = new PoliticsResolver(config);
             var battleA = new BattleResolver(rngA, events);
             var supplyA = new SupplyResolver();
-            var aiA = new AIResolver();
-            var diplomacyA = new DiplomacyResolver();
             var constructionA = new ConstructionResolver();
+            var aiA = new AIResolver(config, constructionA);
+            var diplomacyA = new DiplomacyResolver();
             var turnA = new TurnResolver(clockA, events, economyA, politicsA, battleA, supplyA, aiA, diplomacyA, constructionA);
 
             RunTurns(turnA, clockA, worldA, 2);
@@ -231,9 +231,9 @@ namespace IronCrown.Application.Tests
             var politicsB = new PoliticsResolver(config);
             var battleB = new BattleResolver(rngB, eventsB);
             var supplyB = new SupplyResolver();
-            var aiB = new AIResolver();
-            var diplomacyB = new DiplomacyResolver();
             var constructionB = new ConstructionResolver();
+            var aiB = new AIResolver(config, constructionB);
+            var diplomacyB = new DiplomacyResolver();
             var turnB = new TurnResolver(clockB, eventsB, economyB, politicsB, battleB, supplyB, aiB, diplomacyB, constructionB);
 
             RunTurns(turnB, clockB, worldB, 2);
@@ -247,9 +247,9 @@ namespace IronCrown.Application.Tests
             var politicsC = new PoliticsResolver(config);
             var battleC = new BattleResolver(rngC, eventsC);
             var supplyC = new SupplyResolver();
-            var aiC = new AIResolver();
-            var diplomacyC = new DiplomacyResolver();
             var constructionC = new ConstructionResolver();
+            var aiC = new AIResolver(config, constructionC);
+            var diplomacyC = new DiplomacyResolver();
             var turnC = new TurnResolver(clockC, eventsC, economyC, politicsC, battleC, supplyC, aiC, diplomacyC, constructionC);
 
             RunTurns(turnC, clockC, worldC, 4);
@@ -287,9 +287,9 @@ namespace IronCrown.Application.Tests
             var rngA = new RandomService(42);
             var battleA = new BattleResolver(rngA, eventsA);
             var supplyA = new SupplyResolver();
-            var aiA = new AIResolver();
-            var diploA = new DiplomacyResolver();
             var constructionA = new ConstructionResolver();
+            var aiA = new AIResolver(config, constructionA);
+            var diploA = new DiplomacyResolver();
             var clockA = new GameClock(eventsA);
             var turnA = new TurnResolver(clockA, eventsA, economyA, politicsA, battleA, supplyA, aiA, diploA, constructionA);
 
@@ -300,9 +300,9 @@ namespace IronCrown.Application.Tests
             var rngB = new RandomService(42);
             var battleB = new BattleResolver(rngB, eventsB);
             var supplyB = new SupplyResolver();
-            var aiB = new AIResolver();
-            var diploB = new DiplomacyResolver();
             var constructionB = new ConstructionResolver();
+            var aiB = new AIResolver(config, constructionB);
+            var diploB = new DiplomacyResolver();
             var clockB = new GameClock(eventsB);
             var turnB = new TurnResolver(clockB, eventsB, economyB, politicsB, battleB, supplyB, aiB, diploB, constructionB);
 
@@ -330,9 +330,9 @@ namespace IronCrown.Application.Tests
             var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, events);
             var supply = new SupplyResolver();
-            var ai = new AIResolver();
-            var diplo = new DiplomacyResolver();
             var construction = new ConstructionResolver();
+            var ai = new AIResolver(config, construction);
+            var diplo = new DiplomacyResolver();
             var turn = new TurnResolver(clock, events, economy, politics, battle, supply, ai, diplo, construction);
 
             // 改档位
@@ -362,9 +362,9 @@ namespace IronCrown.Application.Tests
             var politicsL = new PoliticsResolver(config);
             var battleL = new BattleResolver(rngL, events);
             var supplyL = new SupplyResolver();
-            var aiL = new AIResolver();
-            var diploL = new DiplomacyResolver();
             var constructionL = new ConstructionResolver();
+            var aiL = new AIResolver(config, constructionL);
+            var diploL = new DiplomacyResolver();
             var turnL = new TurnResolver(clockL, events, economyL, politicsL, battleL, supplyL, aiL, diploL, constructionL);
 
             turn.ExecuteTurn(world);

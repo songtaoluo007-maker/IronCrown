@@ -75,12 +75,16 @@ namespace IronCrown.Application
             }
 
             _logger.Info($"[Session] New game: {_world.countries.Count} countries, player={_playerCountryId}");
+            _world.playerCountryId = _playerCountryId;
         }
 
         public void SetPlayerCountry(string countryId)
         {
             if (_world != null && _world.countries.ContainsKey(countryId))
+            {
                 _playerCountryId = countryId;
+                _world.playerCountryId = countryId;
+            }
         }
 
         public CommandResult IssueCommand(GameCommand cmd)
@@ -98,18 +102,14 @@ namespace IronCrown.Application
             switch (cmd.commandType)
             {
                 case CommandType.BuildCivilianFactory:
-                    if (country.GetResource("capital") < eco.civilianFactoryBuildCost)
+                    if (!_construction.TryBuild(country, "civilian", eco))
                         return CommandResult.Reject("资本不足");
-                    country.ModifyResource("capital", -eco.civilianFactoryBuildCost);
-                    _construction.EnqueueBuild(country, "civilian", eco);
                     _logger.Info($"[Session] {cmd.countryId} 开始建造民用厂");
                     return CommandResult.Accept();
 
                 case CommandType.BuildMilitaryFactory:
-                    if (country.GetResource("capital") < eco.militaryFactoryBuildCost)
+                    if (!_construction.TryBuild(country, "military", eco))
                         return CommandResult.Reject("资本不足");
-                    country.ModifyResource("capital", -eco.militaryFactoryBuildCost);
-                    _construction.EnqueueBuild(country, "military", eco);
                     _logger.Info($"[Session] {cmd.countryId} 开始建造军用厂");
                     return CommandResult.Accept();
 
@@ -168,6 +168,7 @@ namespace IronCrown.Application
             _world = SaveMapper.ToRuntime(gameState);
             _initialSeed = gameState.seed;
             _playerCountryId = gameState.playerCountryId;
+            _world.playerCountryId = _playerCountryId;
             _rng.Reset(gameState.seed);
             _rng.RestoreState(gameState.rngState);
             var phase = Enum.Parse<GamePhase>(gameState.phase);

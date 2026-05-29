@@ -1,6 +1,6 @@
 // ============================================================================
 // Simulation/AIResolver.cs — AI 决策器
-// Phase 5: GameState → WorldState
+// B3: 注入 IConfigRegistry + ConstructionResolver，实现经济 AI
 // ============================================================================
 
 using System.Collections.Generic;
@@ -10,8 +10,33 @@ namespace IronCrown.Simulation
 {
     public sealed class AIResolver
     {
+        private readonly IConfigRegistry _config;
+        private readonly ConstructionResolver _construction;
+
+        public AIResolver(IConfigRegistry config, ConstructionResolver construction)
+        {
+            _config = config;
+            _construction = construction;
+        }
+
         public void MakeDecisions(CountryState country, WorldState world)
         {
+            // B3: 跳过玩家国
+            if (country.id == world.playerCountryId) return;
+
+            var eco = _config.Get<EconomyConfig>("global");
+            if (eco == null) return;
+
+            // 经济 AI：capital 充足且未达上限 → 建厂
+            if (country.GetResource("capital") >= eco.aiBuildCapitalThreshold)
+            {
+                if (country.civilianFactories < eco.aiMaxCivilianFactories)
+                    _construction.TryBuild(country, "civilian", eco);
+                else if (country.militaryFactories < eco.aiMaxMilitaryFactories)
+                    _construction.TryBuild(country, "military", eco);
+            }
+
+            // 保留战略/战役/战术桩（未来军事 AI 用）
             var strategy = EvaluateStrategicSituation(country, world);
             var campaign = EvaluateCampaignGoals(country, world, strategy);
             ExecuteTacticalOrders(country, world, campaign);

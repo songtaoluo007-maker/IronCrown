@@ -13,6 +13,7 @@ namespace IronCrown.Domain
         // === 原有字段 ===
         public int worldTension;
         public int turnNumber;
+        public string playerCountryId;
 
         // === 扩展字段 ===
         public Dictionary<string, CountryState> countries = new();

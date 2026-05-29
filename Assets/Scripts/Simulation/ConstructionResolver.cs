@@ -10,6 +10,16 @@ namespace IronCrown.Simulation
 {
     public sealed class ConstructionResolver
     {
+        /// <summary>尝试建造（含资源校验+扣费+入队）</summary>
+        public bool TryBuild(CountryState c, string kind, EconomyConfig eco)
+        {
+            int cost = kind == "civilian" ? eco.civilianFactoryBuildCost : eco.militaryFactoryBuildCost;
+            if (c.GetResource("capital") < cost) return false;
+            c.ModifyResource("capital", -cost);
+            EnqueueBuild(c, kind, eco);
+            return true;
+        }
+
         /// <summary>入队建造（调用方已校验资源充足并扣费）</summary>
         public void EnqueueBuild(CountryState country, string factoryKind, EconomyConfig eco)
         {
