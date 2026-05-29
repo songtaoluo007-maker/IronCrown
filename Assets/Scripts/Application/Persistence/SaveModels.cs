@@ -25,22 +25,66 @@ namespace IronCrown.Application
     public class CountrySaveData
     {
         public string id;
+        public string name;
         public int treasury;
         public int stability;
         public int warSupport;
         public int equipmentStockpile;
+
+        // 工厂
+        public int civilianFactories;
+        public int militaryFactories;
+        public int dockyards;
+
+        // 人力
+        public int manpower;
+        public int totalManpower;
+
+        // 资源库存
+        public ResourceEntry[] resources;
+
         public string[] activePolicies;
         public string[] completedTechs;
+    }
+
+    [Serializable]
+    public struct ResourceEntry
+    {
+        public string key;
+        public int value;
     }
 
     [Serializable]
     public class ProvinceSaveData
     {
         public string id;
+        public string name;
         public string ownerCountry;
         public string controllerCountry;
+        public int population;
+        public int manpower;
+
+        // 基础设施
+        public int infrastructure;
+        public int railwayLevel;
+        public int portLevel;
+        public int airBaseLevel;
+
+        // 工业
+        public int industrySlots;
+        public int builtCivilianFactories;
+        public int builtMilitaryFactories;
+
+        // 资源
+        public string[] resourceOutput;
+
+        // 占领
         public int resistance;
         public int compliance;
+
+        // 战略
+        public int victoryPoint;
+        public bool isCapital;
     }
 
     [Serializable]

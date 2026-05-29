@@ -21,20 +21,40 @@ namespace IronCrown.Application
                 countries = world.countries.Values.Select(c => new CountrySaveData
                 {
                     id = c.id,
+                    name = c.name,
                     treasury = c.treasury,
                     stability = c.stability,
                     warSupport = c.warSupport,
                     equipmentStockpile = c.equipmentStockpile,
+                    civilianFactories = c.civilianFactories,
+                    militaryFactories = c.militaryFactories,
+                    dockyards = c.dockyards,
+                    manpower = c.manpower,
+                    totalManpower = c.totalManpower,
+                    resources = c.resources.Select(r => new ResourceEntry { key = r.Key, value = r.Value }).ToArray(),
                     activePolicies = c.activePolicies.ToArray(),
                     completedTechs = c.completedTechs.ToArray()
                 }).ToArray(),
                 provinces = world.provinces.Values.Select(p => new ProvinceSaveData
                 {
                     id = p.id,
+                    name = p.name,
                     ownerCountry = p.ownerCountry,
                     controllerCountry = p.controllerCountry,
+                    population = p.population,
+                    manpower = p.manpower,
+                    infrastructure = p.infrastructure,
+                    railwayLevel = p.railwayLevel,
+                    portLevel = p.portLevel,
+                    airBaseLevel = p.airBaseLevel,
+                    industrySlots = p.industrySlots,
+                    builtCivilianFactories = p.builtCivilianFactories,
+                    builtMilitaryFactories = p.builtMilitaryFactories,
+                    resourceOutput = p.resourceOutput,
                     resistance = p.resistance,
-                    compliance = p.compliance
+                    compliance = p.compliance,
+                    victoryPoint = p.victoryPoint,
+                    isCapital = p.isCapital
                 }).ToArray(),
                 units = world.units.Values.Select(u => new UnitSaveData
                 {
@@ -65,11 +85,20 @@ namespace IronCrown.Application
                     var c = new CountryState
                     {
                         id = cd.id,
+                        name = cd.name,
                         treasury = cd.treasury,
                         stability = cd.stability,
                         warSupport = cd.warSupport,
-                        equipmentStockpile = cd.equipmentStockpile
+                        equipmentStockpile = cd.equipmentStockpile,
+                        civilianFactories = cd.civilianFactories,
+                        militaryFactories = cd.militaryFactories,
+                        dockyards = cd.dockyards,
+                        manpower = cd.manpower,
+                        totalManpower = cd.totalManpower
                     };
+                    if (cd.resources != null)
+                        foreach (var r in cd.resources)
+                            c.resources[r.key] = r.value;
                     if (cd.activePolicies != null)
                         foreach (var p in cd.activePolicies) c.activePolicies.Add(p);
                     if (cd.completedTechs != null)
@@ -85,10 +114,23 @@ namespace IronCrown.Application
                     var p = new ProvinceState
                     {
                         id = pd.id,
+                        name = pd.name,
                         ownerCountry = pd.ownerCountry,
                         controllerCountry = pd.controllerCountry,
+                        population = pd.population,
+                        manpower = pd.manpower,
+                        infrastructure = pd.infrastructure,
+                        railwayLevel = pd.railwayLevel,
+                        portLevel = pd.portLevel,
+                        airBaseLevel = pd.airBaseLevel,
+                        industrySlots = pd.industrySlots,
+                        builtCivilianFactories = pd.builtCivilianFactories,
+                        builtMilitaryFactories = pd.builtMilitaryFactories,
+                        resourceOutput = pd.resourceOutput,
                         resistance = pd.resistance,
-                        compliance = pd.compliance
+                        compliance = pd.compliance,
+                        victoryPoint = pd.victoryPoint,
+                        isCapital = pd.isCapital
                     };
                     world.provinces[p.id] = p;
                 }
