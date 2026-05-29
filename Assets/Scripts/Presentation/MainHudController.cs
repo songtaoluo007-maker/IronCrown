@@ -127,8 +127,12 @@ namespace IronCrown.Presentation
                 bool isPlayer = c.id == vm.playerCountryId;
                 var row = new Label(FormatCountryRow(c, isPlayer));
                 row.AddToClassList("country-row");
+                row.focusable = true;
+                row.pickingMode = PickingMode.Position;
                 if (isPlayer)
                     row.AddToClassList("country-row-player");
+                var countryId = c.id;
+                row.RegisterCallback<ClickEvent>(_ => SelectCountry(countryId));
                 _countryList.Add(row);
             }
         }

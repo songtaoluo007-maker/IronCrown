@@ -71,6 +71,14 @@
     border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
+.country-row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.country-row:active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
 .country-row-player {
     -unity-font-style: bold;
     color: rgba(100, 200, 255, 1);
