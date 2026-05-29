@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
+using IronCrown.Presentation;
 
 namespace IronCrown.PlayMode.Tests
 {
@@ -95,8 +96,14 @@ namespace IronCrown.PlayMode.Tests
             string before = turnLabel.text;
             Debug.Log($"[SmokeTest] Before advance: {before}");
 
-            // 模拟点击推进按钮
-            advanceBtn.SendEvent(new ClickEvent());
+            // 经控制器公开 API 触发推进。
+            // 不用 advanceBtn.SendEvent(new ClickEvent())：UITK 中 EventBase.target 为 internal set，
+            // 测试无法构造可正确分发的合成点击，回调不会触发（已被实测证实）。
+            // 此处验证的是按钮回调最终执行的同一入口 Advance()（按钮存在性由 HUD_AdvanceButton_Exists 覆盖）。
+            var behaviour = Object.FindObjectOfType<MainHudBehaviour>();
+            Assert.IsNotNull(behaviour, "MainHudBehaviour 必须存在于场景中");
+            Assert.IsNotNull(behaviour.Controller, "MainHudController 必须已注入");
+            behaviour.Controller.Advance();
             yield return null;
             yield return null;
 
