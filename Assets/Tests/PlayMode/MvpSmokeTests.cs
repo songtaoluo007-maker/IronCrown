@@ -6,6 +6,7 @@
 using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
@@ -13,23 +14,28 @@ namespace IronCrown.PlayMode.Tests
 {
     public class MvpSmokeTests
     {
+        // PlayMode 测试需异步加载场景并等待完成，再等若干帧让 VContainer DI + EntryPoint 执行
+        private static IEnumerator LoadMainScene()
+        {
+            var op = SceneManager.LoadSceneAsync("Main", LoadSceneMode.Single);
+            Assert.IsNotNull(op, "LoadSceneAsync 返回 null —— 'Main' 未在 Build Settings 或路径错误");
+            while (!op.isDone) yield return null;
+            for (int i = 0; i < 10; i++) yield return null;
+        }
+
         [UnityTest]
         public IEnumerator MainScene_Loads_WithoutErrors()
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
-            yield return null;
-            yield return null;
+            yield return LoadMainScene();
 
-            var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            var scene = SceneManager.GetActiveScene();
             Assert.AreEqual("Main", scene.name, "Main 场景应能加载");
         }
 
         [UnityTest]
         public IEnumerator HUD_TurnLabel_IsNotEmpty()
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
-            // 等待场景加载 + VContainer DI + EntryPoint 执行
-            for (int i = 0; i < 10; i++) yield return null;
+            yield return LoadMainScene();
 
             var uiDoc = Object.FindObjectOfType<UIDocument>();
             Assert.IsNotNull(uiDoc, "UIDocument 必须存在于场景中");
@@ -43,8 +49,7 @@ namespace IronCrown.PlayMode.Tests
         [UnityTest]
         public IEnumerator HUD_AdvanceButton_Exists()
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
-            for (int i = 0; i < 10; i++) yield return null;
+            yield return LoadMainScene();
 
             var uiDoc = Object.FindObjectOfType<UIDocument>();
             Assert.IsNotNull(uiDoc, "UIDocument 必须存在于场景中");
@@ -56,8 +61,7 @@ namespace IronCrown.PlayMode.Tests
         [UnityTest]
         public IEnumerator HUD_CountryList_Has6Rows()
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
-            for (int i = 0; i < 10; i++) yield return null;
+            yield return LoadMainScene();
 
             var uiDoc = Object.FindObjectOfType<UIDocument>();
             Assert.IsNotNull(uiDoc, "UIDocument 必须存在于场景中");
@@ -77,8 +81,7 @@ namespace IronCrown.PlayMode.Tests
         [UnityTest]
         public IEnumerator HUD_AdvanceButton_ChangesTurnLabel()
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
-            for (int i = 0; i < 10; i++) yield return null;
+            yield return LoadMainScene();
 
             var uiDoc = Object.FindObjectOfType<UIDocument>();
             Assert.IsNotNull(uiDoc, "UIDocument 必须存在于场景中");
