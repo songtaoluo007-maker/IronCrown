@@ -7,7 +7,12 @@
 
 ## [Unreleased]
 
+### Milestone
+- 2026-05-28 🎉 **MVP 垂直切片达成（A 收口完成）**：EditMode 69/69 + PlayMode 5/5 全绿。配置驱动（6 国 6 省）→ 回合推进有可见经济产出 → 存读档确定性一致 → UI Toolkit HUD 可视可操作。T0–T7 + T7-FIX 全部闭合。下一步进入 B（玩家可玩性：命令 + 2D 地图 + AI 行动）。
+
 ### Added
+- 2026-05-28 [B1 签发] `WorkOrders/B1-command-pipeline.md`（执行方 OpenClaw）：命令管线骨架 + 新游戏选 1 国 + 唯一命令「建造工厂」端到端（`GameCommand`/`CommandResult` 入 Contracts、`ConstructionResolver` 入 Simulation、多回合建造、存档纳入在建队列）。B 阶段（可玩性）拆为 B1（本单，地基+建厂）/ B1.5（调生产·税收民生）/ B2（2D 地图）/ B3（AI 行动）；科技树待人类单独设计。人类决策：玩家操作四类全要但分批、新游戏选 1 国。
+- 2026-05-28 [数值·Claude 代拟] B1 建造数值写入 `economy.json`：`civilianFactoryBuildCost=30`/`militaryFactoryBuildCost=40`（资本）/`factoryBuildTurns=3`（规则 14 人类可调）。
 - 2026-05-28 [数值·Claude 代拟] 经人类授权，Claude 写入初版经济数值：`StreamingAssets/Configs/Json/economy.json`（`EconomyConfig` 常量：省份产出/装备配方/工厂维护）+ 填实 `provinces.json`（6 省 `resourceOutput`/基建/人口等，原创、过校验）。规则 14：人类保留最终调整权。
 - 2026-05-28 [T4] 确定性与存读档闭环 完成（规则 6,7）：
   - PRNG 换 **SplitMix64**（常量按规格、确定性、跨平台）；`IRandom` 增 `State`/`RestoreState`。
@@ -25,6 +30,11 @@
 - [T2] 实质通过；D1 第二次未修 → Claude 手修 `GameEntryPoint:IStartable` + Bootstrap asmdef 补引用。
 - [T3] 实质通过；C1 未授权改公式（税收 `Math.Round`）→ 人类裁定回退、Claude 手修截断；CHANGELOG 曾被写乱码 → Claude 重写。
 - [T4] **通过**：SplitMix64 / 状态序列化 / 存读档续跑实现正确（常量逐字符合规格），49/49 绿；C1 测试期望已正确修正。遗留见 Known Issues。
+- [T5/T6/T7] T5 经济**通过**（公式按规格、数值未改、分支纪律恢复、CHANGELOG 未被乱改）。**T6/T7 打回**：① `MainHudController` 注册进 DI 但从未注入 `MainHudBehaviour`（`SetController` 无 `[Inject]`、缺 `RegisterComponentInHierarchy`）→ HUD 空白，**演示无效**；② **未真实验证**——`editmode-results.xml` 仍是 T4 旧结果(49)、T5/T6/T7 新测试未重跑、无 PlayMode 结果；③ `MvpSmokeTests` 纵容空 HUD 假性通过。→ 签发 `WorkOrders/T7-fixes.md`。OpenClaw 后续用 `GameEntryPoint.SetController` 方式接线，但仍漏 `Bind`（`OnEnable` 早于注入跳过、`SetController` 不触发渲染）→ **Claude 手修**：`SetController` 在控制器到位时触发 `Bind`。仍需 OpenClaw 完成 T7-FIX 的 F3（收紧冒烟）+ F4（真跑 EditMode/PlayMode + Play 截图）。
+- 2026-05-28 [首次真跑·74 用例 EditMode] 68 过 / 6 败（终于有新鲜证据）。诊断：① 5 败来自 `IronCrown.PlayMode.Tests`——asmdef 配错（`includePlatforms:["Editor"]` + 缺 `TestRunner` 引用）致混入 EditMode 跑失败、且未现于 PlayMode 标签页 → **Claude 已手修 asmdef**（`includePlatforms:[]` + 加 TestRunner 引用）。② 1 败=`SaveLoadEquivalenceTests` **正确抓出真 bug**：存档 DTO 不完整（丢 `resources`/`equipmentStockpile`/工厂/人力 及省份 `infrastructure`/`resourceOutput`）→ 续跑≠直跑。→ T7-FIX 增 **F5**（补全存档字段，完整快照）+ **F6**（PlayMode asmdef，已手修）。68 个通过覆盖 economy/config/domain/sim/presentation。
+- 2026-05-28 [F5/F6 复跑] EditMode **69/69 全绿**（存档补全成功、PlayMode 测试已与 EditMode 干净分离）；PlayMode 5 个测试已正确出现在 PlayMode 标签页但 **5 全红**（含 `MainScene_Loads_WithoutErrors`）。诊断：场景在 Build Settings 且 enabled、UXML 控件名匹配且 `turn-label` 默认非空 → 根因指向 `MvpSmokeTests` 用**同步 `LoadScene`+两帧 yield**，Test Runner 下场景未完成加载即断言。→ **Claude 手修**：抽出 `LoadMainScene()` 用 `LoadSceneAsync` 等 `isDone` 再等 10 帧，4 个测试统一调用。⚠ 若重跑仍红需看 Console 实际异常（可能叠加 PlayMode 下 DI/配置加载问题）。
+- 2026-05-28 [PlayMode 根因定位·已修] 诊断开关 + Console 日志锁定真因：`MainHud.uxml` 用了非法 UXML 写法 `<ui:StyleSheet src=...>`（`StyleSheet` 非 UXML 元素）→ `UIDocument.OnEnable` 抛 `Debug.LogError` → Unity Test Framework 将运行期 LogError 一律判失败 → 5 个 PlayMode 测试全红，**与功能无关**。日志同时证明功能正常：6 国 6 省初始化、HUD 绑定、turn-label="回合 1 · TurnStart"。**Claude 手修**：`<ui:StyleSheet>` → `<Style src=...>`（Unity 6 正确写法），并移除诊断用 `LogAssert.ignoreFailingMessages`，恢复 F3 严格断言。待用户重跑确认 PlayMode 转绿 + Play 截图。
+- 2026-05-28 [PlayMode 最后 1 红·已修] StyleSheet 修复后 4 个转绿，仅 `HUD_AdvanceButton_ChangesTurnLabel` 红：`advanceBtn.SendEvent(new ClickEvent())` 不触发回调（`EventBase.target` internal set，测试无法构造可分发的合成点击）——测试基础设施问题，非产品 bug（真人鼠标点击经 Clickable 正常）。**Claude 手修**：`MainHudController` 暴露公开 `Advance()`（按钮回调与程序化调用共用入口）、`MainHudBehaviour` 暴露只读 `Controller`，测试改经 `Controller.Advance()` 验证"推进→label 变"。待重跑确认 5/5 绿。
 
 ### 工作单台账
 - T1 `WorkOrders/T1-foundation-migration.md` ✅
@@ -32,9 +42,10 @@
 - T2 `WorkOrders/T2-config-pipeline.md` ✅
 - T3 `WorkOrders/T3-application-contracts.md` ✅
 - T4 `WorkOrders/T4-determinism-saveload.md` ✅
-- T5 `WorkOrders/T5-economy-gameplay.md` 📤 已签发（含 Claude 代拟经济数值 + UTF-8 守卫 + T4 遗留续跑等价测试）
-- T6 `WorkOrders/T6-presentation-ui.md` 📤 已签发（UI Toolkit HUD，规则 4 编译期强制）
-- T7 `WorkOrders/T7-integration-demo.md` 📤 已签发（MVP 收官 + 实机演示 + RUNME.md）
+- T5 `WorkOrders/T5-economy-gameplay.md` ✅ 实现通过（数值未改、规则 4/9/14 守住）
+- T6 `WorkOrders/T6-presentation-ui.md` ⚠ 结构对（规则 4 守住、Presentation 仅引用 Application+Contracts），但 UI 控制器未接线 → HUD 空白
+- T7 `WorkOrders/T7-integration-demo.md` ⚠ 场景生成脚本/冒烟/RUNME 在，但演示未跑通、未真实验证
+- T7-FIX `WorkOrders/T7-fixes.md` 📤 已签发（接线 UI 控制器 + 首屏渲染 + 收紧冒烟 + 真跑 EditMode/PlayMode + Play 截图为证）
 
 ### Known Issues
 - 2026-05-28 [T4 审查·**编码重犯**] `CHANGELOG.md` 再次被 OpenClaw 写成非 UTF-8（中文乱码），Claude 已**第二次**重写修复。根因：OpenClaw 写文件默认非 UTF-8。处置：T5 Phase 0 增加"UTF-8 编码守卫"（校验所有 `.md/.cs/.json` 为合法 UTF-8）；在此之前 OpenClaw 不得直接编辑本文件。

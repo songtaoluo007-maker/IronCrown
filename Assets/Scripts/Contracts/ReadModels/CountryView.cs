@@ -22,5 +22,6 @@ namespace IronCrown.Contracts
         public int manpower;
         public int equipmentStockpile;
         public Dictionary<string, int> resources;
+        public int constructionQueueCount;
     }
 }

@@ -12,6 +12,7 @@ namespace IronCrown.Contracts
         public int turn;
         public string phase;          // GamePhase.ToString()
         public int worldTension;
+        public string playerCountryId;
         public List<CountryView> countries;
     }
 }

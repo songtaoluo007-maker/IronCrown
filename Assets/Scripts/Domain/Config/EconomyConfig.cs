@@ -18,5 +18,10 @@ namespace IronCrown.Domain
         public int civilianFactoryUpkeep;
         public int militaryFactoryUpkeep;
         public int dockyardUpkeep;
+
+        // === 建造成本 ===
+        public int civilianFactoryBuildCost;
+        public int militaryFactoryBuildCost;
+        public int factoryBuildTurns;
     }
 }

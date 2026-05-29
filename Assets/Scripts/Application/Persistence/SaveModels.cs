@@ -16,6 +16,7 @@ namespace IronCrown.Application
         public ulong rngState;
         public string phase;
         public string saveTime;
+        public string playerCountryId;
         public CountrySaveData[] countries;
         public ProvinceSaveData[] provinces;
         public UnitSaveData[] units;
@@ -42,6 +43,7 @@ namespace IronCrown.Application
 
         // 资源库存
         public ResourceEntry[] resources;
+        public ConstructionOrderSaveData[] constructionQueue;
 
         public string[] activePolicies;
         public string[] completedTechs;
@@ -52,6 +54,13 @@ namespace IronCrown.Application
     {
         public string key;
         public int value;
+    }
+
+    [Serializable]
+    public class ConstructionOrderSaveData
+    {
+        public string factoryKind;
+        public int turnsRemaining;
     }
 
     [Serializable]

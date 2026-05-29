@@ -1,4 +1,4 @@
-/* MainHud.uss — 中性原创排版（不做美化，仅保证可用） */
+/* MainHud.uss — 中性原创排版 */
 
 .root {
     flex-grow: 1;
@@ -19,11 +19,37 @@
     padding: 4px 0;
 }
 
+.player-label {
+    font-size: 14px;
+    margin-right: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
 .advance-btn {
     width: 80px;
     height: 32px;
     font-size: 14px;
     margin-left: 12px;
+}
+
+/* 命令栏 */
+.command-bar {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.build-btn {
+    width: 100px;
+    height: 28px;
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+.status-label {
+    font-size: 12px;
+    color: rgba(255, 200, 50, 0.9);
+    flex-grow: 1;
 }
 
 /* 分隔线 */
@@ -43,4 +69,9 @@
     padding: 4px 0;
     border-bottom-width: 1px;
     border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.country-row-player {
+    -unity-font-style: bold;
+    color: rgba(100, 200, 255, 1);
 }

@@ -121,11 +121,12 @@ namespace IronCrown.Application.Tests
             var supply = new SupplyResolver();
             var ai = new AIResolver();
             var diplomacy = new DiplomacyResolver();
-            var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy);
+            var construction = new ConstructionResolver();
+            var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
 
-            var session = new GameSessionService(clock, config, initializer, turnResolver, saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, saveRepo, rng, builder, logger);
             return (session, saveRepo);
         }
 

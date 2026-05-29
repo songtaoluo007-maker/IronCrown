@@ -11,7 +11,10 @@
       "equipmentCapitalCost": 1,
       "civilianFactoryUpkeep": 2,
       "militaryFactoryUpkeep": 3,
-      "dockyardUpkeep": 4
+      "dockyardUpkeep": 4,
+      "civilianFactoryBuildCost": 30,
+      "militaryFactoryBuildCost": 40,
+      "factoryBuildTurns": 3
     }
   ]
 }

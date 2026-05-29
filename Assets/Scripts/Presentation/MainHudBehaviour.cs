@@ -18,10 +18,18 @@ namespace IronCrown.Presentation
         private MainHudController _controller;
         private UIDocument _doc;
 
+        /// <summary>暴露控制器供集成测试程序化触发（只读）</summary>
+        public MainHudController Controller => _controller;
+
         /// <summary>由 DI 容器或 EntryPoint 注入控制器</summary>
         public void SetController(MainHudController controller)
         {
             _controller = controller;
+            // 绑定时机修复：OnEnable 可能早于控制器注入而跳过 Bind。
+            // 控制器到位时若 UIDocument 已就绪，立即绑定渲染（此时世界已由 NewGame 建好）。
+            if (_doc == null) _doc = GetComponent<UIDocument>();
+            if (_controller != null && _doc != null)
+                _controller.Bind(_doc.rootVisualElement);
         }
 
         private void OnEnable()

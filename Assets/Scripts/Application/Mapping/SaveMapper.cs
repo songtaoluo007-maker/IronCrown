@@ -32,6 +32,11 @@ namespace IronCrown.Application
                     manpower = c.manpower,
                     totalManpower = c.totalManpower,
                     resources = c.resources.Select(r => new ResourceEntry { key = r.Key, value = r.Value }).ToArray(),
+                    constructionQueue = c.constructionQueue.Select(q => new ConstructionOrderSaveData
+                    {
+                        factoryKind = q.factoryKind,
+                        turnsRemaining = q.turnsRemaining
+                    }).ToArray(),
                     activePolicies = c.activePolicies.ToArray(),
                     completedTechs = c.completedTechs.ToArray()
                 }).ToArray(),
@@ -99,6 +104,9 @@ namespace IronCrown.Application
                     if (cd.resources != null)
                         foreach (var r in cd.resources)
                             c.resources[r.key] = r.value;
+                    if (cd.constructionQueue != null)
+                        foreach (var q in cd.constructionQueue)
+                            c.constructionQueue.Add(new ConstructionOrder { factoryKind = q.factoryKind, turnsRemaining = q.turnsRemaining });
                     if (cd.activePolicies != null)
                         foreach (var p in cd.activePolicies) c.activePolicies.Add(p);
                     if (cd.completedTechs != null)

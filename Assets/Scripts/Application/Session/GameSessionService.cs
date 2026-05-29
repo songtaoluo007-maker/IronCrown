@@ -16,6 +16,7 @@ namespace IronCrown.Application
         private readonly IConfigRegistry _config;
         private readonly WorldInitializer _initializer;
         private readonly TurnResolver _turnResolver;
+        private readonly ConstructionResolver _construction;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
         private readonly ReadModelBuilder _builder;
@@ -23,12 +24,16 @@ namespace IronCrown.Application
 
         private WorldState _world;
         private int _initialSeed = 12345;
+        private string _playerCountryId;
+
+        public string PlayerCountryId => _playerCountryId;
 
         public GameSessionService(
             ITurnClock clock,
             IConfigRegistry config,
             WorldInitializer initializer,
             TurnResolver turnResolver,
+            ConstructionResolver construction,
             ISaveRepository save,
             IRandom rng,
             ReadModelBuilder builder,
@@ -38,13 +43,14 @@ namespace IronCrown.Application
             _config = config;
             _initializer = initializer;
             _turnResolver = turnResolver;
+            _construction = construction;
             _save = save;
             _rng = rng;
             _builder = builder;
             _logger = logger;
         }
 
-        public void NewGame(int? seed = null)
+        public void NewGame(int? seed = null, string playerCountryId = null)
         {
             if (seed.HasValue)
                 _initialSeed = seed.Value;
@@ -54,7 +60,61 @@ namespace IronCrown.Application
             _clock.Reset(60);
             _world = _initializer.CreateNewGame(_config);
 
-            _logger.Info($"[Session] New game: {_world.countries.Count} countries, {_world.provinces.Count} provinces");
+            // 选国：默认取按 id 升序第一个
+            _playerCountryId = playerCountryId;
+            if (string.IsNullOrEmpty(_playerCountryId) && _world.countries.Count > 0)
+            {
+                string minId = null;
+                foreach (var id in _world.countries.Keys)
+                {
+                    if (minId == null || string.Compare(id, minId, StringComparison.Ordinal) < 0)
+                        minId = id;
+                }
+                _playerCountryId = minId;
+            }
+
+            _logger.Info($"[Session] New game: {_world.countries.Count} countries, player={_playerCountryId}");
+        }
+
+        public void SetPlayerCountry(string countryId)
+        {
+            if (_world != null && _world.countries.ContainsKey(countryId))
+                _playerCountryId = countryId;
+        }
+
+        public CommandResult IssueCommand(GameCommand cmd)
+        {
+            if (_world == null) return CommandResult.Reject("no world");
+            if (string.IsNullOrEmpty(_playerCountryId)) return CommandResult.Reject("no player country");
+            if (cmd.countryId != _playerCountryId) return CommandResult.Reject("非玩家国");
+
+            if (!_world.countries.TryGetValue(cmd.countryId, out var country))
+                return CommandResult.Reject("国家不存在");
+
+            var eco = _config.Get<EconomyConfig>("global");
+            if (eco == null) return CommandResult.Reject("经济配置未加载");
+
+            switch (cmd.commandType)
+            {
+                case CommandType.BuildCivilianFactory:
+                    if (country.GetResource("capital") < eco.civilianFactoryBuildCost)
+                        return CommandResult.Reject("资本不足");
+                    country.ModifyResource("capital", -eco.civilianFactoryBuildCost);
+                    _construction.EnqueueBuild(country, "civilian", eco);
+                    _logger.Info($"[Session] {cmd.countryId} 开始建造民用厂");
+                    return CommandResult.Accept();
+
+                case CommandType.BuildMilitaryFactory:
+                    if (country.GetResource("capital") < eco.militaryFactoryBuildCost)
+                        return CommandResult.Reject("资本不足");
+                    country.ModifyResource("capital", -eco.militaryFactoryBuildCost);
+                    _construction.EnqueueBuild(country, "military", eco);
+                    _logger.Info($"[Session] {cmd.countryId} 开始建造军用厂");
+                    return CommandResult.Accept();
+
+                default:
+                    return CommandResult.Reject("未知命令");
+            }
         }
 
         public void AdvancePhase()
@@ -80,6 +140,7 @@ namespace IronCrown.Application
         {
             if (_world == null) return false;
             var gameState = SaveMapper.ToSave(_world, _initialSeed, _rng.State, _clock.CurrentPhase);
+            gameState.playerCountryId = _playerCountryId;
             _save.Save(slot, gameState);
             return true;
         }
@@ -91,19 +152,20 @@ namespace IronCrown.Application
 
             _world = SaveMapper.ToRuntime(gameState);
             _initialSeed = gameState.seed;
+            _playerCountryId = gameState.playerCountryId;
             _rng.Reset(gameState.seed);
             _rng.RestoreState(gameState.rngState);
             var phase = Enum.Parse<GamePhase>(gameState.phase);
             _clock.Restore(gameState.turnNumber, phase);
 
-            _logger.Info($"[Session] Loaded save, turn {gameState.turnNumber}, phase {gameState.phase}");
+            _logger.Info($"[Session] Loaded save, turn {gameState.turnNumber}, player={_playerCountryId}");
             return true;
         }
 
         public WorldView GetWorldView()
         {
             if (_world == null) return null;
-            return _builder.BuildWorldView(_world, _clock);
+            return _builder.BuildWorldView(_world, _clock, _playerCountryId);
         }
     }
 }

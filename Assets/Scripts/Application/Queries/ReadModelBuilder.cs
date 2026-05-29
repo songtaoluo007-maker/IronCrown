@@ -12,7 +12,7 @@ namespace IronCrown.Application
 {
     public sealed class ReadModelBuilder
     {
-        public WorldView BuildWorldView(WorldState world, ITurnClock clock)
+        public WorldView BuildWorldView(WorldState world, ITurnClock clock, string playerCountryId = null)
         {
             var countries = world.countries.Values
                 .OrderBy(c => c.id, System.StringComparer.Ordinal)
@@ -24,6 +24,7 @@ namespace IronCrown.Application
                 turn = clock.CurrentTurn,
                 phase = clock.CurrentPhase.ToString(),
                 worldTension = world.worldTension,
+                playerCountryId = playerCountryId,
                 countries = countries
             };
         }
@@ -44,7 +45,8 @@ namespace IronCrown.Application
                 dockyards = c.dockyards,
                 manpower = c.manpower,
                 equipmentStockpile = c.equipmentStockpile,
-                resources = new Dictionary<string, int>(c.resources)
+                resources = new Dictionary<string, int>(c.resources),
+                constructionQueueCount = c.constructionQueue.Count
             };
         }
     }

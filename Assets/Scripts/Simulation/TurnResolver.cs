@@ -19,6 +19,7 @@ namespace IronCrown.Simulation
         private readonly SupplyResolver _supply;
         private readonly AIResolver _ai;
         private readonly DiplomacyResolver _diplomacy;
+        private readonly ConstructionResolver _construction;
 
         public TurnResolver(
             ITurnClock clock,
@@ -28,7 +29,8 @@ namespace IronCrown.Simulation
             BattleResolver battle,
             SupplyResolver supply,
             AIResolver ai,
-            DiplomacyResolver diplomacy)
+            DiplomacyResolver diplomacy,
+            ConstructionResolver construction)
         {
             _clock = clock;
             _events = events;
@@ -38,6 +40,7 @@ namespace IronCrown.Simulation
             _supply = supply;
             _ai = ai;
             _diplomacy = diplomacy;
+            _construction = construction;
         }
 
         public void ExecuteTurn(WorldState world)
@@ -81,6 +84,7 @@ namespace IronCrown.Simulation
             foreach (var country in world.countries.Values.OrderBy(c => c.id, System.StringComparer.Ordinal))
             {
                 _economy.ResolveEconomy(country, world);
+                _construction.ResolveConstruction(country);
             }
         }
     }
