@@ -42,6 +42,9 @@ namespace IronCrown.Domain
         // === 资源库存 ===
         public Dictionary<string, int> resources = new();
 
+        // === 装备库存 ===
+        public int equipmentStockpile;
+
         // === 人力 ===
         public int manpower;           // 可用人力
         public int totalManpower;      // 总人力

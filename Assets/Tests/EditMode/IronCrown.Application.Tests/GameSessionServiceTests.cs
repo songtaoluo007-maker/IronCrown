@@ -48,7 +48,7 @@ namespace IronCrown.Application.Tests
             var config = new ConfigRegistry(new StubConfigRepository());
             var rng = new RandomService(42);
             var initializer = new WorldInitializer(logger);
-            var economy = new EconomyResolver();
+            var economy = new EconomyResolver(config, new EventBus());
             var politics = new PoliticsResolver();
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();

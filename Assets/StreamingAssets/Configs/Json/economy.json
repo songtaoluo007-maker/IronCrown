@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "global",
+      "_note": "Claude 初版经济数值（规则14：人类保留最终调整权）。1 回合=1 月。",
+      "provinceBaseOutputPerResource": 4,
+      "provinceInfraOutputBonus": 2,
+      "militaryFactoryEquipmentOutput": 4,
+      "equipmentSteelCost": 2,
+      "equipmentCapitalCost": 1,
+      "civilianFactoryUpkeep": 2,
+      "militaryFactoryUpkeep": 3,
+      "dockyardUpkeep": 4
+    }
+  ]
+}

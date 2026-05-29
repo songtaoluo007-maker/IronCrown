@@ -3,7 +3,8 @@
   "rootNamespace": "IronCrown.Simulation.Tests",
   "references": [
     "IronCrown.Domain",
-    "IronCrown.Simulation"
+    "IronCrown.Simulation",
+    "IronCrown.Contracts"
   ],
   "includePlatforms": [
     "Editor"

@@ -20,6 +20,7 @@ namespace IronCrown.Contracts
         public int militaryFactories;
         public int dockyards;
         public int manpower;
+        public int equipmentStockpile;
         public Dictionary<string, int> resources;
     }
 }

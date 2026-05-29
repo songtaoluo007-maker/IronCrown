@@ -28,6 +28,7 @@ namespace IronCrown.Application
         public int treasury;
         public int stability;
         public int warSupport;
+        public int equipmentStockpile;
         public string[] activePolicies;
         public string[] completedTechs;
     }

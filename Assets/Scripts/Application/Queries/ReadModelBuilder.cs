@@ -43,6 +43,7 @@ namespace IronCrown.Application
                 militaryFactories = c.militaryFactories,
                 dockyards = c.dockyards,
                 manpower = c.manpower,
+                equipmentStockpile = c.equipmentStockpile,
                 resources = new Dictionary<string, int>(c.resources)
             };
         }

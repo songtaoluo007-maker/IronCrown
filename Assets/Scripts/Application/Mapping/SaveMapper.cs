@@ -24,6 +24,7 @@ namespace IronCrown.Application
                     treasury = c.treasury,
                     stability = c.stability,
                     warSupport = c.warSupport,
+                    equipmentStockpile = c.equipmentStockpile,
                     activePolicies = c.activePolicies.ToArray(),
                     completedTechs = c.completedTechs.ToArray()
                 }).ToArray(),
@@ -66,7 +67,8 @@ namespace IronCrown.Application
                         id = cd.id,
                         treasury = cd.treasury,
                         stability = cd.stability,
-                        warSupport = cd.warSupport
+                        warSupport = cd.warSupport,
+                        equipmentStockpile = cd.equipmentStockpile
                     };
                     if (cd.activePolicies != null)
                         foreach (var p in cd.activePolicies) c.activePolicies.Add(p);

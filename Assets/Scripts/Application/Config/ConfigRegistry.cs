@@ -28,6 +28,7 @@ namespace IronCrown.Application
             LoadTable<UnitConfig>("units");
             LoadTable<CountryConfig>("countries");
             LoadTable<ProvinceConfig>("provinces");
+            LoadTable<EconomyConfig>("economy");
         }
 
         public T Get<T>(string id) where T : class

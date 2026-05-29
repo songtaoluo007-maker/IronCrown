@@ -41,6 +41,7 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(c.manpower));
                 bytes.AddRange(System.BitConverter.GetBytes(c.civilianFactories));
                 bytes.AddRange(System.BitConverter.GetBytes(c.militaryFactories));
+                bytes.AddRange(System.BitConverter.GetBytes(c.equipmentStockpile));
             }
 
             foreach (var p in world.provinces.Values.OrderBy(x => x.id))
@@ -114,7 +115,7 @@ namespace IronCrown.Application.Tests
             var config = new ConfigRegistry(new StubConfigRepository());
             var rng = new RandomService(seed);
             var initializer = new WorldInitializer(logger);
-            var economy = new EconomyResolver();
+            var economy = new EconomyResolver(config, new EventBus());
             var politics = new PoliticsResolver();
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();

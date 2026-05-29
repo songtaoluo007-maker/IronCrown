@@ -27,6 +27,7 @@ namespace IronCrown.Config.Validation.Tests
         private List<UnitConfig> _units;
         private List<CountryConfig> _countries;
         private List<ProvinceConfig> _provinces;
+        private List<EconomyConfig> _economy;
 
         [OneTimeSetUp]
         public void LoadAll()
@@ -35,6 +36,7 @@ namespace IronCrown.Config.Validation.Tests
             _units = LoadConfig<UnitConfig>("units");
             _countries = LoadConfig<CountryConfig>("countries");
             _provinces = LoadConfig<ProvinceConfig>("provinces");
+            _economy = LoadConfig<EconomyConfig>("economy");
         }
 
         // ========== P5.1 — schemaVersion == 1, items 非空 ==========
@@ -173,6 +175,33 @@ namespace IronCrown.Config.Validation.Tests
                 Assert.That(c.treasury, Is.GreaterThanOrEqualTo(0), $"{c.id} treasury < 0");
                 Assert.That(c.manpower, Is.GreaterThanOrEqualTo(0), $"{c.id} manpower < 0");
                 Assert.That(c.totalManpower, Is.GreaterThanOrEqualTo(0), $"{c.id} totalManpower < 0");
+            }
+        }
+
+        // ========== T5 — economy.json 校验 ==========
+
+        [Test] public void Economy_HasItems() => Assert.IsTrue(_economy.Count > 0, "economy.json items 为空");
+        [Test] public void Economy_UniqueIds() => AssertUniqueIds(_economy.Select(e => e.id), "economy");
+
+        [Test]
+        public void Economy_HasGlobalEntry()
+        {
+            Assert.IsTrue(_economy.Any(e => e.id == "global"), "economy.json 缺少 id=\"global\" 条目");
+        }
+
+        [Test]
+        public void Economy_ConstantsNonNegative()
+        {
+            foreach (var e in _economy)
+            {
+                Assert.That(e.provinceBaseOutputPerResource, Is.GreaterThanOrEqualTo(0), $"{e.id} provinceBaseOutputPerResource < 0");
+                Assert.That(e.provinceInfraOutputBonus, Is.GreaterThanOrEqualTo(0), $"{e.id} provinceInfraOutputBonus < 0");
+                Assert.That(e.militaryFactoryEquipmentOutput, Is.GreaterThanOrEqualTo(0), $"{e.id} militaryFactoryEquipmentOutput < 0");
+                Assert.That(e.equipmentSteelCost, Is.GreaterThanOrEqualTo(0), $"{e.id} equipmentSteelCost < 0");
+                Assert.That(e.equipmentCapitalCost, Is.GreaterThanOrEqualTo(0), $"{e.id} equipmentCapitalCost < 0");
+                Assert.That(e.civilianFactoryUpkeep, Is.GreaterThanOrEqualTo(0), $"{e.id} civilianFactoryUpkeep < 0");
+                Assert.That(e.militaryFactoryUpkeep, Is.GreaterThanOrEqualTo(0), $"{e.id} militaryFactoryUpkeep < 0");
+                Assert.That(e.dockyardUpkeep, Is.GreaterThanOrEqualTo(0), $"{e.id} dockyardUpkeep < 0");
             }
         }
 
