@@ -42,7 +42,7 @@ namespace IronCrown.Simulation.Tests
         {
             var config = CreateConfig();
             var construction = new ConstructionResolver();
-            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
+            var ai = new AIResolver(config, construction, new BattleResolver(new RandomService(42), new EventBus()));
 
             var country = new CountryState
             {
@@ -68,7 +68,7 @@ namespace IronCrown.Simulation.Tests
         {
             var config = CreateConfig();
             var construction = new ConstructionResolver();
-            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
+            var ai = new AIResolver(config, construction, new BattleResolver(new RandomService(42), new EventBus()));
 
             var country = new CountryState
             {
@@ -91,7 +91,7 @@ namespace IronCrown.Simulation.Tests
         {
             var config = CreateConfig();
             var construction = new ConstructionResolver();
-            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
+            var ai = new AIResolver(config, construction, new BattleResolver(new RandomService(42), new EventBus()));
 
             var country = new CountryState
             {
@@ -115,7 +115,7 @@ namespace IronCrown.Simulation.Tests
         {
             var config = CreateConfig();
             var construction = new ConstructionResolver();
-            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
+            var ai = new AIResolver(config, construction, new BattleResolver(new RandomService(42), new EventBus()));
 
             var country = new CountryState
             {
