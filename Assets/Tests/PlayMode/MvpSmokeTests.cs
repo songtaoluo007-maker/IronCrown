@@ -10,12 +10,20 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 using IronCrown.Presentation;
+using IronCrown.Bootstrap;
 
 namespace IronCrown.PlayMode.Tests
 {
     public class MvpSmokeTests
     {
         // PlayMode 测试需异步加载场景并等待完成，再等若干帧让 VContainer DI + EntryPoint 执行
+
+        private static void ClickButton(VisualElement root, string name)
+        {
+            var btn = root.Q<Button>(name);
+            if (btn != null)
+                btn.SendEvent(new ClickEvent());
+        }
         private static IEnumerator LoadMainScene()
         {
             var op = SceneManager.LoadSceneAsync("Main", LoadSceneMode.Single);
@@ -174,9 +182,9 @@ namespace IronCrown.PlayMode.Tests
             SceneManager.LoadScene("Main");
             yield return null; yield return null;
 
-            var root = FindRoot();
-            var hud = new MainHudController();
-            hud.Bind(root);
+            var uiDoc = Object.FindObjectOfType<UIDocument>();
+            Assert.IsNotNull(uiDoc, "UIDocument 必须存在");
+            var root = uiDoc.rootVisualElement;
 
             var entry = Object.FindObjectOfType<GameEntryPoint>();
             Assert.IsNotNull(entry, "GameEntryPoint 必须存在");
@@ -194,7 +202,7 @@ namespace IronCrown.PlayMode.Tests
             ClickButton(root, "advance-btn"); yield return null;
             ClickButton(root, "advance-btn"); yield return null; // 完整第 2 回合
 
-            var mapArea = uiDoc.rootVisualElement.Q<VisualElement>("map-area");
+            var mapArea = root.Q<VisualElement>("map-area");
             Assert.IsNotNull(mapArea, "map-area 必须存在");
 
             // 找到有 garrison 的 tile（首都）
