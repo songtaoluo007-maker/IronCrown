@@ -2,7 +2,7 @@
 
 > **用途**:这是**给未来任何会话(Claude 新开窗口、换人、OpenClaw)的恢复点**。读完本文件 + `CHANGELOG.md` 即可无损重建项目全局,不依赖任何一轮对话的上下文。
 > **维护约定**:每个工作单**审查通过后**,更新本文件 §2(当前状态)与 §3(进度);决策变更更新 §4。本文件是浓缩快照+索引;完整流水账在 `CHANGELOG.md`,每阶段细节在 `WorkOrders/`。
-> 最后更新:2026-05-30(C3 实现完成)。
+> 最后更新:2026-05-30(C4 实现完成)。
 
 ---
 
@@ -18,9 +18,9 @@
 分工:**Claude=架构设计+逐单审查**;**OpenClaw(DeepSeek V4-Pro)=实现+测试**;**人类=数值/体验/产品方向终审(规则 14)**。
 
 ## 2. 当前状态(最新)
-- **已达成**:MVP 垂直切片 ✅ + B 阶段(可玩性)✅ + C1 军事地基 ✅ + C2a 造兵 ✅ + C2b 移动 ✅ + **C3 战斗与占领** ✅。完整循环:选国→建厂/调税→造兵→移动→攻击→多回合战斗→占领→存读档。分支 `feature/c3-battle-occupation`(4 commits, 30 files, +1198/-72)。
-- **进行中**:**C3 已实现待审查**。BattleResolver.InitiateAttack(7步验证) + TickBattles(1v1 tick + 占领) + DestroyUnit；GameSessionService MoveUnit 分流(友好→MovementResolver, 敌方→BattleResolver) + 战斗锁定；ReadModelBuilder controllerCountry 取色 + 新字段；SaveMapper activeBattles 双向持久化；USS 战斗样式。20 新测试。
-- **下一步**:C3 审查通过 → 合入 main → 更新 PROJECT_STATE/CHANGELOG(C1~C3 收口) → C4(战争状态+胜负+军事 AI)。
+- **已达成**:MVP 垂直切片 ✅ + B 阶段(可玩性)✅ + C1 军事地基 ✅ + C2a 造兵 ✅ + C2b 移动 ✅ + C3 战斗与占领 ✅ + **C4 战争状态+胜负+军事 AI** ✅。完整循环:选国→建厂/调税→造兵→移动→攻击→多回合战斗→占领→**AI 主动进攻→宣战→胜负判定**。分支 `feature/c4-warfare-victory`(1 commit, 28 files, +1342/-103)。
+- **进行中**:**C4 已实现待审查**。WarRegistry 双边战争关系(Ordinal升序唯一键)；BattleResolver.InitiateAttack 自动宣战(含空城进驻)；AIResolver.TryAttack(整数战力比 120%)；VictoryConditionResolver(玩家首都被占→Defeat，全敌首都被占→Victory)；GameOverEvent→GameClock.SetGameOver()；UI GameOver 状态+推进按钮禁用。18 新测试。
+- **下一步**:C4 审查通过 → 合入 main → 更新 PROJECT_STATE/CHANGELOG → C5(外交/科技/更多国家)。
 
 ## 3. 进度时间线(浓缩,细节见 CHANGELOG)
 | 阶段 | 内容 | 状态 |
@@ -42,7 +42,7 @@
 | C2a | 造兵(infantry/首都/2 回合/UnitConfig.cost+manpower) | ✅ |
 | C2b | 单步邻接移动(movesLeft/友好省移动/选中部队) | ✅ |
 | C3 | 战斗与占领(ActiveBattle/TickBattles/占领/清场/战斗锁定) | ✅ 待审查 |
-| C4 | 战争状态+胜负+军事 AI | ⏳ 规划中 |
+| C4 | 战争状态+胜负+军事 AI(WarRelation/WarRegistry/VictoryConditionResolver/AI攻击) | ✅ 待审查 |
 
 ## 4. 锁定的关键决策(人类批准,勿无故重提)
 - **确定性**:Simulation 整数优先 + **SplitMix64** 自定义种子 PRNG;`float` 仅表现层;遍历按 id 升序;随机走注入的 `IRandom`。
