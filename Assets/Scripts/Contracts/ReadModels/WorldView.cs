@@ -19,5 +19,8 @@ namespace IronCrown.Contracts
         public List<ProvinceView> provinces;
         public List<UnitView> units;
         public List<ActiveBattleView> activeBattles;
+        public List<WarRelationView> warRelations;
+        public string gameOverResult;
+        public string gameOverWinnerCountryId;
     }
 }

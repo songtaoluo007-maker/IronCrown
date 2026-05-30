@@ -108,6 +108,16 @@ namespace IronCrown.Presentation
                 ShowStatus($"旗 进驻 {e.provinceId}（无抵抗）");
                 Render();
             });
+            _events.Subscribe<GameOverEvent>(e =>
+            {
+                if (e.result == "Victory")
+                    ShowStatus("🎉 胜利！占领所有敌方首都");
+                else
+                    ShowStatus("💀 失败！首都已失守");
+                if (_advanceBtn != null) _advanceBtn.SetEnabled(false);
+                if (_statusLabel != null) _statusLabel.AddToClassList("status-game-over");
+                Render();
+            });
 
             Render();
         }
@@ -355,7 +365,10 @@ namespace IronCrown.Presentation
             foreach (var c in vm.countries)
             {
                 bool isPlayer = c.id == vm.playerCountryId;
-                var row = new Label(FormatCountryRow(c, isPlayer));
+                bool isAtWar = vm.warRelations != null && vm.warRelations.Exists(w =>
+                    (w.countryA == vm.playerCountryId && w.countryB == c.id) ||
+                    (w.countryB == vm.playerCountryId && w.countryA == c.id));
+                var row = new Label(FormatCountryRow(c, isPlayer, isAtWar));
                 row.AddToClassList("country-row");
                 row.focusable = true;
                 row.pickingMode = PickingMode.Position;
@@ -525,7 +538,7 @@ namespace IronCrown.Presentation
             return $"回合 {w.turn} · {w.phase}";
         }
 
-        public static string FormatCountryRow(CountryView c, bool isPlayer = false)
+        public static string FormatCountryRow(CountryView c, bool isPlayer = false, bool isAtWar = false)
         {
             var sb = new StringBuilder();
             if (isPlayer) sb.Append("★ ");
@@ -536,6 +549,9 @@ namespace IronCrown.Presentation
             sb.Append(c.stability);
             sb.Append("  |  装备: ");
             sb.Append(c.equipmentStockpile);
+
+            if (isAtWar)
+                sb.Append("  |  ⚔ 交战中");
 
             if (c.constructionQueueCount > 0)
             {

@@ -37,5 +37,9 @@ namespace IronCrown.Domain
         public int aiBuildCapitalThreshold;
         public int aiMaxCivilianFactories;
         public int aiMaxMilitaryFactories;
+
+        // === AI 军事 ===
+        public int aiAttackPowerRatio;      // 百分比，120 = 攻方需 120% 守方才进攻
+        public int aiMaxAttacksPerTurn;     // 每国每回合最多进攻次数
     }
 }

@@ -1,6 +1,6 @@
 // ============================================================================
-// SaveLoadEquivalenceTests.cs — T5 存档续跑等价测试
-// 验证：跑2回合 → 存 → 读 → 再跑2回合 == 直接跑4回合
+// SaveLoadEquivalenceTests.cs �?T5 存档续跑等价测试
+// 验证：跑2回合 �?�?�?�?�?再跑2回合 == 直接�?回合
 // ============================================================================
 
 using NUnit.Framework;
@@ -92,7 +92,7 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.id));
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.ownerCountry ?? ""));
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.controllerCountry ?? ""));
-                // 静态字段
+                // 静态字�?
                 if (p.neighbors != null)
                 {
                     foreach (var n in p.neighbors)
@@ -150,7 +150,7 @@ namespace IronCrown.Application.Tests
             return config;
         }
 
-        /// <summary>构建含真实省份的小世界</summary>
+        /// <summary>构建含真实省份的小世�?/summary>
         private WorldState BuildWorldWithProvinces()
         {
             var world = new WorldState { worldTension = 10, turnNumber = 1 };
@@ -179,7 +179,7 @@ namespace IronCrown.Application.Tests
             world.countries["republic_west"] = new CountryState
             {
                 id = "republic_west",
-                name = "西境共和国",
+                name = "西境共和�?,
                 ideology = Ideology.FreeRepublic,
                 treasury = 300,
                 stability = 60,
@@ -214,7 +214,7 @@ namespace IronCrown.Application.Tests
             world.provinces["liberty_port"] = new ProvinceState
             {
                 id = "liberty_port",
-                name = "自由港",
+                name = "自由�?,
                 terrain = TerrainType.Coastline,
                 ownerCountry = "republic_west",
                 controllerCountry = "republic_west",
@@ -254,7 +254,7 @@ namespace IronCrown.Application.Tests
             return world;
         }
 
-        /// <summary>手动跑 N 个完整回合（直接驱动 TurnResolver）</summary>
+        /// <summary>手动�?N 个完整回合（直接驱动 TurnResolver�?/summary>
         private void RunTurns(TurnResolver turnResolver, GameClock clock, WorldState world, int turns)
         {
             for (int t = 0; t < turns; t++)
@@ -272,7 +272,7 @@ namespace IronCrown.Application.Tests
             var config = CreateRealConfig();
             var events = new EventBus();
 
-            // === Path A: 跑 2 回合 → 存 → 读 → 再跑 2 回合 ===
+            // === Path A: �?2 回合 �?�?�?�?�?再跑 2 回合 ===
             var worldA = BuildWorldWithProvinces();
             var clockA = new GameClock(events);
             var rngA = new RandomService(12345);
@@ -281,7 +281,7 @@ namespace IronCrown.Application.Tests
             var battleA = new BattleResolver(rngA, events);
             var supplyA = new SupplyResolver();
             var constructionA = new ConstructionResolver();
-            var aiA = new AIResolver(config, constructionA);
+            var aiA = new AIResolver(config, constructionA, new BattleResolver(rngA, events));
             var diplomacyA = new DiplomacyResolver();
             var turnA = new TurnResolver(clockA, events, economyA, politicsA, battleA, supplyA, aiA, diplomacyA, constructionA);
 
@@ -306,13 +306,13 @@ namespace IronCrown.Application.Tests
             var battleB = new BattleResolver(rngB, eventsB);
             var supplyB = new SupplyResolver();
             var constructionB = new ConstructionResolver();
-            var aiB = new AIResolver(config, constructionB);
+            var aiB = new AIResolver(config, constructionB, new BattleResolver(rngB, eventsB));
             var diplomacyB = new DiplomacyResolver();
             var turnB = new TurnResolver(clockB, eventsB, economyB, politicsB, battleB, supplyB, aiB, diplomacyB, constructionB);
 
             RunTurns(turnB, clockB, worldB, 2);
 
-            // === Path C: 直接跑 4 回合 ===
+            // === Path C: 直接�?4 回合 ===
             var worldC = BuildWorldWithProvinces();
             var eventsC = new EventBus();
             var clockC = new GameClock(eventsC);
@@ -322,29 +322,29 @@ namespace IronCrown.Application.Tests
             var battleC = new BattleResolver(rngC, eventsC);
             var supplyC = new SupplyResolver();
             var constructionC = new ConstructionResolver();
-            var aiC = new AIResolver(config, constructionC);
+            var aiC = new AIResolver(config, constructionC, new BattleResolver(rngC, eventsC));
             var diplomacyC = new DiplomacyResolver();
             var turnC = new TurnResolver(clockC, eventsC, economyC, politicsC, battleC, supplyC, aiC, diplomacyC, constructionC);
 
             RunTurns(turnC, clockC, worldC, 4);
 
-            // 比较世界状态哈希
+            // 比较世界状态哈�?
             var hashB = HashWorld(worldB);
             var hashC = HashWorld(worldC);
             Assert.AreEqual(hashC, hashB,
-                "跑2→存→读→再跑2 应等于 直接跑4 的世界状态");
+                "�?→存→读→再�? 应等�?直接�? 的世界状�?);
 
-            // 逐字段验证关键指标
+            // 逐字段验证关键指�?
             foreach (var id in worldC.countries.Keys)
             {
                 var cC = worldC.countries[id];
                 var cB = worldB.countries[id];
-                Assert.AreEqual(cC.treasury, cB.treasury, $"{id} treasury 不一致");
-                Assert.AreEqual(cC.stability, cB.stability, $"{id} stability 不一致");
-                Assert.AreEqual(cC.equipmentStockpile, cB.equipmentStockpile, $"{id} equipmentStockpile 不一致");
+                Assert.AreEqual(cC.treasury, cB.treasury, $"{id} treasury 不一�?);
+                Assert.AreEqual(cC.stability, cB.stability, $"{id} stability 不一�?);
+                Assert.AreEqual(cC.equipmentStockpile, cB.equipmentStockpile, $"{id} equipmentStockpile 不一�?);
                 foreach (var kv in cC.resources)
                 {
-                    Assert.AreEqual(kv.Value, cB.resources[kv.Key], $"{id} resource {kv.Key} 不一致");
+                    Assert.AreEqual(kv.Value, cB.resources[kv.Key], $"{id} resource {kv.Key} 不一�?);
                 }
             }
         }
@@ -362,7 +362,7 @@ namespace IronCrown.Application.Tests
             var battleA = new BattleResolver(rngA, eventsA);
             var supplyA = new SupplyResolver();
             var constructionA = new ConstructionResolver();
-            var aiA = new AIResolver(config, constructionA);
+            var aiA = new AIResolver(config, constructionA, new BattleResolver(rngA, eventsA));
             var diploA = new DiplomacyResolver();
             var clockA = new GameClock(eventsA);
             var turnA = new TurnResolver(clockA, eventsA, economyA, politicsA, battleA, supplyA, aiA, diploA, constructionA);
@@ -375,12 +375,12 @@ namespace IronCrown.Application.Tests
             var battleB = new BattleResolver(rngB, eventsB);
             var supplyB = new SupplyResolver();
             var constructionB = new ConstructionResolver();
-            var aiB = new AIResolver(config, constructionB);
+            var aiB = new AIResolver(config, constructionB, new BattleResolver(rngB, eventsB));
             var diploB = new DiplomacyResolver();
             var clockB = new GameClock(eventsB);
             var turnB = new TurnResolver(clockB, eventsB, economyB, politicsB, battleB, supplyB, aiB, diploB, constructionB);
 
-            // 跑 3 回合
+            // �?3 回合
             for (int i = 0; i < 3; i++)
             {
                 turnA.ExecuteTurn(worldA);
@@ -388,7 +388,7 @@ namespace IronCrown.Application.Tests
             }
 
             Assert.AreEqual(HashWorld(worldA), HashWorld(worldB),
-                "同种子 + 同操作 = 同世界（确定性）");
+                "同种�?+ 同操�?= 同世界（确定性）");
         }
 
         [Test]
@@ -405,29 +405,29 @@ namespace IronCrown.Application.Tests
             var battle = new BattleResolver(rng, events);
             var supply = new SupplyResolver();
             var construction = new ConstructionResolver();
-            var ai = new AIResolver(config, construction);
+            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
             var diplo = new DiplomacyResolver();
             var turn = new TurnResolver(clock, events, economy, politics, battle, supply, ai, diplo, construction);
 
-            // 改档位
+            // 改档�?
             world.countries["empire_north"].taxLevel = 2;    // 高税
             world.countries["empire_north"].civilLevel = 0;  // 紧缩
 
-            // 跑 1 回合
+            // �?1 回合
             turn.ExecuteTurn(world);
             for (int p = 0; p < 5; p++) clock.AdvancePhase();
 
-            // 存
+            // �?
             var saveData = SaveMapper.ToSave(world, 12345, rng.State, clock.CurrentPhase);
 
-            // 读
+            // �?
             var loaded = SaveMapper.ToRuntime(saveData);
 
             // 验证档位保留
-            Assert.AreEqual(2, loaded.countries["empire_north"].taxLevel, "taxLevel 应保留");
-            Assert.AreEqual(0, loaded.countries["empire_north"].civilLevel, "civilLevel 应保留");
+            Assert.AreEqual(2, loaded.countries["empire_north"].taxLevel, "taxLevel 应保�?);
+            Assert.AreEqual(0, loaded.countries["empire_north"].civilLevel, "civilLevel 应保�?);
 
-            // 续跑 1 回合 → 等价
+            // 续跑 1 回合 �?等价
             var rngL = new RandomService(12345);
             rngL.RestoreState(saveData.rngState);
             var clockL = new GameClock(events);
@@ -437,7 +437,7 @@ namespace IronCrown.Application.Tests
             var battleL = new BattleResolver(rngL, events);
             var supplyL = new SupplyResolver();
             var constructionL = new ConstructionResolver();
-            var aiL = new AIResolver(config, constructionL);
+            var aiL = new AIResolver(config, constructionL, new BattleResolver(rngL, events));
             var diploL = new DiplomacyResolver();
             var turnL = new TurnResolver(clockL, events, economyL, politicsL, battleL, supplyL, aiL, diploL, constructionL);
 
@@ -445,13 +445,13 @@ namespace IronCrown.Application.Tests
             turnL.ExecuteTurn(loaded);
 
             Assert.AreEqual(HashWorld(world), HashWorld(loaded),
-                "改档→存→读→续跑 应等价");
+                "改档→存→读→续�?应等�?);
         }
 
         [Test]
         public void SaveLoad_Units_PreservedAcrossSave()
         {
-            // 1 支已损耗 infantry 存→读→hash 等价
+            // 1 支已损�?infantry 存→读→hash 等价
             var world = BuildWorldWithProvinces();
             var unit = world.units["empire_north_inf_1"];
             unit.manpower = 80;
@@ -462,7 +462,7 @@ namespace IronCrown.Application.Tests
             var loaded = SaveMapper.ToRuntime(saveData);
 
             Assert.AreEqual(HashWorld(world), HashWorld(loaded),
-                "已损耗部队存→读 应 hash 等价");
+                "已损耗部队存→读 �?hash 等价");
             Assert.AreEqual(80, loaded.units["empire_north_inf_1"].manpower);
             Assert.AreEqual(30, loaded.units["empire_north_inf_1"].organization);
             Assert.AreEqual(1, loaded.units["empire_north_inf_1"].movesLeft);
@@ -471,7 +471,7 @@ namespace IronCrown.Application.Tests
         [Test]
         public void SaveLoad_UnitProductionQueue_Preserved()
         {
-            // 下单 → 1 回合 → 存（turnsRemaining=1）→ 读 → 再跑 1 回合 → 完工
+            // 下单 �?1 回合 �?存（turnsRemaining=1）→ �?�?再跑 1 回合 �?完工
             var config = new TestConfigRegistry();
             config.Register("global", new EconomyConfig
             {
@@ -488,7 +488,7 @@ namespace IronCrown.Application.Tests
             });
             config.Register("infantry", new UnitConfig
             {
-                id = "infantry", name = "步兵师",
+                id = "infantry", name = "步兵�?,
                 attack = 10, defense = 15, breakthrough = 5,
                 speed = 3, hp = 100, organization = 60,
                 armor = 0, piercing = 5, supplyConsumption = 10,
@@ -496,7 +496,7 @@ namespace IronCrown.Application.Tests
             });
 
             var world = BuildWorldWithProvinces();
-            // empire_north 有 steel=50, capital=100，够造 1 支步兵
+            // empire_north �?steel=50, capital=100，够�?1 支步�?
             var unitProd = new UnitProductionResolver();
             var eco = config.Get<EconomyConfig>("global");
 
@@ -504,17 +504,17 @@ namespace IronCrown.Application.Tests
             var result = unitProd.TryEnqueue(world.countries["empire_north"], "infantry", config, eco);
             Assert.IsTrue(result.accepted);
 
-            // 跑 1 回合
+            // �?1 回合
             unitProd.ResolveProduction(world, config);
 
-            // 存（turnsRemaining=1）
+            // 存（turnsRemaining=1�?
             var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
             var loaded = SaveMapper.ToRuntime(saveData);
 
             Assert.AreEqual(1, loaded.countries["empire_north"].unitProductionQueue.Count);
             Assert.AreEqual(1, loaded.countries["empire_north"].unitProductionQueue[0].turnsRemaining);
 
-            // 再跑 1 回合 → 完工
+            // 再跑 1 回合 �?完工
             unitProd.ResolveProduction(loaded, config);
 
             Assert.AreEqual(0, loaded.countries["empire_north"].unitProductionQueue.Count);
@@ -526,22 +526,22 @@ namespace IronCrown.Application.Tests
         public void SaveLoad_UnitMovement_Preserved()
         {
             var world = BuildWorldWithProvinces();
-            // empire_north_inf_1 在 iron_city，speed=3, movesLeft=3
+            // empire_north_inf_1 �?iron_city，speed=3, movesLeft=3
             var unit = world.units["empire_north_inf_1"];
             Assert.AreEqual("iron_city", unit.currentProvinceId);
             Assert.AreEqual(3, unit.movesLeft);
 
-            // 移动一步到 coal_basin（邻接 + empire_north 控制）
+            // 移动一步到 coal_basin（邻�?+ empire_north 控制�?
             unit.currentProvinceId = "coal_basin";
             unit.movesLeft = 2;
 
-            // 存 → 读
+            // �?�?�?
             var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
             var loaded = SaveMapper.ToRuntime(saveData);
 
             // hash 等价
             Assert.AreEqual(HashWorld(world), HashWorld(loaded),
-                "移动后存→读 应 hash 等价");
+                "移动后存→读 �?hash 等价");
 
             Assert.AreEqual("coal_basin", loaded.units["empire_north_inf_1"].currentProvinceId);
             Assert.AreEqual(2, loaded.units["empire_north_inf_1"].movesLeft);
@@ -550,10 +550,10 @@ namespace IronCrown.Application.Tests
         [Test]
         public void SaveLoad_ActiveBattle_Preserved()
         {
-            // 构建含活动战斗的世界 → 存 → 读 → 验证战斗保留
+            // 构建含活动战斗的世界 �?�?�?�?�?验证战斗保留
             var world = BuildWorldWithProvinces();
 
-            // 给 republic_west 加一支部队在 liberty_port
+            // �?republic_west 加一支部队在 liberty_port
             world.units["republic_west_inf_1"] = new UnitState
             {
                 id = "republic_west_inf_1",
@@ -568,7 +568,7 @@ namespace IronCrown.Application.Tests
             };
             world.countries["republic_west"].unitIds.Add("republic_west_inf_1");
 
-            // 手动创建 ActiveBattle（模拟战斗中）
+            // 手动创建 ActiveBattle（模拟战斗中�?
             world.activeBattles.Add(new ActiveBattle
             {
                 id = "empire_north_inf_1_vs_republic_west_inf_1",
@@ -578,12 +578,12 @@ namespace IronCrown.Application.Tests
                 turnsElapsed = 1
             });
 
-            // 存 → 读
+            // �?�?�?
             var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
             var loaded = SaveMapper.ToRuntime(saveData);
 
             // 验证战斗保留
-            Assert.AreEqual(1, loaded.activeBattles.Count, "战斗应保留");
+            Assert.AreEqual(1, loaded.activeBattles.Count, "战斗应保�?);
             var b = loaded.activeBattles[0];
             Assert.AreEqual("empire_north_inf_1_vs_republic_west_inf_1", b.id);
             Assert.AreEqual("empire_north_inf_1", b.attackerUnitId);
@@ -593,7 +593,7 @@ namespace IronCrown.Application.Tests
 
             // hash 等价
             Assert.AreEqual(HashWorld(world), HashWorld(loaded),
-                "含战斗世界存→读 应 hash 等价");
+                "含战斗世界存→读 �?hash 等价");
         }
     }
 }

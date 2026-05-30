@@ -105,6 +105,17 @@ namespace IronCrown.Simulation
                     return CommandResult.Reject("该省已有战斗进行中");
             }
 
+            // 自动宣战（基于 target.ownerCountry 法理主权）
+            if (WarRegistry.TryDeclareWar(world, attacker.ownerCountry, target.ownerCountry, world.turnNumber, out var newWar))
+            {
+                _events.Publish(new WarDeclaredEvent
+                {
+                    countryA = newWar.countryA,
+                    countryB = newWar.countryB,
+                    startTurn = newWar.startTurn
+                });
+            }
+
             // 取守方：target 省内非攻方所属部队，按 id 升序 [0] 为主战
             var defenders = world.units.Values
                 .Where(u => u.currentProvinceId == targetProvinceId && u.ownerCountry != attacker.ownerCountry)

@@ -22,6 +22,9 @@ namespace IronCrown.Application
         public ProvinceSaveData[] provinces;
         public UnitSaveData[] units;
         public ActiveBattleSaveData[] activeBattles;
+        public WarRelationSaveData[] warRelations;
+        public string gameOverResult;
+        public string gameOverWinnerCountryId;
     }
 
     [Serializable]
@@ -147,5 +150,13 @@ namespace IronCrown.Application
         public string defenderUnitId;
         public string provinceId;
         public int turnsElapsed;
+    }
+
+    [Serializable]
+    public class WarRelationSaveData
+    {
+        public string countryA;
+        public string countryB;
+        public int startTurn;
     }
 }

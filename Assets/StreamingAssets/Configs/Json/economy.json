@@ -24,7 +24,10 @@
       "_aiNote": "AI 经济决策阈值（规则14 人类可调）。AI 仅作用于非玩家国。",
       "aiBuildCapitalThreshold": 60,
       "aiMaxCivilianFactories": 20,
-      "aiMaxMilitaryFactories": 15
+      "aiMaxMilitaryFactories": 15,
+      "_aiMilitaryNote": "AI 军事进攻阈值（规则14 人类可调）。aiAttackPowerRatio=120 表示攻方需 120% 守方才发动。",
+      "aiAttackPowerRatio": 120,
+      "aiMaxAttacksPerTurn": 1
     }
   ]
 }

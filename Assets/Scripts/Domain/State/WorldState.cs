@@ -21,7 +21,12 @@ namespace IronCrown.Domain
         public Dictionary<string, ProvinceState> provinces = new();
         public Dictionary<string, UnitState> units = new();
         public List<ActiveBattle> activeBattles = new();
+        public List<WarRelation> warRelations = new();
         public List<DiplomacyRelation> relations = new();
+
+        // === 游戏终局 ===
+        public string gameOverResult;           // "Victory" | "Defeat" | null
+        public string gameOverWinnerCountryId;  // 玩家胜=playerCountryId；失败=null
 
         public void AddTension(int amount, string reason = null)
         {

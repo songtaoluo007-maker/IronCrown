@@ -218,3 +218,9 @@
     font-size: 13px;
     color: rgba(236, 238, 245, 1);
 }
+
+.status-game-over {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: rgba(255, 60, 60, 1);
+}

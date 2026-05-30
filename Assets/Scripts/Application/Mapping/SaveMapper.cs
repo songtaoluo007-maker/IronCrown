@@ -110,6 +110,18 @@ namespace IronCrown.Application
                 turnsElapsed = b.turnsElapsed
             }).ToArray();
 
+            // 战争关系
+            state.warRelations = world.warRelations.Select(w => new WarRelationSaveData
+            {
+                countryA = w.countryA,
+                countryB = w.countryB,
+                startTurn = w.startTurn
+            }).ToArray();
+
+            // 游戏终局
+            state.gameOverResult = world.gameOverResult;
+            state.gameOverWinnerCountryId = world.gameOverWinnerCountryId;
+
             return state;
         }
 
@@ -248,6 +260,24 @@ namespace IronCrown.Application
                     });
                 }
             }
+
+            // 战争关系
+            if (save.warRelations != null)
+            {
+                foreach (var wd in save.warRelations)
+                {
+                    world.warRelations.Add(new WarRelation
+                    {
+                        countryA = wd.countryA,
+                        countryB = wd.countryB,
+                        startTurn = wd.startTurn
+                    });
+                }
+            }
+
+            // 游戏终局
+            world.gameOverResult = save.gameOverResult;
+            world.gameOverWinnerCountryId = save.gameOverWinnerCountryId;
 
             return world;
         }

@@ -22,6 +22,7 @@ namespace IronCrown.Simulation
         private readonly ConstructionResolver _construction;
         private readonly UnitProductionResolver _unitProduction;
         private readonly MovementResolver _movement;
+        private readonly VictoryConditionResolver _victory;
         private readonly IConfigRegistry _config;
 
         public TurnResolver(
@@ -36,6 +37,7 @@ namespace IronCrown.Simulation
             ConstructionResolver construction,
             UnitProductionResolver unitProduction = null,
             MovementResolver movement = null,
+            VictoryConditionResolver victory = null,
             IConfigRegistry config = null)
         {
             _clock = clock;
@@ -49,6 +51,7 @@ namespace IronCrown.Simulation
             _construction = construction;
             _unitProduction = unitProduction;
             _movement = movement;
+            _victory = victory;
             _config = config;
         }
 
@@ -122,6 +125,10 @@ namespace IronCrown.Simulation
 
             // 战斗 tick（Settlement 尾段）
             _battle.TickBattles(world);
+
+            // 胜负判定（TickBattles 之后）
+            if (_victory != null)
+                _victory.CheckVictory(world, _clock);
         }
 
     }

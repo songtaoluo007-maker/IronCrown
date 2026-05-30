@@ -61,6 +61,9 @@ namespace IronCrown.Application
             _rng = rng;
             _builder = builder;
             _logger = logger;
+
+            // 订阅 GameOver 事件 → 切时钟
+            _events.Subscribe<GameOverEvent>(_ => _clock.SetGameOver());
         }
 
         public void NewGame(int? seed = null, string playerCountryId = null)
@@ -102,6 +105,7 @@ namespace IronCrown.Application
         public CommandResult IssueCommand(GameCommand cmd)
         {
             if (_world == null) return CommandResult.Reject("no world");
+            if (_clock.CurrentPhase == GamePhase.GameOver) return CommandResult.Reject("游戏已结束");
             if (string.IsNullOrEmpty(_playerCountryId)) return CommandResult.Reject("no player country");
             if (cmd.countryId != _playerCountryId) return CommandResult.Reject("非玩家国");
 

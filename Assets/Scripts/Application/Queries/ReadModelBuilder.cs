@@ -69,7 +69,14 @@ namespace IronCrown.Application
                 countries = countries,
                 provinces = provinces,
                 units = units,
-                activeBattles = activeBattles
+                activeBattles = activeBattles,
+                warRelations = world.warRelations
+                    .OrderBy(w => w.countryA, System.StringComparer.Ordinal)
+                    .ThenBy(w => w.countryB, System.StringComparer.Ordinal)
+                    .Select(BuildWarRelationView)
+                    .ToList(),
+                gameOverResult = world.gameOverResult,
+                gameOverWinnerCountryId = world.gameOverWinnerCountryId
             };
         }
 
@@ -191,6 +198,16 @@ namespace IronCrown.Application
                 attackerMaxOrg = atkMaxOrg,
                 defenderOrg = defOrg,
                 defenderMaxOrg = defMaxOrg
+            };
+        }
+
+        public WarRelationView BuildWarRelationView(WarRelation w)
+        {
+            return new WarRelationView
+            {
+                countryA = w.countryA,
+                countryB = w.countryB,
+                startTurn = w.startTurn
             };
         }
     }

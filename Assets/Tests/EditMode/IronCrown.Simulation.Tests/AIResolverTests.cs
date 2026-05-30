@@ -1,5 +1,5 @@
 // ============================================================================
-// AIResolverTests.cs — B3 AI 经济决策测试
+// AIResolverTests.cs �?B3 AI 经济决策测试
 // ============================================================================
 
 using NUnit.Framework;
@@ -9,8 +9,7 @@ using System.Collections.Generic;
 
 namespace IronCrown.Simulation.Tests
 {
-    // 本地 stub，不依赖 Application 层
-    internal class LocalConfigRegistry : IConfigRegistry
+    // 本地 stub，不依赖 Application �?    internal class LocalConfigRegistry : IConfigRegistry
     {
         private readonly Dictionary<string, object> _data = new();
         public void Register<T>(string id, T value) where T : class => _data[id] = value;
@@ -42,7 +41,7 @@ namespace IronCrown.Simulation.Tests
         {
             var config = CreateConfig();
             var construction = new ConstructionResolver();
-            var ai = new AIResolver(config, construction);
+            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
 
             var country = new CountryState
             {
@@ -68,7 +67,7 @@ namespace IronCrown.Simulation.Tests
         {
             var config = CreateConfig();
             var construction = new ConstructionResolver();
-            var ai = new AIResolver(config, construction);
+            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
 
             var country = new CountryState
             {
@@ -91,7 +90,7 @@ namespace IronCrown.Simulation.Tests
         {
             var config = CreateConfig();
             var construction = new ConstructionResolver();
-            var ai = new AIResolver(config, construction);
+            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
 
             var country = new CountryState
             {
@@ -115,7 +114,7 @@ namespace IronCrown.Simulation.Tests
         {
             var config = CreateConfig();
             var construction = new ConstructionResolver();
-            var ai = new AIResolver(config, construction);
+            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
 
             var country = new CountryState
             {
