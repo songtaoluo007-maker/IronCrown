@@ -312,5 +312,144 @@ namespace IronCrown.Application.Tests
 
             Assert.AreEqual("some_unit", view.selectedUnitId);
         }
+
+        // === C3: controllerColor / isOccupied / hasActiveBattle / isInBattle ===
+
+        [Test]
+        public void BuildProvinceView_ControllerColor_UsesController()
+        {
+            var world = new WorldState();
+            world.provinces["p1"] = new ProvinceState
+            {
+                id = "p1", name = "P1",
+                ownerCountry = "original_owner",
+                controllerCountry = "occupier",
+                gridX = 0, gridY = 0
+            };
+
+            var config = new TestConfigRegistry();
+            config.Register("occupier", new CountryConfig
+            {
+                id = "occupier", name = "Occupier",
+                mapColor = "#FF0000",
+                resources = new Dictionary<string, int>()
+            });
+            config.Register("original_owner", new CountryConfig
+            {
+                id = "original_owner", name = "Original",
+                mapColor = "#0000FF",
+                resources = new Dictionary<string, int>()
+            });
+
+            var clock = new GameClock(new EventBus());
+            var view = _builder.BuildWorldView(world, clock, config: config);
+
+            // 颜色按 controller 取，不是 owner
+            Assert.AreEqual("#FF0000", view.provinces[0].ownerColor,
+                "被占领省应按 controllerCountry 取色");
+            Assert.IsTrue(view.provinces[0].isOccupied, "controller != owner 应标记被占领");
+        }
+
+        [Test]
+        public void BuildProvinceView_HasActiveBattle_Marked()
+        {
+            var world = new WorldState();
+            world.provinces["p1"] = new ProvinceState
+            {
+                id = "p1", name = "P1",
+                ownerCountry = "a", controllerCountry = "b",
+                gridX = 0, gridY = 0
+            };
+            world.activeBattles.Add(new ActiveBattle
+            {
+                id = "battle_1",
+                attackerUnitId = "atk",
+                defenderUnitId = "def",
+                provinceId = "p1",
+                turnsElapsed = 1
+            });
+
+            var clock = new GameClock(new EventBus());
+            var view = _builder.BuildWorldView(world, clock);
+
+            Assert.IsTrue(view.provinces[0].hasActiveBattle, "有战斗的省应标记 hasActiveBattle");
+        }
+
+        [Test]
+        public void BuildUnitView_IsInBattle_Marked()
+        {
+            var world = new WorldState();
+            world.units["atk"] = new UnitState
+            {
+                id = "atk", unitType = "infantry", ownerCountry = "a",
+                currentProvinceId = "p1", speed = 3, movesLeft = 1
+            };
+            world.units["def"] = new UnitState
+            {
+                id = "def", unitType = "infantry", ownerCountry = "b",
+                currentProvinceId = "p1", speed = 3, movesLeft = 1
+            };
+            world.activeBattles.Add(new ActiveBattle
+            {
+                id = "battle_1",
+                attackerUnitId = "atk",
+                defenderUnitId = "def",
+                provinceId = "p1",
+                turnsElapsed = 0
+            });
+
+            var clock = new GameClock(new EventBus());
+            var view = _builder.BuildWorldView(world, clock);
+
+            var atkView = view.units.Find(u => u.id == "atk");
+            var defView = view.units.Find(u => u.id == "def");
+            var otherView = view.units.Count == 2 ? null : view.units.Find(u => u.id != "atk" && u.id != "def");
+            Assert.IsTrue(atkView.isInBattle, "攻方应标记 isInBattle");
+            Assert.IsTrue(defView.isInBattle, "守方应标记 isInBattle");
+        }
+
+        [Test]
+        public void BuildWorldView_ActiveBattlesList_Populated()
+        {
+            var world = new WorldState();
+            world.provinces["p1"] = new ProvinceState
+            {
+                id = "p1", name = "P1",
+                ownerCountry = "b", controllerCountry = "b",
+                gridX = 0, gridY = 0
+            };
+            world.units["atk"] = new UnitState
+            {
+                id = "atk", unitType = "infantry", ownerCountry = "a",
+                currentProvinceId = "p1", speed = 3, movesLeft = 0,
+                organization = 50, maxOrganization = 60
+            };
+            world.units["def"] = new UnitState
+            {
+                id = "def", unitType = "infantry", ownerCountry = "b",
+                currentProvinceId = "p1", speed = 3, movesLeft = 1,
+                organization = 40, maxOrganization = 60
+            };
+            world.activeBattles.Add(new ActiveBattle
+            {
+                id = "battle_1",
+                attackerUnitId = "atk",
+                defenderUnitId = "def",
+                provinceId = "p1",
+                turnsElapsed = 2
+            });
+
+            var clock = new GameClock(new EventBus());
+            var view = _builder.BuildWorldView(world, clock);
+
+            Assert.AreEqual(1, view.activeBattles.Count, "应有 1 场战斗");
+            var b = view.activeBattles[0];
+            Assert.AreEqual("battle_1", b.id);
+            Assert.AreEqual(2, b.turnsElapsed);
+            Assert.AreEqual(50, b.attackerOrg);
+            Assert.AreEqual(60, b.attackerMaxOrg);
+            Assert.AreEqual(40, b.defenderOrg);
+            Assert.AreEqual(60, b.defenderMaxOrg);
+        }
     }
 }
