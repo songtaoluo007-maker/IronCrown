@@ -362,7 +362,7 @@ namespace IronCrown.Application.Tests
             var battleA = new BattleResolver(rngA, eventsA);
             var supplyA = new SupplyResolver();
             var constructionA = new ConstructionResolver();
-            var aiA = new AIResolver(config, constructionA, new BattleResolver(rngA, events));
+            var aiA = new AIResolver(config, constructionA, new BattleResolver(rngA, eventsA));
             var diploA = new DiplomacyResolver();
             var clockA = new GameClock(eventsA);
             var turnA = new TurnResolver(clockA, eventsA, economyA, politicsA, battleA, supplyA, aiA, diploA, constructionA);

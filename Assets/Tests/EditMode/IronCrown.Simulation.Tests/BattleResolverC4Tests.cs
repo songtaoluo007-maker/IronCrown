@@ -29,6 +29,7 @@ namespace IronCrown.Tests
         {
             public T Load<T>(string configName) where T : class => null;
             public List<T> LoadList<T>(string configName) where T : class => new List<T>();
+            public void ClearCache() { }
         }
 
         private class StubLogger : IAppLogger
@@ -40,10 +41,11 @@ namespace IronCrown.Tests
 
         private class InMemorySaveRepository : ISaveRepository
         {
-            private string _json;
-            public void Save(string json) { _json = json; }
-            public string Load() => _json;
-            public bool Exists() => _json != null;
+            private readonly Dictionary<string, GameState> _store = new();
+            public bool Save(string slot, GameState state) { _store[slot] = state; return true; }
+            public GameState Load(string slot) => _store.TryGetValue(slot, out var s) ? s : null;
+            public bool Delete(string slot) => _store.Remove(slot);
+            public string[] ListSaves() => new List<string>(_store.Keys).ToArray();
         }
 
         private (WorldState world, CountryState player, CountryState enemy,
@@ -61,14 +63,14 @@ namespace IronCrown.Tests
 
             var player = new CountryState { id = "player", name = "P" };
             player.capitalProvinceId = $"pa{suffix}";
-            player.SetResource("steel", 1000); player.SetResource("food", 1000);
-            player.SetResource("capital", 1000); player.SetResource("oil", 1000); player.SetResource("rubber", 1000);
+            player.ModifyResource("steel", 1000); player.ModifyResource("food", 1000);
+            player.ModifyResource("capital", 1000); player.ModifyResource("oil", 1000); player.ModifyResource("rubber", 1000);
             world.countries[player.id] = player;
 
             var enemy = new CountryState { id = "enemy", name = "E" };
             enemy.capitalProvinceId = $"pb{suffix}";
-            enemy.SetResource("steel", 1000); enemy.SetResource("food", 1000);
-            enemy.SetResource("capital", 1000); enemy.SetResource("oil", 1000); enemy.SetResource("rubber", 1000);
+            enemy.ModifyResource("steel", 1000); enemy.ModifyResource("food", 1000);
+            enemy.ModifyResource("capital", 1000); enemy.ModifyResource("oil", 1000); enemy.ModifyResource("rubber", 1000);
             world.countries[enemy.id] = enemy;
 
             var provA = new ProvinceState { id = $"pa{suffix}", ownerCountry = "player", controllerCountry = "player" };
@@ -558,8 +560,8 @@ namespace IronCrown.Tests
 
         private void SetResources(CountryState c)
         {
-            c.SetResource("steel", 1000); c.SetResource("food", 1000);
-            c.SetResource("capital", 1000); c.SetResource("oil", 1000); c.SetResource("rubber", 1000);
+            c.ModifyResource("steel", 1000); c.ModifyResource("food", 1000);
+            c.ModifyResource("capital", 1000); c.ModifyResource("oil", 1000); c.ModifyResource("rubber", 1000);
         }
     }
 }

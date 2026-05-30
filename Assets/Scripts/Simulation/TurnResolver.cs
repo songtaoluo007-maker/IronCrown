@@ -37,8 +37,8 @@ namespace IronCrown.Simulation
             ConstructionResolver construction,
             UnitProductionResolver unitProduction = null,
             MovementResolver movement = null,
-            VictoryConditionResolver victory = null,
-            IConfigRegistry config = null)
+            IConfigRegistry config = null,
+            VictoryConditionResolver victory = null)
         {
             _clock = clock;
             _events = events;
