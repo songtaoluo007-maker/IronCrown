@@ -264,5 +264,53 @@ namespace IronCrown.Application.Tests
             // garrisonCount 应为 3（排序不影响计数）
             Assert.AreEqual(3, view.provinces[0].garrisonCount);
         }
+
+        [Test]
+        public void BuildWorldView_UnitsList_Populated()
+        {
+            var world = new WorldState();
+            world.units["c_unit"] = new UnitState { id = "c_unit", unitType = "infantry", ownerCountry = "x", currentProvinceId = "p1", speed = 3, movesLeft = 3 };
+            world.units["a_unit"] = new UnitState { id = "a_unit", unitType = "infantry", ownerCountry = "x", currentProvinceId = "p1", speed = 3, movesLeft = 3 };
+            world.units["b_unit"] = new UnitState { id = "b_unit", unitType = "infantry", ownerCountry = "x", currentProvinceId = "p1", speed = 3, movesLeft = 3 };
+
+            var clock = new GameClock(new EventBus());
+            var view = _builder.BuildWorldView(world, clock);
+
+            Assert.AreEqual(3, view.units.Count, "应有 3 支部队");
+            Assert.AreEqual("a_unit", view.units[0].id, "应按 id 升序");
+            Assert.AreEqual("b_unit", view.units[1].id);
+            Assert.AreEqual("c_unit", view.units[2].id);
+        }
+
+        [Test]
+        public void BuildProvinceView_GarrisonUnitIds_SortedById()
+        {
+            var world = new WorldState();
+            world.provinces["p1"] = new ProvinceState { id = "p1", name = "P1" };
+            // 乱序加入
+            world.units["z_unit"] = new UnitState { id = "z_unit", unitType = "infantry", ownerCountry = "x", currentProvinceId = "p1", speed = 3, movesLeft = 3 };
+            world.units["a_unit"] = new UnitState { id = "a_unit", unitType = "infantry", ownerCountry = "x", currentProvinceId = "p1", speed = 3, movesLeft = 3 };
+            world.units["m_unit"] = new UnitState { id = "m_unit", unitType = "infantry", ownerCountry = "x", currentProvinceId = "p1", speed = 3, movesLeft = 3 };
+
+            var clock = new GameClock(new EventBus());
+            var view = _builder.BuildWorldView(world, clock);
+
+            var pv = view.provinces[0];
+            Assert.AreEqual(3, pv.garrisonUnitIds.Length);
+            Assert.AreEqual("a_unit", pv.garrisonUnitIds[0]);
+            Assert.AreEqual("m_unit", pv.garrisonUnitIds[1]);
+            Assert.AreEqual("z_unit", pv.garrisonUnitIds[2]);
+        }
+
+        [Test]
+        public void BuildWorldView_SelectedUnitId_PassedThrough()
+        {
+            var world = new WorldState();
+            world.selectedUnitId = "some_unit";
+            var clock = new GameClock(new EventBus());
+            var view = _builder.BuildWorldView(world, clock);
+
+            Assert.AreEqual("some_unit", view.selectedUnitId);
+        }
     }
 }

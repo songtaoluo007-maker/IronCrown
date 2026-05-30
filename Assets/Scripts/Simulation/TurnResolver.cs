@@ -21,6 +21,7 @@ namespace IronCrown.Simulation
         private readonly DiplomacyResolver _diplomacy;
         private readonly ConstructionResolver _construction;
         private readonly UnitProductionResolver _unitProduction;
+        private readonly MovementResolver _movement;
         private readonly IConfigRegistry _config;
 
         public TurnResolver(
@@ -34,6 +35,7 @@ namespace IronCrown.Simulation
             DiplomacyResolver diplomacy,
             ConstructionResolver construction,
             UnitProductionResolver unitProduction = null,
+            MovementResolver movement = null,
             IConfigRegistry config = null)
         {
             _clock = clock;
@@ -46,11 +48,16 @@ namespace IronCrown.Simulation
             _diplomacy = diplomacy;
             _construction = construction;
             _unitProduction = unitProduction;
+            _movement = movement;
             _config = config;
         }
 
         public void ExecuteTurn(WorldState world)
         {
+            // 回合开始：重置所有部队移动力（早于经济结算）
+            if (_movement != null)
+                _movement.ResetMovement(world);
+
             _events.Publish(new TurnStartEvent { TurnNumber = _clock.CurrentTurn });
             ExecuteInternalAffairs(world);
             ExecuteMilitary(world);

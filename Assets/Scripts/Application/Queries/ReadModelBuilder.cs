@@ -38,6 +38,11 @@ namespace IronCrown.Application
                 .Select(p => BuildProvinceView(p, colorMap, sortedUnits))
                 .ToList();
 
+            var units = world.units.Values
+                .OrderBy(u => u.id, System.StringComparer.Ordinal)
+                .Select(BuildUnitView)
+                .ToList();
+
             return new WorldView
             {
                 turn = clock.CurrentTurn,
@@ -45,8 +50,10 @@ namespace IronCrown.Application
                 worldTension = world.worldTension,
                 playerCountryId = playerCountryId,
                 selectedProvinceId = selectedProvinceId,
+                selectedUnitId = world.selectedUnitId,
                 countries = countries,
-                provinces = provinces
+                provinces = provinces,
+                units = units
             };
         }
 
@@ -90,6 +97,16 @@ namespace IronCrown.Application
                 }
             }
 
+            // 收集驻军 unitId 列表
+            string[] garrisonUnitIds = System.Array.Empty<string>();
+            if (sortedUnits != null)
+            {
+                garrisonUnitIds = sortedUnits
+                    .Where(u => u.currentProvinceId == p.id)
+                    .Select(u => u.id)
+                    .ToArray();
+            }
+
             return new ProvinceView
             {
                 id = p.id,
@@ -105,7 +122,25 @@ namespace IronCrown.Application
                 isCapital = p.isCapital,
                 resourceOutput = p.resourceOutput,
                 neighbors = p.neighbors ?? System.Array.Empty<string>(),
-                garrisonCount = garrisonCount
+                garrisonCount = garrisonCount,
+                garrisonUnitIds = garrisonUnitIds
+            };
+        }
+
+        public UnitView BuildUnitView(UnitState u)
+        {
+            return new UnitView
+            {
+                id = u.id,
+                unitType = u.unitType,
+                ownerCountry = u.ownerCountry,
+                currentProvinceId = u.currentProvinceId,
+                manpower = u.manpower,
+                maxManpower = u.maxManpower,
+                organization = u.organization,
+                maxOrganization = u.maxOrganization,
+                movesLeft = u.movesLeft,
+                speed = u.speed
             };
         }
     }

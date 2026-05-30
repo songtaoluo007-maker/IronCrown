@@ -21,5 +21,6 @@ namespace IronCrown.Contracts
         public string[] resourceOutput;
         public string[] neighbors;
         public int garrisonCount;
+        public string[] garrisonUnitIds;
     }
 }

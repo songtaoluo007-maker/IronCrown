@@ -14,7 +14,9 @@ namespace IronCrown.Contracts
         public int worldTension;
         public string playerCountryId;
         public string selectedProvinceId;
+        public string selectedUnitId;
         public List<CountryView> countries;
         public List<ProvinceView> provinces;
+        public List<UnitView> units;
     }
 }

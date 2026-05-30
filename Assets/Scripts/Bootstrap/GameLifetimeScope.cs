@@ -45,6 +45,7 @@ namespace IronCrown.Bootstrap
             builder.Register<DiplomacyResolver>(Lifetime.Singleton);
             builder.Register<ConstructionResolver>(Lifetime.Singleton);
             builder.Register<UnitProductionResolver>(Lifetime.Singleton);
+            builder.Register<MovementResolver>(Lifetime.Singleton);
             builder.Register<TurnResolver>(Lifetime.Singleton);
 
             // === Presentation 单例 ===

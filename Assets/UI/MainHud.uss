@@ -156,6 +156,11 @@
     border-width: 3px;
 }
 
+.province-tile-move-target {
+    border-color: rgba(180, 220, 120, 0.85);
+    border-width: 3px;
+}
+
 .province-garrison-badge {
     position: absolute;
     top: 2px;

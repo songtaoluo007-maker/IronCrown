@@ -184,6 +184,15 @@ namespace IronCrown.Config.Validation.Tests
             public int unitProductionTurns;
         }
 
+        [System.Serializable]
+        class UnitConfigList { public List<UnitConfigData> items = new(); }
+        [System.Serializable]
+        class UnitConfigData
+        {
+            public string id;
+            public int speed;
+        }
+
         [Test]
         public void Economy_HasUnitProductionTurns()
         {
@@ -192,6 +201,18 @@ namespace IronCrown.Config.Validation.Tests
             var eco = config.items.Find(e => e.id == "global");
             Assert.IsNotNull(eco, "economy.json 应有 id='global'");
             Assert.Greater(eco.unitProductionTurns, 0, "unitProductionTurns 应 > 0");
+        }
+
+        [Test]
+        public void UnitConfig_HasSpeed()
+        {
+            var config = LoadConfig<UnitConfigList>("units.json");
+            Assert.IsNotNull(config);
+            Assert.IsTrue(config.items.Count > 0, "units.json 至少有 1 种单位");
+            foreach (var u in config.items)
+            {
+                Assert.Greater(u.speed, 0, $"unitType={u.id} 的 speed 应 > 0");
+            }
         }
     }
 }

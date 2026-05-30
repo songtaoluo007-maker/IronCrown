@@ -207,7 +207,76 @@ namespace IronCrown.Presentation
 
         public void SelectProvince(string provinceId)
         {
+            OnProvinceClick(provinceId);
+        }
+
+        private void OnProvinceClick(string provinceId)
+        {
+            var vm = _session.GetWorldView();
+            if (vm == null) return;
+
+            var clickedProvince = vm.provinces.Find(p => p.id == provinceId);
+            if (clickedProvince == null) return;
+
+            // 已选中部队 -> 检查是否点邻省移动
+            if (!string.IsNullOrEmpty(vm.selectedUnitId) && vm.units != null)
+            {
+                var selectedUnit = vm.units.Find(u => u.id == vm.selectedUnitId);
+                if (selectedUnit != null)
+                {
+                    var currentProvince = vm.provinces.Find(p => p.id == selectedUnit.currentProvinceId);
+                    bool isNeighbor = currentProvince != null && currentProvince.neighbors != null
+                        && System.Array.Exists(currentProvince.neighbors, n => n == provinceId);
+                    bool isFriendly = clickedProvince.ownerCountry == selectedUnit.ownerCountry;
+
+                    if (isNeighbor && isFriendly && selectedUnit.movesLeft > 0)
+                    {
+                        // 发移动命令
+                        var result = _session.IssueCommand(new GameCommand
+                        {
+                            commandType = CommandType.MoveUnit,
+                            countryId = _session.PlayerCountryId,
+                            unitId = vm.selectedUnitId,
+                            targetProvinceId = provinceId
+                        });
+                        if (result.accepted)
+                        {
+                            ShowStatus(vm.selectedUnitId + " -> " + clickedProvince.name + " (剩余 " + (selectedUnit.movesLeft - 1) + ")");
+                            _session.SelectProvince(provinceId);
+                        }
+                        else
+                        {
+                            ShowStatus("被拒: " + result.reason);
+                        }
+                        Render();
+                        return;
+                    }
+                    else if (!isNeighbor || !isFriendly)
+                    {
+                        // 点非邻省/敌方省 -> 清空部队选中，切省
+                        _session.SelectUnit(null);
+                    }
+                }
+            }
+
+            // 选省
             _session.SelectProvince(provinceId);
+
+            // 该省有己方部队 -> 自动选中
+            if (clickedProvince.garrisonUnitIds != null && clickedProvince.garrisonUnitIds.Length > 0
+                && clickedProvince.ownerCountry == vm.playerCountryId)
+            {
+                // 循环选：当前已选第 i 支 -> 选下一支
+                string current = vm.selectedUnitId;
+                int idx = System.Array.IndexOf(clickedProvince.garrisonUnitIds, current);
+                int next = (idx + 1) % clickedProvince.garrisonUnitIds.Length;
+                _session.SelectUnit(clickedProvince.garrisonUnitIds[next]);
+            }
+            else
+            {
+                _session.SelectUnit(null);
+            }
+
             Render();
         }
 
@@ -272,6 +341,28 @@ namespace IronCrown.Presentation
 
             const int cellSize = 110;
 
+            // 计算可移动目标省
+            string[] moveTargets = null;
+            if (!string.IsNullOrEmpty(vm.selectedUnitId) && vm.units != null)
+            {
+                var selUnit = vm.units.Find(u => u.id == vm.selectedUnitId);
+                if (selUnit != null && selUnit.movesLeft > 0)
+                {
+                    var selProv = vm.provinces.Find(p => p.id == selUnit.currentProvinceId);
+                    if (selProv != null && selProv.neighbors != null)
+                    {
+                        var targets = new System.Collections.Generic.List<string>();
+                        foreach (var nId in selProv.neighbors)
+                        {
+                            var np = vm.provinces.Find(p => p.id == nId);
+                            if (np != null && np.ownerCountry == selUnit.ownerCountry)
+                                targets.Add(nId);
+                        }
+                        moveTargets = targets.ToArray();
+                    }
+                }
+            }
+
             foreach (var p in vm.provinces)
             {
                 var tile = new VisualElement();
@@ -287,6 +378,10 @@ namespace IronCrown.Presentation
                 bool isSelected = p.id == vm.selectedProvinceId;
                 if (isSelected)
                     tile.AddToClassList("province-tile-selected");
+
+                // 移动目标高亮
+                if (moveTargets != null && System.Array.Exists(moveTargets, t => t == p.id))
+                    tile.AddToClassList("province-tile-move-target");
 
                 var label = new Label(p.name);
                 label.AddToClassList("province-tile-label");
@@ -336,6 +431,16 @@ namespace IronCrown.Presentation
             if (pv.neighbors != null && pv.neighbors.Length > 0)
                 sb.Append($"  |  邻接: {string.Join(", ", pv.neighbors)}");
             sb.Append($"  |  驻军: {pv.garrisonCount} 支");
+
+            // 选中部队详情
+            if (!string.IsNullOrEmpty(vm.selectedUnitId) && vm.units != null)
+            {
+                var selUnit = vm.units.Find(u => u.id == vm.selectedUnitId);
+                if (selUnit != null && selUnit.currentProvinceId == pv.id)
+                {
+                    sb.Append($"  |  已选部队: {selUnit.id} (剩 {selUnit.movesLeft}/{selUnit.speed})");
+                }
+            }
 
             _provinceDetailLabel.text = sb.ToString();
         }

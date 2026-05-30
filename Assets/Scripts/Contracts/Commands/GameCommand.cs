@@ -10,5 +10,7 @@ namespace IronCrown.Contracts
         public string countryId;
         public int level;  // 档位 (0-2)，仅 SetTaxLevel/SetCivilLevel 使用
         public string unitType;  // 兵种类型，仅 BuildUnit 使用
+        public string unitId;    // 部队ID，仅 MoveUnit 使用
+        public string targetProvinceId;  // 目标省份ID，仅 MoveUnit 使用
     }
 }

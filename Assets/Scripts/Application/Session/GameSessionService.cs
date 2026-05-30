@@ -18,6 +18,8 @@ namespace IronCrown.Application
         private readonly TurnResolver _turnResolver;
         private readonly ConstructionResolver _construction;
         private readonly UnitProductionResolver _unitProduction;
+        private readonly MovementResolver _movement;
+        private readonly IEventPublisher _events;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
         private readonly ReadModelBuilder _builder;
@@ -37,6 +39,8 @@ namespace IronCrown.Application
             TurnResolver turnResolver,
             ConstructionResolver construction,
             UnitProductionResolver unitProduction,
+            MovementResolver movement,
+            IEventPublisher events,
             ISaveRepository save,
             IRandom rng,
             ReadModelBuilder builder,
@@ -48,6 +52,8 @@ namespace IronCrown.Application
             _turnResolver = turnResolver;
             _construction = construction;
             _unitProduction = unitProduction;
+            _movement = movement;
+            _events = events;
             _save = save;
             _rng = rng;
             _builder = builder;
@@ -136,6 +142,24 @@ namespace IronCrown.Application
                         _logger.Info($"[Session] {cmd.countryId} 下令训练 {cmd.unitType}");
                     return unitResult;
 
+                case CommandType.MoveUnit:
+                    var moveFrom = _world.units.TryGetValue(cmd.unitId, out var mvUnit) ? mvUnit.currentProvinceId : null;
+                    var moveResult = _movement.TryMove(_world, cmd.unitId, cmd.targetProvinceId, _playerCountryId);
+                    if (moveResult.accepted)
+                    {
+                        _world.selectedUnitId = cmd.unitId;
+                        var movedUnit = _world.units[cmd.unitId];
+                        _events.Publish(new UnitMovedEvent
+                        {
+                            unitId = cmd.unitId,
+                            fromProvinceId = moveFrom,
+                            toProvinceId = movedUnit.currentProvinceId,
+                            movesLeftAfter = movedUnit.movesLeft
+                        });
+                        _logger.Info($"[Session] {cmd.unitId} 移动到 {cmd.targetProvinceId}（剩余 {movedUnit.movesLeft}）");
+                    }
+                    return moveResult;
+
                 default:
                     return CommandResult.Reject("未知命令");
             }
@@ -199,6 +223,14 @@ namespace IronCrown.Application
             if (provinceId != null && !_world.provinces.ContainsKey(provinceId))
                 return;
             _selectedProvinceId = provinceId;
+        }
+
+        public void SelectUnit(string unitId)
+        {
+            if (_world == null) return;
+            if (unitId != null && !_world.units.ContainsKey(unitId))
+                return;
+            _world.selectedUnitId = unitId;
         }
     }
 }

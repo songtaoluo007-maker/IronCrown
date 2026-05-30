@@ -512,5 +512,30 @@ namespace IronCrown.Application.Tests
             Assert.IsTrue(loaded.units.ContainsKey("empire_north_inf_2"), "新部队应生成");
             Assert.AreEqual(100, loaded.units["empire_north_inf_2"].manpower, "新部队应满编");
         }
+
+        [Test]
+        public void SaveLoad_UnitMovement_Preserved()
+        {
+            var world = BuildWorldWithProvinces();
+            // empire_north_inf_1 在 iron_city，speed=3, movesLeft=3
+            var unit = world.units["empire_north_inf_1"];
+            Assert.AreEqual("iron_city", unit.currentProvinceId);
+            Assert.AreEqual(3, unit.movesLeft);
+
+            // 移动一步到 coal_basin（邻接 + empire_north 控制）
+            unit.currentProvinceId = "coal_basin";
+            unit.movesLeft = 2;
+
+            // 存 → 读
+            var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            // hash 等价
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "移动后存→读 应 hash 等价");
+
+            Assert.AreEqual("coal_basin", loaded.units["empire_north_inf_1"].currentProvinceId);
+            Assert.AreEqual(2, loaded.units["empire_north_inf_1"].movesLeft);
+        }
     }
 }

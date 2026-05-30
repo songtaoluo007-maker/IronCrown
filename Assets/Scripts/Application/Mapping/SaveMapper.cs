@@ -97,6 +97,8 @@ namespace IronCrown.Application
                     supplyConsumption = u.supplyConsumption
                 }).ToArray()
             };
+            state.playerCountryId = world.playerCountryId;
+            state.selectedUnitId = world.selectedUnitId;
             return state;
         }
 
@@ -106,7 +108,8 @@ namespace IronCrown.Application
             {
                 turnNumber = save.turnNumber,
                 worldTension = 0,
-                playerCountryId = save.playerCountryId
+                playerCountryId = save.playerCountryId,
+                selectedUnitId = save.selectedUnitId
             };
 
             if (save.countries != null)

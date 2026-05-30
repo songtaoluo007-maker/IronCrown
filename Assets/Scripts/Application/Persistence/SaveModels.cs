@@ -17,6 +17,7 @@ namespace IronCrown.Application
         public string phase;
         public string saveTime;
         public string playerCountryId;
+        public string selectedUnitId;
         public CountrySaveData[] countries;
         public ProvinceSaveData[] provinces;
         public UnitSaveData[] units;

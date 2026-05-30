@@ -14,6 +14,7 @@ namespace IronCrown.Domain
         public int worldTension;
         public int turnNumber;
         public string playerCountryId;
+        public string selectedUnitId;
 
         // === 扩展字段 ===
         public Dictionary<string, CountryState> countries = new();

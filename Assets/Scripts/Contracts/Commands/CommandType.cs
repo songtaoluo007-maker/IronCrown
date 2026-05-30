@@ -10,6 +10,7 @@ namespace IronCrown.Contracts
         BuildMilitaryFactory,
         SetTaxLevel,
         SetCivilLevel,
-        BuildUnit
+        BuildUnit,
+        MoveUnit
     }
 }
