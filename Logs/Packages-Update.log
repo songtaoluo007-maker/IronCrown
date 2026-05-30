@@ -58,3 +58,19 @@ The following packages were added:
   com.unity.ugui@2.0.0
   com.unity.xr.legacyinputhelpers@2.1.12
   com.unity.ai.navigation@2.0.12
+
+=== Sat May 30 11:25:00 2026
+
+Packages were changed.
+Update Mode: updateDependencies
+
+The following packages were added:
+  com.unity.modules.adaptiveperformance@1.0.0
+  com.unity.modules.vectorgraphics@1.0.0
+The following packages were updated:
+  com.unity.analytics from version 3.8.1 to 3.8.2
+  com.unity.ide.rider from version 3.0.39 to 3.0.40
+  com.unity.multiplayer.center from version 1.0.0 to 1.0.1
+  com.unity.nuget.newtonsoft-json from version 3.2.1 to 3.2.2
+  com.unity.purchasing from version 4.14.2 to 4.15.0
+  com.unity.xr.legacyinputhelpers from version 2.1.12 to 3.0.1

@@ -129,14 +129,14 @@ namespace IronCrown.Application.Tests
                 id = "empire_north", name = "北境帝国", ideology = "ImperialOrder",
                 stability = 70, warSupport = 50, treasury = 500,
                 civilianFactories = 2, militaryFactories = 1,
-                resources = new Dictionary<string, int> { { "steel", 50 } }
+                resources = new Dictionary<string, int> { { "steel", 50 }, { "food", 100 }, { "capital", 100 } }
             });
             config.Register("republic_west", new CountryConfig
             {
                 id = "republic_west", name = "西境共和国", ideology = "FreeRepublic",
                 stability = 60, warSupport = 40, treasury = 300,
                 civilianFactories = 1, militaryFactories = 2,
-                resources = new Dictionary<string, int> { { "steel", 30 } }
+                resources = new Dictionary<string, int> { { "steel", 30 }, { "food", 100 }, { "capital", 100 } }
             });
 
             var clock = new GameClock(new EventBus());
@@ -253,7 +253,7 @@ namespace IronCrown.Application.Tests
                 stability = 60, warSupport = 50, legitimacy = 70, corruption = 15, bureaucracy = 40,
                 treasury = 500, taxIncome = 80, tradeIncome = 20, militaryExpense = 30, civilExpense = 20,
                 civilianFactories = 3, militaryFactories = 2, dockyards = 1, manpower = 50000, totalManpower = 200000,
-                resources = new Dictionary<string, int>(),
+                resources = new Dictionary<string, int> { { "steel", 100 }, { "food", 100 }, { "capital", 100 } },
                 capitalProvinceId = "iron_city"
             });
             config.Register("republic_west", new CountryConfig
@@ -262,7 +262,7 @@ namespace IronCrown.Application.Tests
                 stability = 65, warSupport = 40, legitimacy = 75, corruption = 10, bureaucracy = 50,
                 treasury = 300, taxIncome = 60, tradeIncome = 30, militaryExpense = 20, civilExpense = 25,
                 civilianFactories = 2, militaryFactories = 1, dockyards = 0, manpower = 30000, totalManpower = 150000,
-                resources = new Dictionary<string, int>(),
+                resources = new Dictionary<string, int> { { "steel", 100 }, { "food", 100 }, { "capital", 100 } },
                 mapColor = "#4682C8", capitalProvinceId = "liberty_port"
             });
             config.Register("alliance_east", new CountryConfig
@@ -271,7 +271,7 @@ namespace IronCrown.Application.Tests
                 stability = 55, warSupport = 60, legitimacy = 70, corruption = 20, bureaucracy = 40,
                 treasury = 250, taxIncome = 50, tradeIncome = 20, militaryExpense = 25, civilExpense = 20,
                 civilianFactories = 2, militaryFactories = 2, dockyards = 0, manpower = 50000, totalManpower = 200000,
-                resources = new Dictionary<string, int>(),
+                resources = new Dictionary<string, int> { { "steel", 100 }, { "food", 100 }, { "capital", 100 } },
                 mapColor = "#C83232", capitalProvinceId = "red_plain"
             });
             config.Register("kingdom_south", new CountryConfig
@@ -280,7 +280,7 @@ namespace IronCrown.Application.Tests
                 stability = 60, warSupport = 35, legitimacy = 80, corruption = 15, bureaucracy = 45,
                 treasury = 200, taxIncome = 40, tradeIncome = 25, militaryExpense = 15, civilExpense = 20,
                 civilianFactories = 1, militaryFactories = 1, dockyards = 1, manpower = 20000, totalManpower = 100000,
-                resources = new Dictionary<string, int>(),
+                resources = new Dictionary<string, int> { { "steel", 100 }, { "food", 100 }, { "capital", 100 } },
                 mapColor = "#DAA520", capitalProvinceId = "coral_bay"
             });
             config.Register("federation_central", new CountryConfig
@@ -289,7 +289,7 @@ namespace IronCrown.Application.Tests
                 stability = 70, warSupport = 30, legitimacy = 85, corruption = 5, bureaucracy = 60,
                 treasury = 350, taxIncome = 70, tradeIncome = 35, militaryExpense = 20, civilExpense = 30,
                 civilianFactories = 2, militaryFactories = 1, dockyards = 0, manpower = 15000, totalManpower = 80000,
-                resources = new Dictionary<string, int>(),
+                resources = new Dictionary<string, int> { { "steel", 100 }, { "food", 100 }, { "capital", 100 } },
                 mapColor = "#46C864", capitalProvinceId = "high_peak"
             });
             config.Register("steppe_junta", new CountryConfig
@@ -298,7 +298,7 @@ namespace IronCrown.Application.Tests
                 stability = 45, warSupport = 70, legitimacy = 50, corruption = 25, bureaucracy = 30,
                 treasury = 180, taxIncome = 35, tradeIncome = 10, militaryExpense = 30, civilExpense = 15,
                 civilianFactories = 1, militaryFactories = 2, dockyards = 0, manpower = 60000, totalManpower = 250000,
-                resources = new Dictionary<string, int>(),
+                resources = new Dictionary<string, int> { { "steel", 100 }, { "food", 100 }, { "capital", 100 } },
                 mapColor = "#808020", capitalProvinceId = "wind_plain"
             });
             config.Register("iron_city", new ProvinceConfig
