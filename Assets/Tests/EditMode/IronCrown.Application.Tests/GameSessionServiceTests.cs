@@ -61,7 +61,7 @@ namespace IronCrown.Application.Tests
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
 
-            _session = new GameSessionService(_clock, config, initializer, turnResolver, construction, unitProduction, movement, saveRepo, rng, builder, logger);
+            _session = new GameSessionService(_clock, config, initializer, turnResolver, construction, unitProduction, movement, new EventBus(), saveRepo, rng, builder, logger);
         }
 
         [Test]
@@ -156,7 +156,7 @@ namespace IronCrown.Application.Tests
             var movement = new MovementResolver();
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, new EventBus(), saveRepo, rng, builder, logger);
 
             session.NewGame(playerCountryId: "empire_north");
             Assert.AreEqual("empire_north", session.PlayerCountryId);
@@ -372,7 +372,7 @@ namespace IronCrown.Application.Tests
             var movement = new MovementResolver();
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, new EventBus(), saveRepo, rng, builder, logger);
             return (session, clock);
         }
 
