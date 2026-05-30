@@ -1,5 +1,5 @@
 // ============================================================================
-// GameSessionServiceTests.cs �?GameSessionService 集成测试
+// GameSessionServiceTests.cs — GameSessionService 集成测试
 // ============================================================================
 
 using NUnit.Framework;
@@ -100,11 +100,11 @@ namespace IronCrown.Application.Tests
             _session.NewGame(playerCountryId: "empire_north");
             var view = _session.GetWorldView();
             var playerCountry = view.countries.Find(c => c.id == "empire_north");
-            // 需要确保玩家国有足够资�?
+            // 需要确保玩家国有足够资本
             // 通过 world state 直接设（测试用）
-            // 这里�?config 的默认值——capital 需 >= 30
-            // �?WorldInitializer 创建的国家可能资本不�?
-            // 所以这个测试验证的是命令管道能工作，不验证具体数�?
+            // 这里用 config 的默认值——capital 需 >= 30
+            // 但 WorldInitializer 创建的国家可能资本不够
+            // 所以这个测试验证的是命令管道能工作，不验证具体数值
         }
 
         [Test]
@@ -123,7 +123,7 @@ namespace IronCrown.Application.Tests
         [Test]
         public void SetPlayerCountry_ChangesPlayer()
         {
-            // 此测试独立构�?GameSessionService（需要有国家的配置）
+            // 此测试独立构造 GameSessionService（需要有国家的配置）
             var config = new TestConfigRegistry();
             config.Register("empire_north", new CountryConfig
             {
@@ -134,7 +134,7 @@ namespace IronCrown.Application.Tests
             });
             config.Register("republic_west", new CountryConfig
             {
-                id = "republic_west", name = "西境共和�?, ideology = "FreeRepublic",
+                id = "republic_west", name = "西境共和国", ideology = "FreeRepublic",
                 stability = 60, warSupport = 40, treasury = 300,
                 civilianFactories = 1, militaryFactories = 2,
                 resources = new Dictionary<string, int> { { "steel", 30 }, { "food", 100 }, { "capital", 100 } }
@@ -230,7 +230,7 @@ namespace IronCrown.Application.Tests
                 countryId = "republic_west",
                 level = 2
             });
-            Assert.IsFalse(r.accepted, "非玩家国应被�?);
+            Assert.IsFalse(r.accepted, "非玩家国应被拒");
         }
 
         private (GameSessionService session, GameClock clock) CreateSessionWithConfig()
@@ -260,7 +260,7 @@ namespace IronCrown.Application.Tests
             });
             config.Register("republic_west", new CountryConfig
             {
-                id = "republic_west", name = "西境共和�?, ideology = "FreeRepublic",
+                id = "republic_west", name = "西境共和国", ideology = "FreeRepublic",
                 stability = 65, warSupport = 40, legitimacy = 75, corruption = 10, bureaucracy = 50,
                 treasury = 300, taxIncome = 60, tradeIncome = 30, militaryExpense = 20, civilExpense = 25,
                 civilianFactories = 2, militaryFactories = 1, dockyards = 0, manpower = 30000, totalManpower = 150000,
@@ -296,7 +296,7 @@ namespace IronCrown.Application.Tests
             });
             config.Register("steppe_junta", new CountryConfig
             {
-                id = "steppe_junta", name = "草原军政�?, ideology = "MilitaryGov",
+                id = "steppe_junta", name = "草原军政府", ideology = "MilitaryGov",
                 stability = 45, warSupport = 70, legitimacy = 50, corruption = 25, bureaucracy = 30,
                 treasury = 180, taxIncome = 35, tradeIncome = 10, militaryExpense = 30, civilExpense = 15,
                 civilianFactories = 1, militaryFactories = 2, dockyards = 0, manpower = 60000, totalManpower = 250000,
@@ -313,7 +313,7 @@ namespace IronCrown.Application.Tests
             });
             config.Register("liberty_port", new ProvinceConfig
             {
-                id = "liberty_port", name = "自由�?, terrain = "Coastline",
+                id = "liberty_port", name = "自由港", terrain = "Coastline",
                 ownerCountry = "republic_west", isCapital = true,
                 gridX = 0, gridY = 1,
                 resourceOutput = new[] { "rareMetal" },
@@ -329,7 +329,7 @@ namespace IronCrown.Application.Tests
             });
             config.Register("coral_bay", new ProvinceConfig
             {
-                id = "coral_bay", name = "珊瑚�?, terrain = "Coastline",
+                id = "coral_bay", name = "珊瑚湾", terrain = "Coastline",
                 ownerCountry = "kingdom_south", isCapital = true,
                 gridX = 1, gridY = 2,
                 resourceOutput = new[] { "oil" },
@@ -353,7 +353,7 @@ namespace IronCrown.Application.Tests
             });
             config.Register("infantry", new UnitConfig
             {
-                id = "infantry", name = "步兵�?,
+                id = "infantry", name = "步兵师",
                 attack = 10, defense = 15, breakthrough = 5,
                 speed = 3, hp = 100, organization = 60,
                 armor = 0, piercing = 5, supplyConsumption = 10
@@ -417,15 +417,15 @@ namespace IronCrown.Application.Tests
             session.NewGame(playerCountryId: "empire_north");
             var view = session.GetWorldView();
 
-            // 每国 1 支步�?= 6 �?
-            // 省份 garrisonCount 应该：首�?1, 非首�?0
+            // 每国 1 支步兵 = 6 支
+            // 省份 garrisonCount 应该：首都=1, 非首都=0
             var ironCity = view.provinces.Find(p => p.id == "iron_city");
-            Assert.AreEqual(1, ironCity.garrisonCount, "首都应有 1 支驻�?);
+            Assert.AreEqual(1, ironCity.garrisonCount, "首都应有 1 支驻军");
 
-            // 总部队数通过省份 garrisonCount 汇�?
+            // 总部队数通过省份 garrisonCount 汇总
             int totalUnits = 0;
             foreach (var p in view.provinces) totalUnits += p.garrisonCount;
-            Assert.AreEqual(6, totalUnits, "6 国各 1 支步�?);
+            Assert.AreEqual(6, totalUnits, "6 国各 1 支步兵");
         }
 
         [Test]
@@ -476,7 +476,7 @@ namespace IronCrown.Application.Tests
                 countryId = "republic_west",
                 unitType = "infantry"
             });
-            Assert.IsFalse(result.accepted, "非玩家国应被�?);
+            Assert.IsFalse(result.accepted, "非玩家国应被拒");
             Assert.AreEqual("非玩家国", result.reason);
         }
 
@@ -494,17 +494,17 @@ namespace IronCrown.Application.Tests
                 unitType = "infantry"
             });
 
-            // �?2 个完整回合（每回�?5 阶段�?
+            // 推 2 个完整回合（每回合 5 阶段）
             for (int t = 0; t < 2; t++)
             {
-                session.AdvancePhase(); // TurnStart �?触发 ExecuteTurn
+                session.AdvancePhase(); // TurnStart → 触发 ExecuteTurn
                 for (int p = 0; p < 4; p++)
                     session.AdvancePhase(); // 剩余 4 阶段
             }
 
             var view = session.GetWorldView();
             var capital = view.provinces.Find(p => p.id == "iron_city");
-            Assert.AreEqual(2, capital.garrisonCount, "2 回合后首都应�?2 支驻�?);
+            Assert.AreEqual(2, capital.garrisonCount, "2 回合后首都应有 2 支驻军");
         }
 
         [Test]
@@ -525,7 +525,7 @@ namespace IronCrown.Application.Tests
             Assert.IsNotNull(unit);
             session.SelectUnit(unit.id);
 
-            // wind_plain �?steppe_junta，非己方控制
+            // wind_plain 归 steppe_junta，非己方控制
             var result = session.IssueCommand(new GameCommand
             {
                 commandType = CommandType.MoveUnit,
@@ -537,7 +537,7 @@ namespace IronCrown.Application.Tests
             // wind_plain controllerCountry=steppe_junta != empire_north
             // GameSessionService 分流：敌方省→BattleResolver.InitiateAttack
             // InitiateAttack 检查：邻接+非己方→进入战斗流程
-            // �?wind_plain �?steppe_junta 的驻军，所以会创建 ActiveBattle
+            // 但 wind_plain 有 steppe_junta 的驻军，所以会创建 ActiveBattle
         }
 
         [Test]
@@ -547,7 +547,7 @@ namespace IronCrown.Application.Tests
             session.NewGame(playerCountryId: "empire_north");
 
             session.SelectProvince("iron_city");
-            // 尝试移动 republic_west 的部�?
+            // 尝试移动 republic_west 的部队
             var result = session.IssueCommand(new GameCommand
             {
                 commandType = CommandType.MoveUnit,
@@ -623,14 +623,14 @@ namespace IronCrown.Application.Tests
                 for (int p = 0; p < 4; p++) session.AdvancePhase();
             }
 
-            // �?iron_city + �?empire_north 部队
+            // 选 iron_city + 选 empire_north 部队
             session.SelectProvince("iron_city");
             var view = session.GetWorldView();
             var unit = view.units.Find(u => u.ownerCountry == "empire_north");
             Assert.IsNotNull(unit);
             session.SelectUnit(unit.id);
 
-            // wind_plain �?steppe_junta（邻�?iron_city）→ 应进入战�?
+            // wind_plain 归 steppe_junta（邻接 iron_city）→ 应进入战斗
             var result = session.IssueCommand(new GameCommand
             {
                 commandType = CommandType.MoveUnit,
@@ -641,12 +641,12 @@ namespace IronCrown.Application.Tests
             Assert.IsTrue(result.accepted, "攻击应被接受");
 
             var viewAfter = session.GetWorldView();
-            Assert.AreEqual(1, viewAfter.activeBattles.Count, "应有 1 场战�?);
+            Assert.AreEqual(1, viewAfter.activeBattles.Count, "应有 1 场战斗");
             Assert.AreEqual("wind_plain", viewAfter.activeBattles[0].provinceId);
 
-            // 攻方应标记为战斗�?
+            // 攻方应标记为战斗中
             var atkView = viewAfter.units.Find(u => u.id == unit.id);
-            Assert.IsTrue(atkView.isInBattle, "攻方应标记为战斗�?);
+            Assert.IsTrue(atkView.isInBattle, "攻方应标记为战斗中");
         }
 
         [Test]
@@ -666,7 +666,7 @@ namespace IronCrown.Application.Tests
             var unit = view.units.Find(u => u.ownerCountry == "empire_north");
             session.SelectUnit(unit.id);
 
-            // 先发起攻�?
+            // 先发起攻击
             session.IssueCommand(new GameCommand
             {
                 commandType = CommandType.MoveUnit,
@@ -675,7 +675,7 @@ namespace IronCrown.Application.Tests
                 targetProvinceId = "wind_plain"
             });
 
-            // 再次移动应被拒（战斗锁定�?
+            // 再次移动应被拒（战斗锁定）
             var result2 = session.IssueCommand(new GameCommand
             {
                 commandType = CommandType.MoveUnit,
@@ -684,7 +684,7 @@ namespace IronCrown.Application.Tests
                 targetProvinceId = "high_peak"
             });
             Assert.IsFalse(result2.accepted, "战斗中应被拒");
-            Assert.AreEqual("部队正在战斗�?, result2.reason);
+            Assert.AreEqual("部队正在战斗中", result2.reason);
         }
 
         [Test]
@@ -696,7 +696,7 @@ namespace IronCrown.Application.Tests
             var view = session.GetWorldView();
             var windPlain = view.provinces.Find(p => p.id == "wind_plain");
             Assert.AreEqual("steppe_junta", windPlain.controllerCountry);
-            Assert.IsFalse(windPlain.isOccupied, "初始不应被占�?);
+            Assert.IsFalse(windPlain.isOccupied, "初始不应被占领");
         }
     }
 }

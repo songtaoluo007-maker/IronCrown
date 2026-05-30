@@ -13,5 +13,6 @@ namespace IronCrown.Domain
         void AdvancePhase();
         void Reset(int maxTurns = 60);
         void Restore(int turn, GamePhase phase, int maxTurns = 60);
+        void SetGameOver();
     }
 }
