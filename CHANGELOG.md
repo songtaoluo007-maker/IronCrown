@@ -7,7 +7,13 @@
 
 ## [Unreleased]
 
+### Added
+- 2026-05-29 [C2a 签发] `WorkOrders/C2a-unit-production.md`（执行方 OpenClaw）：军事阶段第二步·部分一——玩家在首都训练 1 支步兵，下单一次性扣 `infantry.cost` + manpower=hp，2 回合后完工驻首都。**人类拍板的设计取舍**（规则 14）：C2a 造兵 / C2b 移动拆两单；移动模型=单步邻接+movesLeft；造兵地点仅首都；成本=`UnitConfig.cost`+manpower+多回合队列。**Phase 0 强制收 C1 三项尾巴**：① `SaveLoadEquivalenceTests.HashWorld` 扩 units 13 字段 + 省份静态字段（C1 续跑等价测试本身是空检查的盲区）；② `UnitSaveData` 扩 13 字段（决策 A：全字段持久化）+ `SaveMapper.ToRuntime` 重建 `country.unitIds`（激活 C1 起的死字段）；③ `ReadModelBuilder` 遍历 units 按 id 升序。新增 `Simulation/UnitProductionResolver`、`Domain/UnitFactory`（与 C1 WorldInitializer 步兵创建块共享，规则 3）、`Contracts/UnitProducedEvent`。**新数值**（Claude 代拟）：`economy.json` 加 `unitProductionTurns=2`（规则 14 可调）。
+- 2026-05-29 [C1 审查通过] 领土邻接 + 初始部队 + 地图驻军 — 军事阶段地基达成。**主体过**：6 省 neighbors 对称（high_peak 4 邻枢纽）；6 支初始 infantry 满编驻各国首都；ProvinceView+garrisonCount/neighbors；地图 `⚔N` 徽章 + 详情邻接/驻军；SaveMapper 顺补 B2 漏存的 gridX/gridY/terrain。**最新 artifact**：`artifacts/c1-editmode5.xml`（97/97）+ `c1-playmode-final.xml`（5/5）为权威证据；**c1-editmode-final.xml 是更早版本（3 failed）—命名混乱**，C2a Phase 0 清理。**8 项尾巴**：① HashWorld 不含 units 致续跑等价失明（C2a Phase 0.1 修）；② UnitSaveData 字段不全（C2a Phase 0.2 决策 A 全字段持久）；③ ReadModelBuilder 遍历 units 无序（C2a Phase 0.3）；④ garrisonCount O(P*U) 触发技术债 C-5 提醒；⑤ artifacts 命名乱（C2a Phase 0.4 清理）；⑥ commit 越界将 Claude dirty 治理文件一并打包（OpenClaw commit 卫生需改）；⑦ OpenClaw 顺补 B3 真 bug `EconomyConfig` 缺 `aiBuildCapital*` 3 字段（B3 审查盲区，记录复盘——Claude 以后必交叉 cs 与 json 字段）；⑧ Play 截图待补（与 C2a 一并出 `Design/screenshots/c1-*.png`）。**复盘**：`Ideology` 枚举（Domain）与 `ConfigValidationTests.validIdeologies` 集合漂移——硬编码字符串集合应改为引用枚举，列入后续技术债。
+- 2026-05-28 [记忆/恢复机制] 为解决"跨会话/上下文上限后丢失项目脉络"问题,建立 `PROJECT_STATE.md`(项目恢复入口/状态快照):新会话读它即可重建全局(进度时间线 T0→当前、锁定决策、协作复盘、文件地图、下一步、技术债指针)。原则:**真相源在仓库 git 跟踪文件,非任何人私有记忆**(私有记忆会丢、OpenClaw 读不到)。`PROJECT_RULES.md` 执行约定新增"记忆/恢复机制"条:新会话先读 PROJECT_STATE、每工作单审查通过后更新它。Claude 私有记忆顶部加指针导向 PROJECT_STATE。
+
 ### Milestone
+- 2026-05-29 ✅ **C1 闭合（军事地基）**：领土邻接 + 初始部队 + 地图驻军达成，EditMode 97/97 + PlayMode 5/5 全绿（权威 artifact: `c1-editmode5.xml`+`c1-playmode-final.xml`）。C 阶段（军事）拆 C1✅ → C2a(造兵, 已签发) → C2b(移动) → C3(战斗+占领) → C4(战争胜负+军事 AI)。
 - 2026-05-28 🎉 **B 阶段收官（可玩性达成）**：B1(命令管线+建厂)→B1.5(税率/民生)→B2(2D方块地图+选省)→B3(AI 自主建厂) 全绿（112 测试）。完整循环：选国→建厂/调税民生→推回合看经济→AI 对手自主发展→存读档。B3 审查通过（TryBuild 重构干净、AI 确定性无随机、playerCountryId 存档同步、规则 3/4/5 守住）。
 - 2026-05-28 🎉 **MVP 垂直切片达成（A 收口完成）**：EditMode 69/69 + PlayMode 5/5 全绿。配置驱动（6 国 6 省）→ 回合推进有可见经济产出 → 存读档确定性一致 → UI Toolkit HUD 可视可操作。T0–T7 + T7-FIX 全部闭合。下一步进入 B（玩家可玩性：命令 + 2D 地图 + AI 行动）。
 

@@ -2,7 +2,7 @@
 
 > **用途**:这是**给未来任何会话(Claude 新开窗口、换人、OpenClaw)的恢复点**。读完本文件 + `CHANGELOG.md` 即可无损重建项目全局,不依赖任何一轮对话的上下文。
 > **维护约定**:每个工作单**审查通过后**,更新本文件 §2(当前状态)与 §3(进度);决策变更更新 §4。本文件是浓缩快照+索引;完整流水账在 `CHANGELOG.md`,每阶段细节在 `WorkOrders/`。
-> 最后更新:2026-05-28(C1 已签发待执行)。
+> 最后更新:2026-05-29(C1 闭合 / C2a 已签发待执行)。
 
 ---
 
@@ -18,9 +18,9 @@
 分工:**Claude=架构设计+逐单审查**;**OpenClaw(DeepSeek V4-Pro)=实现+测试**;**人类=数值/体验/产品方向终审(规则 14)**。
 
 ## 2. 当前状态(最新)
-- **已达成**:MVP 垂直切片 ✅ + B 阶段(可玩性)✅。完整循环可玩:选国→建厂/调税率民生→推回合看经济→AI 对手自主建厂→存读档,2D 方块地图可点选省。测试 112 全绿。
-- **进行中**:**军事阶段 C1**(领土+驻军地基)已签发 `WorkOrders/C1-territory-garrison.md`,**待 OpenClaw 执行**。C1 = 省份邻接 + 各国初始步兵驻首都 + 地图显示驻军(不做移动/战斗,仍 6 省)。
-- **下一步**:C1 审查通过 → C2(造兵+移动)→ C3(战斗+占领,复用 BattleResolver)→ C4(战争状态+胜负+军事 AI)。美术顺延至 D 阶段。
+- **已达成**:MVP 垂直切片 ✅ + B 阶段(可玩性)✅ + **C1 军事地基** ✅(领土邻接+初始驻军+地图标记)。完整循环:选国→建厂/调税民生→推回合→AI 对手发展→存读档,2D 地图可点选省+显示驻军徽章。EditMode 97/97 + PlayMode 5/5 全绿(权威 artifact: `artifacts/c1-editmode5.xml` + `c1-playmode-final.xml`)。
+- **进行中**:**C2a 造兵**已签发 `WorkOrders/C2a-unit-production.md`,**待 OpenClaw 执行**。C2a = 玩家在首都训练 1 支 infantry(扣 `UnitConfig.cost`+manpower、2 回合完工)。本单 Phase 0 **强制收 C1 三项尾巴**:HashWorld 扩 units/省份静态字段、UnitSaveData 扩 13 字段(决策 A 全字段持久)、ReadModelBuilder 遍历 units 按 id 升序。
+- **下一步**:C2a 审查通过 → C2b(单步邻接+movesLeft 移动)→ C3(战斗+占领,复用 BattleResolver)→ C4(战争状态+胜负+军事 AI)。**人类已拍板设计取舍**(规则 14):C2 拆 C2a/C2b 两单 / 移动=单步邻接+movesLeft / 造兵仅首都 / 成本=UnitConfig.cost+manpower+多回合。美术顺延 D。
 
 ## 3. 进度时间线(浓缩,细节见 CHANGELOG)
 | 阶段 | 内容 | 状态 |
@@ -38,8 +38,9 @@
 | B1.5 | 税率/民生经营杠杆 | ✅ |
 | B2 | 2D 方块地图 + 点击选省看详情 | ✅ |
 | B3 | AI 自主建厂(+TryBuild 重构、playerCountryId)→ **B 阶段收官** | ✅ |
-| C1 | 领土+驻军地基(邻接+初始部队+地图驻军) | 🔄 已签发待执行 |
-| C2/C3/C4 | 造兵移动 / 战斗占领 / 战争胜负+军事 AI | ⏳ 规划中 |
+| C1 | 领土+驻军地基(邻接+初始部队+地图驻军) | ✅ |
+| C2a | 造兵(infantry/首都/2 回合/UnitConfig.cost+manpower) | 🔄 已签发待执行 |
+| C2b/C3/C4 | 单步邻接移动 / 战斗占领 / 战争胜负+军事 AI | ⏳ 规划中 |
 
 ## 4. 锁定的关键决策(人类批准,勿无故重提)
 - **确定性**:Simulation 整数优先 + **SplitMix64** 自定义种子 PRNG;`float` 仅表现层;遍历按 id 升序;随机走注入的 `IRandom`。
@@ -69,6 +70,8 @@
 - 运行演示:见 `RUNME.md`(Unity 6 打开→Setup Main Scene→Play)
 
 ## 7. 技术债(详见 ARCHITECTURE 附录 C,审查触及触发条件须提醒人类)
-- **C-1 CI 自动门禁**(高):现质量靠 Claude 人工审,长期应自动化。
-- **C-2 存档迁移**(高,上线红线):有 schemaVersion 无迁移逻辑。
-- C-3 配置工具链 / C-4 Presentation 组织(MainHudController 已膨胀)/ C-5 移动端性能 / C-6 本地化。
+- **C-1 CI 自动门禁**(高):现质量靠 Claude 人工审,长期应自动化。**C1 已触触发条件之一**:OpenClaw artifact 命名混乱(c1-editmode-final 早于 editmode5 且失败),纯人工审查易漏判;若有 CI 跑 NUnit + 按命名规约校验则不会出。
+- **C-2 存档迁移**(高,上线红线):有 schemaVersion 无迁移逻辑;C2a 决策 A 扩 UnitSaveData 13 字段会让旧档与新档结构不兼容,**仍不触发迁移管线**(尚未对真实玩家发布,Newtonsoft 容错读)。
+- **C-5 移动端性能**(中,触发条件已局部应验):C1 `ReadModelBuilder.BuildProvinceView` `garrisonCount` O(P×U) 每省遍历全部部队,6×6 无感,扩省后是问题。C2a Phase 0.3 已要求 units 预排序+共享,但本质循环没变,后续若上量需重做(按省份 id 索引部队列表)。
+- C-3 配置工具链 / C-4 Presentation 组织(MainHudController 已 369 行膨胀) / C-6 本地化。
+- **新技术债**:`Domain.Ideology` 枚举与 `ConfigValidationTests.validIdeologies` 字符串集合漂移(C1 期间 OpenClaw 把 MilitaryGov 加进字符串集合修测试,但枚举值本就该是单一真相)。后续小项收尾时把测试改为引用枚举名,避免再次漂移。
