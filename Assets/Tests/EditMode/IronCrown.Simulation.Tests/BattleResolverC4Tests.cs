@@ -110,7 +110,9 @@ namespace IronCrown.Tests
         private ConfigRegistry MakeConfig(EconomyConfig eco)
         {
             var repo = new StubConfigRepositoryWithData(eco);
-            return new ConfigRegistry(repo);
+            var cfg = new ConfigRegistry(repo);
+            cfg.LoadAll();
+            return cfg;
         }
 
         private class StubConfigRepositoryWithData : IConfigRepository
@@ -118,7 +120,11 @@ namespace IronCrown.Tests
             private readonly EconomyConfig _eco;
             public StubConfigRepositoryWithData(EconomyConfig eco) { _eco = eco; }
             public T Load<T>(string configName) where T : class => configName == "economy" ? _eco as T : null;
-            public System.Collections.Generic.List<T> LoadList<T>(string configName) where T : class => new();
+            public System.Collections.Generic.List<T> LoadList<T>(string configName) where T : class
+            {
+                if (configName == "economy" && _eco is T ecoObj) return new System.Collections.Generic.List<T> { ecoObj };
+                return new System.Collections.Generic.List<T>();
+            }
             public void ClearCache() { }
         }
 
@@ -358,11 +364,11 @@ namespace IronCrown.Tests
             var battle = MakeBattle(rng, events);
             var ai = new AIResolver(config, construction, battle);
 
-            // 攻方足够强
-            atk.baseAttack = 20;
-            def.baseDefense = 5;
-            def.organization = 30;
-            def.maxOrganization = 60;
+            // 攻方足够强 — def 是 enemy 的部队，AI 用它进攻
+            def.baseAttack = 20;
+            atk.baseDefense = 5;
+            atk.organization = 30;
+            atk.maxOrganization = 60;
 
             ai.MakeDecisions(enemy, world);
 
@@ -380,11 +386,9 @@ namespace IronCrown.Tests
             var battle = MakeBattle(rng, events);
             var ai = new AIResolver(config, construction, battle);
 
-            // 攻方太弱
-            atk.baseAttack = 5;
-            def.baseDefense = 20;
-            atk.organization = 30;
-            atk.maxOrganization = 60;
+            // 攻方太弱 — def 是 enemy 的部队，AI 用它进攻
+            def.baseAttack = 5;
+            atk.baseDefense = 20;
 
             ai.MakeDecisions(enemy, world);
 

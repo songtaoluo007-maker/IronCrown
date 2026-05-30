@@ -533,11 +533,9 @@ namespace IronCrown.Application.Tests
                 unitId = unit.id,
                 targetProvinceId = "wind_plain"
             });
-            Assert.IsFalse(result.accepted, "移动到非己方控制省应被拒");
-            // wind_plain controllerCountry=steppe_junta != empire_north
-            // GameSessionService 分流：敌方省→BattleResolver.InitiateAttack
-            // InitiateAttack 检查：邻接+非己方→进入战斗流程
-            // 但 wind_plain 有 steppe_junta 的驻军，所以会创建 ActiveBattle
+            // C3 变更：敌方省 → InitiateAttack，可能创建 ActiveBattle
+            // 如果 wind_plain 有守军则创建战斗，无守军则占领
+            Assert.IsTrue(result.accepted, "移动到敌方省应触发进攻");
         }
 
         [Test]

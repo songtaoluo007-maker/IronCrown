@@ -152,7 +152,7 @@ namespace IronCrown.Simulation.Tests
         public void InitiateAttack_AlreadyInBattle_Rejects()
         {
             var resolver = new BattleResolver(_rng, _events);
-            var (world, atk, def, target) = BuildWorldWithUnits();
+            var (world, atk, def, target) = BuildWorldWithUnits(atkMovesLeft: 2);
 
             resolver.InitiateAttack(world, "atk_1", "target", "empire");
 
@@ -292,11 +292,14 @@ namespace IronCrown.Simulation.Tests
             var u1 = CreateUnit("z_unit", "a", "p1");
             var u2 = CreateUnit("a_unit", "b", "p2");
             var u3 = CreateUnit("m_unit", "a", "p2");
+            var u4 = CreateUnit("c_unit", "c", "p3");
             world.units["z_unit"] = u1;
             world.units["a_unit"] = u2;
             world.units["m_unit"] = u3;
+            world.units["c_unit"] = u4;
             world.countries["a"].unitIds.AddRange(new[] { "z_unit", "m_unit" });
             world.countries["b"].unitIds.Add("a_unit");
+            world.countries["c"].unitIds.Add("c_unit");
 
             resolver.InitiateAttack(world, "z_unit", "p2", "a");
             resolver.InitiateAttack(world, "m_unit", "p3", "a");
