@@ -119,6 +119,15 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(u.experience));
                 bytes.AddRange(System.BitConverter.GetBytes(u.movesLeft));
             }
+            // activeBattles
+            foreach (var b in world.activeBattles)
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.id));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.attackerUnitId));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.defenderUnitId));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.provinceId));
+                bytes.AddRange(System.BitConverter.GetBytes(b.turnsElapsed));
+            }
             return FnvHash(bytes);
         }
 
@@ -536,6 +545,55 @@ namespace IronCrown.Application.Tests
 
             Assert.AreEqual("coal_basin", loaded.units["empire_north_inf_1"].currentProvinceId);
             Assert.AreEqual(2, loaded.units["empire_north_inf_1"].movesLeft);
+        }
+
+        [Test]
+        public void SaveLoad_ActiveBattle_Preserved()
+        {
+            // 构建含活动战斗的世界 → 存 → 读 → 验证战斗保留
+            var world = BuildWorldWithProvinces();
+
+            // 给 republic_west 加一支部队在 liberty_port
+            world.units["republic_west_inf_1"] = new UnitState
+            {
+                id = "republic_west_inf_1",
+                unitType = "infantry",
+                ownerCountry = "republic_west",
+                currentProvinceId = "liberty_port",
+                manpower = 100, maxManpower = 100,
+                equipment = 100, maxEquipment = 100,
+                organization = 60, maxOrganization = 60,
+                baseAttack = 10, baseDefense = 15, baseBreakthrough = 5,
+                speed = 3, movesLeft = 1
+            };
+            world.countries["republic_west"].unitIds.Add("republic_west_inf_1");
+
+            // 手动创建 ActiveBattle（模拟战斗中）
+            world.activeBattles.Add(new ActiveBattle
+            {
+                id = "empire_north_inf_1_vs_republic_west_inf_1",
+                attackerUnitId = "empire_north_inf_1",
+                defenderUnitId = "republic_west_inf_1",
+                provinceId = "liberty_port",
+                turnsElapsed = 1
+            });
+
+            // 存 → 读
+            var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            // 验证战斗保留
+            Assert.AreEqual(1, loaded.activeBattles.Count, "战斗应保留");
+            var b = loaded.activeBattles[0];
+            Assert.AreEqual("empire_north_inf_1_vs_republic_west_inf_1", b.id);
+            Assert.AreEqual("empire_north_inf_1", b.attackerUnitId);
+            Assert.AreEqual("republic_west_inf_1", b.defenderUnitId);
+            Assert.AreEqual("liberty_port", b.provinceId);
+            Assert.AreEqual(1, b.turnsElapsed);
+
+            // hash 等价
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "含战斗世界存→读 应 hash 等价");
         }
     }
 }

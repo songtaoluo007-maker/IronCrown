@@ -99,6 +99,17 @@ namespace IronCrown.Application
             };
             state.playerCountryId = world.playerCountryId;
             state.selectedUnitId = world.selectedUnitId;
+
+            // 活动战斗
+            state.activeBattles = world.activeBattles.Select(b => new ActiveBattleSaveData
+            {
+                id = b.id,
+                attackerUnitId = b.attackerUnitId,
+                defenderUnitId = b.defenderUnitId,
+                provinceId = b.provinceId,
+                turnsElapsed = b.turnsElapsed
+            }).ToArray();
+
             return state;
         }
 
@@ -220,6 +231,22 @@ namespace IronCrown.Application
             {
                 if (world.countries.TryGetValue(u.ownerCountry, out var owner))
                     owner.unitIds.Add(u.id);
+            }
+
+            // 活动战斗
+            if (save.activeBattles != null)
+            {
+                foreach (var bd in save.activeBattles)
+                {
+                    world.activeBattles.Add(new ActiveBattle
+                    {
+                        id = bd.id,
+                        attackerUnitId = bd.attackerUnitId,
+                        defenderUnitId = bd.defenderUnitId,
+                        provinceId = bd.provinceId,
+                        turnsElapsed = bd.turnsElapsed
+                    });
+                }
             }
 
             return world;

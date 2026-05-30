@@ -35,12 +35,29 @@ namespace IronCrown.Application
 
             var provinces = world.provinces.Values
                 .OrderBy(p => p.id, System.StringComparer.Ordinal)
-                .Select(p => BuildProvinceView(p, colorMap, sortedUnits))
+                .Select(p => BuildProvinceView(p, colorMap, sortedUnits, battleProvinceIds))
                 .ToList();
+
+            // 构建战斗中 unitId 集合
+            var battleUnitIds = new HashSet<string>();
+            foreach (var b in world.activeBattles)
+            {
+                battleUnitIds.Add(b.attackerUnitId);
+                battleUnitIds.Add(b.defenderUnitId);
+            }
+            // 构建战斗中 provinceId 集合
+            var battleProvinceIds = new HashSet<string>();
+            foreach (var b in world.activeBattles)
+                battleProvinceIds.Add(b.provinceId);
 
             var units = world.units.Values
                 .OrderBy(u => u.id, System.StringComparer.Ordinal)
-                .Select(BuildUnitView)
+                .Select(u => BuildUnitView(u, battleUnitIds))
+                .ToList();
+
+            var activeBattles = world.activeBattles
+                .OrderBy(b => b.id, System.StringComparer.Ordinal)
+                .Select(b => BuildActiveBattleView(b, world.units))
                 .ToList();
 
             return new WorldView
@@ -53,7 +70,8 @@ namespace IronCrown.Application
                 selectedUnitId = world.selectedUnitId,
                 countries = countries,
                 provinces = provinces,
-                units = units
+                units = units,
+                activeBattles = activeBattles
             };
         }
 
@@ -81,10 +99,12 @@ namespace IronCrown.Application
             };
         }
 
-        public ProvinceView BuildProvinceView(ProvinceState p, Dictionary<string, string> colorMap, List<UnitState> sortedUnits = null)
+        public ProvinceView BuildProvinceView(ProvinceState p, Dictionary<string, string> colorMap, List<UnitState> sortedUnits = null, HashSet<string> battleProvinceIds = null)
         {
+            // 按 controllerCountry 取色（占领后立即变色）
+            string displayCountry = p.controllerCountry ?? p.ownerCountry;
             string ownerColor = "#808080";
-            if (p.ownerCountry != null && colorMap.TryGetValue(p.ownerCountry, out var color))
+            if (displayCountry != null && colorMap.TryGetValue(displayCountry, out var color))
                 ownerColor = color;
 
             int garrisonCount = 0;
@@ -123,11 +143,14 @@ namespace IronCrown.Application
                 resourceOutput = p.resourceOutput,
                 neighbors = p.neighbors ?? System.Array.Empty<string>(),
                 garrisonCount = garrisonCount,
-                garrisonUnitIds = garrisonUnitIds
+                garrisonUnitIds = garrisonUnitIds,
+                controllerCountry = p.controllerCountry,
+                isOccupied = p.controllerCountry != null && p.controllerCountry != p.ownerCountry,
+                hasActiveBattle = battleProvinceIds != null && battleProvinceIds.Contains(p.id)
             };
         }
 
-        public UnitView BuildUnitView(UnitState u)
+        public UnitView BuildUnitView(UnitState u, HashSet<string> battleUnitIds = null)
         {
             return new UnitView
             {
@@ -140,7 +163,36 @@ namespace IronCrown.Application
                 organization = u.organization,
                 maxOrganization = u.maxOrganization,
                 movesLeft = u.movesLeft,
-                speed = u.speed
+                speed = u.speed,
+                isInBattle = battleUnitIds != null && battleUnitIds.Contains(u.id)
+            };
+        }
+
+        public ActiveBattleView BuildActiveBattleView(ActiveBattle b, Dictionary<string, UnitState> units)
+        {
+            int atkOrg = 0, atkMaxOrg = 0, defOrg = 0, defMaxOrg = 0;
+            if (units.TryGetValue(b.attackerUnitId, out var atk))
+            {
+                atkOrg = atk.organization;
+                atkMaxOrg = atk.maxOrganization;
+            }
+            if (units.TryGetValue(b.defenderUnitId, out var def))
+            {
+                defOrg = def.organization;
+                defMaxOrg = def.maxOrganization;
+            }
+
+            return new ActiveBattleView
+            {
+                id = b.id,
+                attackerUnitId = b.attackerUnitId,
+                defenderUnitId = b.defenderUnitId,
+                provinceId = b.provinceId,
+                turnsElapsed = b.turnsElapsed,
+                attackerOrg = atkOrg,
+                attackerMaxOrg = atkMaxOrg,
+                defenderOrg = defOrg,
+                defenderMaxOrg = defMaxOrg
             };
         }
     }

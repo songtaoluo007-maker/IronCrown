@@ -18,5 +18,6 @@ namespace IronCrown.Contracts
         public List<CountryView> countries;
         public List<ProvinceView> provinces;
         public List<UnitView> units;
+        public List<ActiveBattleView> activeBattles;
     }
 }

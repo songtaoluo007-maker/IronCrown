@@ -21,6 +21,7 @@ namespace IronCrown.Application
         public CountrySaveData[] countries;
         public ProvinceSaveData[] provinces;
         public UnitSaveData[] units;
+        public ActiveBattleSaveData[] activeBattles;
     }
 
     [Serializable]
@@ -136,5 +137,15 @@ namespace IronCrown.Application
         public int speed;
         public int movesLeft;
         public int supplyConsumption;
+    }
+
+    [Serializable]
+    public class ActiveBattleSaveData
+    {
+        public string id;
+        public string attackerUnitId;
+        public string defenderUnitId;
+        public string provinceId;
+        public int turnsElapsed;
     }
 }

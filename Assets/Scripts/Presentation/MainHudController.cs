@@ -88,6 +88,26 @@ namespace IronCrown.Presentation
 
             _events.Subscribe<TurnStartEvent>(_ => Render());
             _events.Subscribe<TurnEndEvent>(_ => Render());
+            _events.Subscribe<BattleInitiatedEvent>(e =>
+            {
+                ShowStatus($"⚔ {e.attackerUnitId} 开赴 {e.provinceId} 战场");
+                Render();
+            });
+            _events.Subscribe<BattleConcludedEvent>(e =>
+            {
+                if (e.winnerKind == "Attacker")
+                    ShowStatus($"⚔ 占领 {e.provinceId}！");
+                else if (e.winnerKind == "Defender")
+                    ShowStatus($"⚔ 攻势受挫：{e.attackerUnitId} 阵亡");
+                else
+                    ShowStatus($"⚔ 两败俱伤");
+                Render();
+            });
+            _events.Subscribe<ProvinceOccupiedEvent>(e =>
+            {
+                ShowStatus($"旗 进驻 {e.provinceId}（无抵抗）");
+                Render();
+            });
 
             Render();
         }
@@ -227,11 +247,12 @@ namespace IronCrown.Presentation
                     var currentProvince = vm.provinces.Find(p => p.id == selectedUnit.currentProvinceId);
                     bool isNeighbor = currentProvince != null && currentProvince.neighbors != null
                         && System.Array.Exists(currentProvince.neighbors, n => n == provinceId);
-                    bool isFriendly = clickedProvince.ownerCountry == selectedUnit.ownerCountry;
+                    bool isFriendly = clickedProvince.controllerCountry == selectedUnit.ownerCountry;
+                    bool isEnemy = isNeighbor && !isFriendly && clickedProvince.controllerCountry != null;
 
-                    if (isNeighbor && isFriendly && selectedUnit.movesLeft > 0)
+                    if (isNeighbor && (isFriendly || isEnemy) && selectedUnit.movesLeft > 0)
                     {
-                        // 发移动命令
+                        // 发移动/攻击命令（GameSessionService 自动分流）
                         var result = _session.IssueCommand(new GameCommand
                         {
                             commandType = CommandType.MoveUnit,
@@ -241,7 +262,10 @@ namespace IronCrown.Presentation
                         });
                         if (result.accepted)
                         {
-                            ShowStatus(vm.selectedUnitId + " -> " + clickedProvince.name + " (剩余 " + (selectedUnit.movesLeft - 1) + ")");
+                            if (isEnemy)
+                                ShowStatus(vm.selectedUnitId + " 开赴 " + clickedProvince.name + " 战场");
+                            else
+                                ShowStatus(vm.selectedUnitId + " -> " + clickedProvince.name + " (剩余 " + (selectedUnit.movesLeft - 1) + ")");
                             _session.SelectProvince(provinceId);
                         }
                         else
@@ -251,9 +275,9 @@ namespace IronCrown.Presentation
                         Render();
                         return;
                     }
-                    else if (!isNeighbor || !isFriendly)
+                    else if (!isNeighbor)
                     {
-                        // 点非邻省/敌方省 -> 清空部队选中，切省
+                        // 点非邻省 -> 清空部队选中，切省
                         _session.SelectUnit(null);
                     }
                 }
@@ -341,24 +365,30 @@ namespace IronCrown.Presentation
 
             const int cellSize = 110;
 
-            // 计算可移动目标省
+            // 计算可移动/可攻击目标省
             string[] moveTargets = null;
+            string[] attackTargets = null;
             if (!string.IsNullOrEmpty(vm.selectedUnitId) && vm.units != null)
             {
                 var selUnit = vm.units.Find(u => u.id == vm.selectedUnitId);
-                if (selUnit != null && selUnit.movesLeft > 0)
+                if (selUnit != null && selUnit.movesLeft > 0 && !selUnit.isInBattle)
                 {
                     var selProv = vm.provinces.Find(p => p.id == selUnit.currentProvinceId);
                     if (selProv != null && selProv.neighbors != null)
                     {
-                        var targets = new System.Collections.Generic.List<string>();
+                        var moveList = new System.Collections.Generic.List<string>();
+                        var attackList = new System.Collections.Generic.List<string>();
                         foreach (var nId in selProv.neighbors)
                         {
                             var np = vm.provinces.Find(p => p.id == nId);
-                            if (np != null && np.ownerCountry == selUnit.ownerCountry)
-                                targets.Add(nId);
+                            if (np == null) continue;
+                            if (np.controllerCountry == selUnit.ownerCountry)
+                                moveList.Add(nId);
+                            else
+                                attackList.Add(nId);
                         }
-                        moveTargets = targets.ToArray();
+                        moveTargets = moveList.ToArray();
+                        attackTargets = attackList.ToArray();
                     }
                 }
             }
@@ -379,9 +409,22 @@ namespace IronCrown.Presentation
                 if (isSelected)
                     tile.AddToClassList("province-tile-selected");
 
-                // 移动目标高亮
+                // 移动目标高亮（绿）
                 if (moveTargets != null && System.Array.Exists(moveTargets, t => t == p.id))
                     tile.AddToClassList("province-tile-move-target");
+
+                // 攻击目标高亮（红）
+                if (attackTargets != null && System.Array.Exists(attackTargets, t => t == p.id))
+                    tile.AddToClassList("province-tile-attack-target");
+
+                // 战斗中省份标记
+                if (p.hasActiveBattle)
+                {
+                    tile.AddToClassList("province-tile-in-battle");
+                    var battleBadge = new Label("⚔战");
+                    battleBadge.AddToClassList("province-battle-badge");
+                    tile.Add(battleBadge);
+                }
 
                 var label = new Label(p.name);
                 label.AddToClassList("province-tile-label");
@@ -432,6 +475,20 @@ namespace IronCrown.Presentation
                 sb.Append($"  |  邻接: {string.Join(", ", pv.neighbors)}");
             sb.Append($"  |  驻军: {pv.garrisonCount} 支");
 
+            // 被占领省信息
+            if (pv.isOccupied)
+                sb.Append($"  |  法理: {pv.ownerCountry} / 控制: {pv.controllerCountry}");
+
+            // 战斗中详情
+            if (pv.hasActiveBattle && vm.activeBattles != null)
+            {
+                var battle = vm.activeBattles.Find(b => b.provinceId == pv.id);
+                if (battle != null)
+                {
+                    sb.Append($"  |  战斗中: {battle.attackerUnitId}({battle.attackerOrg}/{battle.attackerMaxOrg}) vs {battle.defenderUnitId}({battle.defenderOrg}/{battle.defenderMaxOrg}) — {battle.turnsElapsed} 回合");
+                }
+            }
+
             // 选中部队详情
             if (!string.IsNullOrEmpty(vm.selectedUnitId) && vm.units != null)
             {
@@ -439,6 +496,8 @@ namespace IronCrown.Presentation
                 if (selUnit != null && selUnit.currentProvinceId == pv.id)
                 {
                     sb.Append($"  |  已选部队: {selUnit.id} (剩 {selUnit.movesLeft}/{selUnit.speed})");
+                    if (selUnit.isInBattle)
+                        sb.Append(" [战斗中]");
                 }
             }
 

@@ -17,5 +17,6 @@ namespace IronCrown.Contracts
         public int maxOrganization;
         public int movesLeft;
         public int speed;
+        public bool isInBattle;
     }
 }

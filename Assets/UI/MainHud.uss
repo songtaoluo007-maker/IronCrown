@@ -161,6 +161,29 @@
     border-width: 3px;
 }
 
+.province-tile-attack-target {
+    border-color: rgba(255, 80, 80, 0.9);
+    border-width: 3px;
+}
+
+.province-tile-in-battle {
+    border-color: rgba(255, 50, 50, 1);
+    border-width: 3px;
+}
+
+.province-battle-badge {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 11px;
+    color: #FF4444;
+    -unity-font-style: bold;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding-left: 3px;
+    padding-right: 3px;
+    border-radius: 3px;
+}
+
 .province-garrison-badge {
     position: absolute;
     top: 2px;

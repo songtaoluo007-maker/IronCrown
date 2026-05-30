@@ -20,6 +20,7 @@ namespace IronCrown.Domain
         public Dictionary<string, CountryState> countries = new();
         public Dictionary<string, ProvinceState> provinces = new();
         public Dictionary<string, UnitState> units = new();
+        public List<ActiveBattle> activeBattles = new();
         public List<DiplomacyRelation> relations = new();
 
         public void AddTension(int amount, string reason = null)

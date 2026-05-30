@@ -119,6 +119,9 @@ namespace IronCrown.Simulation
             {
                 _construction.ResolveConstruction(country);
             }
+
+            // 战斗 tick（Settlement 尾段）
+            _battle.TickBattles(world);
         }
 
     }

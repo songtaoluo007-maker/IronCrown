@@ -19,6 +19,7 @@ namespace IronCrown.Application
         private readonly ConstructionResolver _construction;
         private readonly UnitProductionResolver _unitProduction;
         private readonly MovementResolver _movement;
+        private readonly BattleResolver _battle;
         private readonly IEventPublisher _events;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
@@ -40,6 +41,7 @@ namespace IronCrown.Application
             ConstructionResolver construction,
             UnitProductionResolver unitProduction,
             MovementResolver movement,
+            BattleResolver battle,
             IEventPublisher events,
             ISaveRepository save,
             IRandom rng,
@@ -53,6 +55,7 @@ namespace IronCrown.Application
             _construction = construction;
             _unitProduction = unitProduction;
             _movement = movement;
+            _battle = battle;
             _events = events;
             _save = save;
             _rng = rng;
@@ -143,22 +146,49 @@ namespace IronCrown.Application
                     return unitResult;
 
                 case CommandType.MoveUnit:
-                    var moveFrom = _world.units.TryGetValue(cmd.unitId, out var mvUnit) ? mvUnit.currentProvinceId : null;
-                    var moveResult = _movement.TryMove(_world, cmd.unitId, cmd.targetProvinceId, _playerCountryId);
-                    if (moveResult.accepted)
+                    // 统一战斗锁定检查
+                    foreach (var b in _world.activeBattles)
                     {
-                        _world.selectedUnitId = cmd.unitId;
-                        var movedUnit = _world.units[cmd.unitId];
-                        _events.Publish(new UnitMovedEvent
-                        {
-                            unitId = cmd.unitId,
-                            fromProvinceId = moveFrom,
-                            toProvinceId = movedUnit.currentProvinceId,
-                            movesLeftAfter = movedUnit.movesLeft
-                        });
-                        _logger.Info($"[Session] {cmd.unitId} 移动到 {cmd.targetProvinceId}（剩余 {movedUnit.movesLeft}）");
+                        if (b.attackerUnitId == cmd.unitId || b.defenderUnitId == cmd.unitId)
+                            return CommandResult.Reject("部队正在战斗中");
                     }
-                    return moveResult;
+
+                    if (!_world.units.TryGetValue(cmd.unitId, out var mvUnit))
+                        return CommandResult.Reject("部队不存在");
+                    if (!_world.provinces.TryGetValue(cmd.targetProvinceId, out var mvTarget))
+                        return CommandResult.Reject("目标省份不存在");
+
+                    if (mvTarget.controllerCountry == mvUnit.ownerCountry)
+                    {
+                        // 己方省 → 和平移动
+                        var moveFrom = mvUnit.currentProvinceId;
+                        var moveResult = _movement.TryMove(_world, cmd.unitId, cmd.targetProvinceId, _playerCountryId);
+                        if (moveResult.accepted)
+                        {
+                            _world.selectedUnitId = cmd.unitId;
+                            var movedUnit = _world.units[cmd.unitId];
+                            _events.Publish(new UnitMovedEvent
+                            {
+                                unitId = cmd.unitId,
+                                fromProvinceId = moveFrom,
+                                toProvinceId = movedUnit.currentProvinceId,
+                                movesLeftAfter = movedUnit.movesLeft
+                            });
+                            _logger.Info($"[Session] {cmd.unitId} 移动到 {cmd.targetProvinceId}（剩余 {movedUnit.movesLeft}）");
+                        }
+                        return moveResult;
+                    }
+                    else
+                    {
+                        // 敌方省 → 战斗
+                        var battleResult = _battle.InitiateAttack(_world, cmd.unitId, cmd.targetProvinceId, _playerCountryId);
+                        if (battleResult.accepted)
+                        {
+                            _world.selectedUnitId = cmd.unitId;
+                            _logger.Info($"[Session] {cmd.unitId} 开赴 {cmd.targetProvinceId} 战场");
+                        }
+                        return battleResult;
+                    }
 
                 default:
                     return CommandResult.Reject("未知命令");

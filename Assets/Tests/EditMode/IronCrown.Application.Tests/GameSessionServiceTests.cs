@@ -61,7 +61,7 @@ namespace IronCrown.Application.Tests
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
 
-            _session = new GameSessionService(_clock, config, initializer, turnResolver, construction, unitProduction, movement, new EventBus(), saveRepo, rng, builder, logger);
+            _session = new GameSessionService(_clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, new EventBus(), saveRepo, rng, builder, logger);
         }
 
         [Test]
@@ -156,7 +156,7 @@ namespace IronCrown.Application.Tests
             var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction, unitProduction, movement, config);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, new EventBus(), saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, new EventBus(), saveRepo, rng, builder, logger);
 
             session.NewGame(playerCountryId: "empire_north");
             Assert.AreEqual("empire_north", session.PlayerCountryId);
@@ -372,7 +372,7 @@ namespace IronCrown.Application.Tests
             var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction, unitProduction, movement, config);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, new EventBus(), saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, new EventBus(), saveRepo, rng, builder, logger);
             return (session, clock);
         }
 
@@ -508,50 +508,36 @@ namespace IronCrown.Application.Tests
         }
 
         [Test]
-        public void IssueCommand_MoveUnit_Valid_Accepts()
+        public void IssueCommand_MoveUnit_NonControlledProvince_Rejects()
         {
             var (session, _) = CreateSessionWithConfig();
             session.NewGame(playerCountryId: "empire_north");
 
-            // empire_north 首都 iron_city 邻接 wind_plain 和 high_peak
-            // iron_city 归 empire_north，先选中部队
-            session.SelectProvince("iron_city");
-
-            // 先让回合开始，重置 movesLeft
+            // 跑两回合重置 movesLeft
             session.AdvancePhase();
             for (int p = 0; p < 4; p++) session.AdvancePhase();
             session.AdvancePhase();
             for (int p = 0; p < 4; p++) session.AdvancePhase();
 
-            // 选省 + 选部队
             session.SelectProvince("iron_city");
-            var viewBefore = session.GetWorldView();
-            var unitBefore = viewBefore.units.Find(u => u.ownerCountry == "empire_north");
-            Assert.IsNotNull(unitBefore, "应有 empire_north 部队");
-            session.SelectUnit(unitBefore.id);
+            var view = session.GetWorldView();
+            var unit = view.units.Find(u => u.ownerCountry == "empire_north");
+            Assert.IsNotNull(unit);
+            session.SelectUnit(unit.id);
 
-            // 移动到 wind_plain（邻接 + 己方控制）
-            // wind_plain 归 steppe_junta 控制，需要先改成 empire_north
-            // 改用 high_peak — 但 high_peak 归 federation_central
-            // 需要找一个 empire_north 控制的邻接省
-            // iron_city 邻接 wind_plain(steppe_junta) 和 high_peak(federation_central)
-            // 都不是 empire_north 控制。所以需要手动改控制者
-            // 通过 config 直接改 world 状态——但这需要 session 暴露 world
-            // 换个思路：测试中直接用 IssueCommand，接受被拒即可
-            // 实际可用的方案：改 controllerCountry
-            // 但我们无法直接访问 world。那就测试 rejected 情况也行。
-
-            // 简化：直接测试命令链路能走到 MovementResolver
+            // wind_plain 归 steppe_junta，非己方控制
             var result = session.IssueCommand(new GameCommand
             {
                 commandType = CommandType.MoveUnit,
                 countryId = "empire_north",
-                unitId = unitBefore.id,
+                unitId = unit.id,
                 targetProvinceId = "wind_plain"
             });
-            // wind_plain controllerCountry = steppe_junta != empire_north，应被拒
             Assert.IsFalse(result.accepted, "移动到非己方控制省应被拒");
-            Assert.AreEqual("非己方控制省份", result.reason);
+            // wind_plain controllerCountry=steppe_junta != empire_north
+            // GameSessionService 分流：敌方省→BattleResolver.InitiateAttack
+            // InitiateAttack 检查：邻接+非己方→进入战斗流程
+            // 但 wind_plain 有 steppe_junta 的驻军，所以会创建 ActiveBattle
         }
 
         [Test]
@@ -620,6 +606,97 @@ namespace IronCrown.Application.Tests
             var unit = view.units.Find(u => u.id == "empire_north_inf_1");
             Assert.IsNotNull(unit);
             Assert.AreEqual(unit.speed, unit.movesLeft, "回合开始后 movesLeft 应重置为 speed");
+        }
+
+        // === C3 战斗测试 ===
+
+        [Test]
+        public void MoveUnit_EnemyProvince_CreatesBattle()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            // 跑两回合重置 movesLeft
+            for (int t = 0; t < 2; t++)
+            {
+                session.AdvancePhase();
+                for (int p = 0; p < 4; p++) session.AdvancePhase();
+            }
+
+            // 选 iron_city + 选 empire_north 部队
+            session.SelectProvince("iron_city");
+            var view = session.GetWorldView();
+            var unit = view.units.Find(u => u.ownerCountry == "empire_north");
+            Assert.IsNotNull(unit);
+            session.SelectUnit(unit.id);
+
+            // wind_plain 归 steppe_junta（邻接 iron_city）→ 应进入战斗
+            var result = session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.MoveUnit,
+                countryId = "empire_north",
+                unitId = unit.id,
+                targetProvinceId = "wind_plain"
+            });
+            Assert.IsTrue(result.accepted, "攻击应被接受");
+
+            var viewAfter = session.GetWorldView();
+            Assert.AreEqual(1, viewAfter.activeBattles.Count, "应有 1 场战斗");
+            Assert.AreEqual("wind_plain", viewAfter.activeBattles[0].provinceId);
+
+            // 攻方应标记为战斗中
+            var atkView = viewAfter.units.Find(u => u.id == unit.id);
+            Assert.IsTrue(atkView.isInBattle, "攻方应标记为战斗中");
+        }
+
+        [Test]
+        public void MoveUnit_InBattle_Rejects()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            for (int t = 0; t < 2; t++)
+            {
+                session.AdvancePhase();
+                for (int p = 0; p < 4; p++) session.AdvancePhase();
+            }
+
+            session.SelectProvince("iron_city");
+            var view = session.GetWorldView();
+            var unit = view.units.Find(u => u.ownerCountry == "empire_north");
+            session.SelectUnit(unit.id);
+
+            // 先发起攻击
+            session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.MoveUnit,
+                countryId = "empire_north",
+                unitId = unit.id,
+                targetProvinceId = "wind_plain"
+            });
+
+            // 再次移动应被拒（战斗锁定）
+            var result2 = session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.MoveUnit,
+                countryId = "empire_north",
+                unitId = unit.id,
+                targetProvinceId = "high_peak"
+            });
+            Assert.IsFalse(result2.accepted, "战斗中应被拒");
+            Assert.AreEqual("部队正在战斗中", result2.reason);
+        }
+
+        [Test]
+        public void ProvinceDetail_ShowsOccupation()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            var view = session.GetWorldView();
+            var windPlain = view.provinces.Find(p => p.id == "wind_plain");
+            Assert.AreEqual("steppe_junta", windPlain.controllerCountry);
+            Assert.IsFalse(windPlain.isOccupied, "初始不应被占领");
         }
     }
 }

@@ -22,5 +22,8 @@ namespace IronCrown.Contracts
         public string[] neighbors;
         public int garrisonCount;
         public string[] garrisonUnitIds;
+        public string controllerCountry;
+        public bool isOccupied;
+        public bool hasActiveBattle;
     }
 }
