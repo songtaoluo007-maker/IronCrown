@@ -22,6 +22,7 @@ namespace IronCrown.Presentation
         private Button _advanceBtn;
         private Button _buildCivilianBtn;
         private Button _buildMilitaryBtn;
+        private Button _buildInfantryBtn;
         private Button _taxUpBtn;
         private Button _taxDownBtn;
         private Button _civilUpBtn;
@@ -36,6 +37,7 @@ namespace IronCrown.Presentation
         private EventCallback<ClickEvent> _onAdvance;
         private EventCallback<ClickEvent> _onBuildCivilian;
         private EventCallback<ClickEvent> _onBuildMilitary;
+        private EventCallback<ClickEvent> _onBuildInfantry;
         private EventCallback<ClickEvent> _onTaxUp;
         private EventCallback<ClickEvent> _onTaxDown;
         private EventCallback<ClickEvent> _onCivilUp;
@@ -55,6 +57,7 @@ namespace IronCrown.Presentation
             _advanceBtn = root.Q<Button>("advance-btn");
             _buildCivilianBtn = root.Q<Button>("build-civilian-btn");
             _buildMilitaryBtn = root.Q<Button>("build-military-btn");
+            _buildInfantryBtn = root.Q<Button>("build-infantry-btn");
             _taxUpBtn = root.Q<Button>("tax-up-btn");
             _taxDownBtn = root.Q<Button>("tax-down-btn");
             _civilUpBtn = root.Q<Button>("civil-up-btn");
@@ -68,6 +71,7 @@ namespace IronCrown.Presentation
             _onAdvance = _ => Advance();
             _onBuildCivilian = _ => BuildCivilian();
             _onBuildMilitary = _ => BuildMilitary();
+            _onBuildInfantry = _ => BuildInfantry();
             _onTaxUp = _ => SetTax(1);
             _onTaxDown = _ => SetTax(-1);
             _onCivilUp = _ => SetCivil(1);
@@ -76,6 +80,7 @@ namespace IronCrown.Presentation
             if (_advanceBtn != null) _advanceBtn.RegisterCallback(_onAdvance);
             if (_buildCivilianBtn != null) _buildCivilianBtn.RegisterCallback(_onBuildCivilian);
             if (_buildMilitaryBtn != null) _buildMilitaryBtn.RegisterCallback(_onBuildMilitary);
+            if (_buildInfantryBtn != null) _buildInfantryBtn.RegisterCallback(_onBuildInfantry);
             if (_taxUpBtn != null) _taxUpBtn.RegisterCallback(_onTaxUp);
             if (_taxDownBtn != null) _taxDownBtn.RegisterCallback(_onTaxDown);
             if (_civilUpBtn != null) _civilUpBtn.RegisterCallback(_onCivilUp);
@@ -92,6 +97,7 @@ namespace IronCrown.Presentation
             if (_advanceBtn != null) _advanceBtn.UnregisterCallback(_onAdvance);
             if (_buildCivilianBtn != null) _buildCivilianBtn.UnregisterCallback(_onBuildCivilian);
             if (_buildMilitaryBtn != null) _buildMilitaryBtn.UnregisterCallback(_onBuildMilitary);
+            if (_buildInfantryBtn != null) _buildInfantryBtn.UnregisterCallback(_onBuildInfantry);
             if (_taxUpBtn != null) _taxUpBtn.UnregisterCallback(_onTaxUp);
             if (_taxDownBtn != null) _taxDownBtn.UnregisterCallback(_onTaxDown);
             if (_civilUpBtn != null) _civilUpBtn.UnregisterCallback(_onCivilUp);
@@ -127,6 +133,21 @@ namespace IronCrown.Presentation
             });
             if (result.accepted)
                 ShowStatus("已下令建造军用厂");
+            else
+                ShowStatus($"被拒: {result.reason}");
+            Render();
+        }
+
+        public void BuildInfantry()
+        {
+            var result = _session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.BuildUnit,
+                countryId = _session.PlayerCountryId,
+                unitType = "infantry"
+            });
+            if (result.accepted)
+                ShowStatus("已下令训练步兵");
             else
                 ShowStatus($"被拒: {result.reason}");
             Render();
@@ -347,6 +368,12 @@ namespace IronCrown.Presentation
             {
                 sb.Append("  |  在建: ");
                 sb.Append(c.constructionQueueCount);
+            }
+
+            if (c.unitProductionQueueCount > 0)
+            {
+                sb.Append("  |  在训: ");
+                sb.Append(c.unitProductionQueueCount);
             }
 
             if (c.resources != null && c.resources.Count > 0)

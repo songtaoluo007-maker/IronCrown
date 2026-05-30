@@ -40,6 +40,11 @@ namespace IronCrown.Application
                         factoryKind = q.factoryKind,
                         turnsRemaining = q.turnsRemaining
                     }).ToArray(),
+                    unitProductionQueue = c.unitProductionQueue.Select(q => new UnitProductionOrderSaveData
+                    {
+                        unitType = q.unitType,
+                        turnsRemaining = q.turnsRemaining
+                    }).ToArray(),
                     activePolicies = c.activePolicies.ToArray(),
                     completedTechs = c.completedTechs.ToArray()
                 }).ToArray(),
@@ -76,7 +81,20 @@ namespace IronCrown.Application
                     currentProvince = u.currentProvinceId,
                     manpower = u.manpower,
                     equipment = u.equipment,
-                    organization = u.organization
+                    organization = u.organization,
+                    maxManpower = u.maxManpower,
+                    maxEquipment = u.maxEquipment,
+                    maxOrganization = u.maxOrganization,
+                    morale = u.morale,
+                    experience = u.experience,
+                    baseAttack = u.baseAttack,
+                    baseDefense = u.baseDefense,
+                    baseBreakthrough = u.baseBreakthrough,
+                    armor = u.armor,
+                    piercing = u.piercing,
+                    speed = u.speed,
+                    movesLeft = u.movesLeft,
+                    supplyConsumption = u.supplyConsumption
                 }).ToArray()
             };
             return state;
@@ -117,6 +135,9 @@ namespace IronCrown.Application
                     if (cd.constructionQueue != null)
                         foreach (var q in cd.constructionQueue)
                             c.constructionQueue.Add(new ConstructionOrder { factoryKind = q.factoryKind, turnsRemaining = q.turnsRemaining });
+                    if (cd.unitProductionQueue != null)
+                        foreach (var q in cd.unitProductionQueue)
+                            c.unitProductionQueue.Add(new UnitProductionOrder { unitType = q.unitType, turnsRemaining = q.turnsRemaining });
                     if (cd.activePolicies != null)
                         foreach (var p in cd.activePolicies) c.activePolicies.Add(p);
                     if (cd.completedTechs != null)
@@ -170,10 +191,32 @@ namespace IronCrown.Application
                         currentProvinceId = ud.currentProvince,
                         manpower = ud.manpower,
                         equipment = ud.equipment,
-                        organization = ud.organization
+                        organization = ud.organization,
+                        maxManpower = ud.maxManpower,
+                        maxEquipment = ud.maxEquipment,
+                        maxOrganization = ud.maxOrganization,
+                        morale = ud.morale,
+                        experience = ud.experience,
+                        baseAttack = ud.baseAttack,
+                        baseDefense = ud.baseDefense,
+                        baseBreakthrough = ud.baseBreakthrough,
+                        armor = ud.armor,
+                        piercing = ud.piercing,
+                        speed = ud.speed,
+                        movesLeft = ud.movesLeft,
+                        supplyConsumption = ud.supplyConsumption
                     };
                     world.units[u.id] = u;
                 }
+            }
+
+            // 重建 country.unitIds（不读存档，从 units 按 owner 分组重建）
+            foreach (var c in world.countries.Values)
+                c.unitIds.Clear();
+            foreach (var u in world.units.Values.OrderBy(u => u.id, System.StringComparer.Ordinal))
+            {
+                if (world.countries.TryGetValue(u.ownerCountry, out var owner))
+                    owner.unitIds.Add(u.id);
             }
 
             return world;

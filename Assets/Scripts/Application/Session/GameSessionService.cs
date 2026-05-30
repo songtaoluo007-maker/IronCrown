@@ -17,6 +17,7 @@ namespace IronCrown.Application
         private readonly WorldInitializer _initializer;
         private readonly TurnResolver _turnResolver;
         private readonly ConstructionResolver _construction;
+        private readonly UnitProductionResolver _unitProduction;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
         private readonly ReadModelBuilder _builder;
@@ -35,6 +36,7 @@ namespace IronCrown.Application
             WorldInitializer initializer,
             TurnResolver turnResolver,
             ConstructionResolver construction,
+            UnitProductionResolver unitProduction,
             ISaveRepository save,
             IRandom rng,
             ReadModelBuilder builder,
@@ -45,6 +47,7 @@ namespace IronCrown.Application
             _initializer = initializer;
             _turnResolver = turnResolver;
             _construction = construction;
+            _unitProduction = unitProduction;
             _save = save;
             _rng = rng;
             _builder = builder;
@@ -126,6 +129,12 @@ namespace IronCrown.Application
                     country.civilLevel = cmd.level;
                     _logger.Info($"[Session] {cmd.countryId} 民生设为 {cmd.level}");
                     return CommandResult.Accept();
+
+                case CommandType.BuildUnit:
+                    var unitResult = _unitProduction.TryEnqueue(country, cmd.unitType, _config, eco);
+                    if (unitResult.accepted)
+                        _logger.Info($"[Session] {cmd.countryId} 下令训练 {cmd.unitType}");
+                    return unitResult;
 
                 default:
                     return CommandResult.Reject("未知命令");

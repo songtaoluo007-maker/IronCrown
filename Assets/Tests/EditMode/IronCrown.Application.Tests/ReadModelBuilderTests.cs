@@ -225,5 +225,44 @@ namespace IronCrown.Application.Tests
             Assert.Contains("p2", view.provinces[0].neighbors);
             Assert.Contains("p3", view.provinces[0].neighbors);
         }
+
+        [Test]
+        public void BuildCountryView_UnitProductionQueueCount()
+        {
+            var country = new CountryState
+            {
+                id = "test",
+                name = "Test",
+                ideology = Ideology.FreeRepublic,
+                resources = new Dictionary<string, int>()
+            };
+            country.unitProductionQueue.Add(new UnitProductionOrder { unitType = "infantry", turnsRemaining = 2 });
+
+            var view = _builder.BuildCountryView(country);
+
+            Assert.AreEqual(1, view.unitProductionQueueCount);
+        }
+
+        [Test]
+        public void BuildWorldView_UnitsOrderedById()
+        {
+            var world = new WorldState();
+            world.provinces["p1"] = new ProvinceState
+            {
+                id = "p1", name = "P1",
+                ownerCountry = "x", gridX = 0, gridY = 0,
+                terrain = TerrainType.Plain
+            };
+            // 故意乱序添加
+            world.units["b"] = new UnitState { id = "b", unitType = "infantry", ownerCountry = "x", currentProvinceId = "p1" };
+            world.units["a"] = new UnitState { id = "a", unitType = "infantry", ownerCountry = "x", currentProvinceId = "p1" };
+            world.units["c"] = new UnitState { id = "c", unitType = "infantry", ownerCountry = "x", currentProvinceId = "p1" };
+
+            var clock = new GameClock(new EventBus());
+            var view = _builder.BuildWorldView(world, clock);
+
+            // garrisonCount 应为 3（排序不影响计数）
+            Assert.AreEqual(3, view.provinces[0].garrisonCount);
+        }
     }
 }

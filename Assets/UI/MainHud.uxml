@@ -13,6 +13,7 @@
         <ui:VisualElement class="command-bar">
             <ui:Button name="build-civilian-btn" text="建民用厂" class="build-btn" />
             <ui:Button name="build-military-btn" text="建军用厂" class="build-btn" />
+            <ui:Button name="build-infantry-btn" text="训练步兵" class="build-btn" />
         </ui:VisualElement>
 
         <!-- 内政栏 -->

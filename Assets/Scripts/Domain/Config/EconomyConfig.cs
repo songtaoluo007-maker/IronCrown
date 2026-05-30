@@ -30,6 +30,9 @@ namespace IronCrown.Domain
         public int[] civilExpensePercents;  // [50,100,150] 民生支出倍率
         public int[] civilStabilityDeltas;  // [-2,0,2] 每回合稳定修正
 
+        // === 造兵 ===
+        public int unitProductionTurns;
+
         // === AI 阈值 ===
         public int aiBuildCapitalThreshold;
         public int aiMaxCivilianFactories;

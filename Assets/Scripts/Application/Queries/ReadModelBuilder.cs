@@ -30,9 +30,12 @@ namespace IronCrown.Application
                 }
             }
 
+            // units 按 id 排序一次，避免 O(P*U) 无序遍历
+            var sortedUnits = world.units.Values.OrderBy(u => u.id, System.StringComparer.Ordinal).ToList();
+
             var provinces = world.provinces.Values
                 .OrderBy(p => p.id, System.StringComparer.Ordinal)
-                .Select(p => BuildProvinceView(p, colorMap, world.units))
+                .Select(p => BuildProvinceView(p, colorMap, sortedUnits))
                 .ToList();
 
             return new WorldView
@@ -65,21 +68,22 @@ namespace IronCrown.Application
                 equipmentStockpile = c.equipmentStockpile,
                 resources = new Dictionary<string, int>(c.resources),
                 constructionQueueCount = c.constructionQueue.Count,
+                unitProductionQueueCount = c.unitProductionQueue.Count,
                 taxLevel = c.taxLevel,
                 civilLevel = c.civilLevel
             };
         }
 
-        public ProvinceView BuildProvinceView(ProvinceState p, Dictionary<string, string> colorMap, Dictionary<string, UnitState> units = null)
+        public ProvinceView BuildProvinceView(ProvinceState p, Dictionary<string, string> colorMap, List<UnitState> sortedUnits = null)
         {
             string ownerColor = "#808080";
             if (p.ownerCountry != null && colorMap.TryGetValue(p.ownerCountry, out var color))
                 ownerColor = color;
 
             int garrisonCount = 0;
-            if (units != null)
+            if (sortedUnits != null)
             {
-                foreach (var u in units.Values)
+                foreach (var u in sortedUnits)
                 {
                     if (u.currentProvinceId == p.id)
                         garrisonCount++;
