@@ -160,6 +160,7 @@ namespace IronCrown.Application.Tests
                 resources = new Dictionary<string, int>
                 {
                     { "steel", 50 },
+                    { "food", 100 },
                     { "capital", 100 }
                 }
             };
@@ -178,6 +179,7 @@ namespace IronCrown.Application.Tests
                 resources = new Dictionary<string, int>
                 {
                     { "steel", 30 },
+                    { "food", 80 },
                     { "capital", 80 }
                 }
             };
