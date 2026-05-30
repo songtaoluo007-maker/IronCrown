@@ -157,6 +157,8 @@ namespace IronCrown.Application.Tests
                 civilianFactories = 2,
                 militaryFactories = 1,
                 dockyards = 0,
+                manpower = 100000,
+                totalManpower = 200000,
                 resources = new Dictionary<string, int>
                 {
                     { "steel", 50 },
@@ -176,6 +178,8 @@ namespace IronCrown.Application.Tests
                 civilianFactories = 1,
                 militaryFactories = 2,
                 dockyards = 0,
+                manpower = 50000,
+                totalManpower = 150000,
                 resources = new Dictionary<string, int>
                 {
                     { "steel", 30 },
