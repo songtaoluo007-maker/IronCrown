@@ -9,6 +9,7 @@ using IronCrown.Contracts;
 using IronCrown.Domain;
 using IronCrown.Simulation;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IronCrown.Application.Tests
 {
