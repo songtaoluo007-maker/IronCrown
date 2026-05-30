@@ -15,13 +15,13 @@ namespace IronCrown.Simulation.Tests
     public class BattleResolverC3Tests
     {
         private EventBus _events;
-        private DeterministicRng _rng;
+        private RandomService _rng;
 
         [SetUp]
         public void SetUp()
         {
             _events = new EventBus();
-            _rng = new DeterministicRng(12345);
+            _rng = new RandomService(12345);
         }
 
         private (WorldState world, UnitState attacker, UnitState defender, ProvinceState target) BuildWorldWithUnits(
@@ -284,11 +284,17 @@ namespace IronCrown.Simulation.Tests
     internal class FixedResultRng : IRandom
     {
         private readonly double _fixedValue;
-        public int State { get; set; }
+        public int Seed => 0;
+        public ulong State { get; set; }
 
         public FixedResultRng(double fixedValue) { _fixedValue = fixedValue; }
-        public int Next(int max) => (int)(_fixedValue * max);
-        public void Reset(int seed) { }
-        public void RestoreState(int state) { }
+        public int Next(int maxExclusive) => (int)(_fixedValue * maxExclusive);
+        public int Range(int minInclusive, int maxExclusive) => minInclusive + (int)(_fixedValue * (maxExclusive - minInclusive));
+        public bool Roll(int percentChance) => _fixedValue * 100 < percentChance;
+        public double NextDouble() => _fixedValue;
+        public double RangeDouble(double min, double max) => min + _fixedValue * (max - min);
+        public void Reset() { }
+        public void Reset(int newSeed) { }
+        public void RestoreState(ulong state) { }
     }
 }

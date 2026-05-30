@@ -33,22 +33,20 @@ namespace IronCrown.Application
             // units 按 id 排序一次，避免 O(P*U) 无序遍历
             var sortedUnits = world.units.Values.OrderBy(u => u.id, System.StringComparer.Ordinal).ToList();
 
-            var provinces = world.provinces.Values
-                .OrderBy(p => p.id, System.StringComparer.Ordinal)
-                .Select(p => BuildProvinceView(p, colorMap, sortedUnits, battleProvinceIds))
-                .ToList();
-
-            // 构建战斗中 unitId 集合
+            // 构建战斗中 unitId/provinceId 集合（在 province 映射之前）
             var battleUnitIds = new HashSet<string>();
+            var battleProvinceIds = new HashSet<string>();
             foreach (var b in world.activeBattles)
             {
                 battleUnitIds.Add(b.attackerUnitId);
                 battleUnitIds.Add(b.defenderUnitId);
-            }
-            // 构建战斗中 provinceId 集合
-            var battleProvinceIds = new HashSet<string>();
-            foreach (var b in world.activeBattles)
                 battleProvinceIds.Add(b.provinceId);
+            }
+
+            var provinces = world.provinces.Values
+                .OrderBy(p => p.id, System.StringComparer.Ordinal)
+                .Select(p => BuildProvinceView(p, colorMap, sortedUnits, battleProvinceIds))
+                .ToList();
 
             var units = world.units.Values
                 .OrderBy(u => u.id, System.StringComparer.Ordinal)
