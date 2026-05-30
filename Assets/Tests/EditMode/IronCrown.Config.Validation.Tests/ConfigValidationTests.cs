@@ -174,5 +174,24 @@ namespace IronCrown.Config.Validation.Tests
                 owners.Add(p.ownerCountry);
             }
         }
+
+        [System.Serializable]
+        class EconomyList { public List<EconomyData> items = new(); }
+        [System.Serializable]
+        class EconomyData
+        {
+            public string id;
+            public int unitProductionTurns;
+        }
+
+        [Test]
+        public void Economy_HasUnitProductionTurns()
+        {
+            var config = LoadConfig<EconomyList>("economy.json");
+            Assert.IsNotNull(config);
+            var eco = config.items.Find(e => e.id == "global");
+            Assert.IsNotNull(eco, "economy.json 应有 id='global'");
+            Assert.Greater(eco.unitProductionTurns, 0, "unitProductionTurns 应 > 0");
+        }
     }
 }

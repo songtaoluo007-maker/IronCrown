@@ -53,13 +53,14 @@ namespace IronCrown.Application.Tests
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();
             var construction = new ConstructionResolver();
+            var unitProduction = new UnitProductionResolver();
             var ai = new AIResolver(config, construction);
             var diplomacy = new DiplomacyResolver();
-            var turnResolver = new TurnResolver(_clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction);
+            var turnResolver = new TurnResolver(_clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction, unitProduction, config);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
 
-            _session = new GameSessionService(_clock, config, initializer, turnResolver, construction, saveRepo, rng, builder, logger);
+            _session = new GameSessionService(_clock, config, initializer, turnResolver, construction, unitProduction, saveRepo, rng, builder, logger);
         }
 
         [Test]
@@ -147,12 +148,13 @@ namespace IronCrown.Application.Tests
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();
             var construction = new ConstructionResolver();
+            var unitProduction = new UnitProductionResolver();
             var ai = new AIResolver(config, construction);
             var diplomacy = new DiplomacyResolver();
-            var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction);
+            var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction, unitProduction, config);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, saveRepo, rng, builder, logger);
 
             session.NewGame(playerCountryId: "empire_north");
             Assert.AreEqual("empire_north", session.PlayerCountryId);
@@ -361,12 +363,13 @@ namespace IronCrown.Application.Tests
             var battle = new BattleResolver(rng, new EventBus());
             var supply = new SupplyResolver();
             var construction = new ConstructionResolver();
+            var unitProduction = new UnitProductionResolver();
             var ai = new AIResolver(config, construction);
             var diplomacy = new DiplomacyResolver();
-            var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction);
+            var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction, unitProduction, config);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, saveRepo, rng, builder, logger);
             return (session, clock);
         }
 
@@ -437,6 +440,68 @@ namespace IronCrown.Application.Tests
                 else
                     Assert.AreEqual(0, p.garrisonCount, $"{p.name} 不是首都，不应有驻军");
             }
+        }
+
+        [Test]
+        public void IssueCommand_BuildUnit_Player_Accepts()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            var result = session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.BuildUnit,
+                countryId = "empire_north",
+                unitType = "infantry"
+            });
+            Assert.IsTrue(result.accepted, "玩家国应能下令造兵");
+
+            var view = session.GetWorldView();
+            var player = view.countries.Find(c => c.id == "empire_north");
+            Assert.AreEqual(1, player.unitProductionQueueCount, "在训队列应为 1");
+        }
+
+        [Test]
+        public void IssueCommand_BuildUnit_NonPlayer_Rejects()
+        {
+            var (session, _) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            var result = session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.BuildUnit,
+                countryId = "republic_west",
+                unitType = "infantry"
+            });
+            Assert.IsFalse(result.accepted, "非玩家国应被拒");
+            Assert.AreEqual("非玩家国", result.reason);
+        }
+
+        [Test]
+        public void BuildUnit_TwoTurnAdvance_NewGarrisonAppears()
+        {
+            var (session, clock) = CreateSessionWithConfig();
+            session.NewGame(playerCountryId: "empire_north");
+
+            // 下单
+            session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.BuildUnit,
+                countryId = "empire_north",
+                unitType = "infantry"
+            });
+
+            // 推 2 个完整回合（每回合 5 阶段）
+            for (int t = 0; t < 2; t++)
+            {
+                session.AdvancePhase(); // TurnStart → 触发 ExecuteTurn
+                for (int p = 0; p < 4; p++)
+                    session.AdvancePhase(); // 剩余 4 阶段
+            }
+
+            var view = session.GetWorldView();
+            var capital = view.provinces.Find(p => p.id == "iron_city");
+            Assert.AreEqual(2, capital.garrisonCount, "2 回合后首都应有 2 支驻军");
         }
     }
 }

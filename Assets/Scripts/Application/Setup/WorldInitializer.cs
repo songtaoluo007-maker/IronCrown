@@ -92,30 +92,9 @@ namespace IronCrown.Application
                 foreach (var country in world.countries.Values)
                 {
                     string unitId = $"{country.id}_inf_1";
-                    var unit = new UnitState
-                    {
-                        id = unitId,
-                        unitType = "infantry",
-                        ownerCountry = country.id,
-                        currentProvinceId = country.capitalProvinceId,
-                        manpower = infantryTemplate.hp,
-                        maxManpower = infantryTemplate.hp,
-                        equipment = infantryTemplate.hp,
-                        maxEquipment = infantryTemplate.hp,
-                        organization = infantryTemplate.organization,
-                        maxOrganization = infantryTemplate.organization,
-                        morale = 50,
-                        experience = 0,
-                        baseAttack = infantryTemplate.attack,
-                        baseDefense = infantryTemplate.defense,
-                        baseBreakthrough = infantryTemplate.breakthrough,
-                        armor = infantryTemplate.armor,
-                        piercing = infantryTemplate.piercing,
-                        speed = infantryTemplate.speed,
-                        movesLeft = infantryTemplate.speed,
-                        supplyConsumption = infantryTemplate.supplyConsumption
-                    };
+                    var unit = UnitFactory.CreateFromTemplate(unitId, "infantry", country.id, country.capitalProvinceId, infantryTemplate);
                     world.units[unitId] = unit;
+                    country.unitIds.Add(unitId);
                 }
             }
 

@@ -20,6 +20,8 @@ namespace IronCrown.Simulation
         private readonly AIResolver _ai;
         private readonly DiplomacyResolver _diplomacy;
         private readonly ConstructionResolver _construction;
+        private readonly UnitProductionResolver _unitProduction;
+        private readonly IConfigRegistry _config;
 
         public TurnResolver(
             ITurnClock clock,
@@ -30,7 +32,9 @@ namespace IronCrown.Simulation
             SupplyResolver supply,
             AIResolver ai,
             DiplomacyResolver diplomacy,
-            ConstructionResolver construction)
+            ConstructionResolver construction,
+            UnitProductionResolver unitProduction = null,
+            IConfigRegistry config = null)
         {
             _clock = clock;
             _events = events;
@@ -41,6 +45,8 @@ namespace IronCrown.Simulation
             _ai = ai;
             _diplomacy = diplomacy;
             _construction = construction;
+            _unitProduction = unitProduction;
+            _config = config;
         }
 
         public void ExecuteTurn(WorldState world)
@@ -84,8 +90,29 @@ namespace IronCrown.Simulation
             foreach (var country in world.countries.Values.OrderBy(c => c.id, System.StringComparer.Ordinal))
             {
                 _economy.ResolveEconomy(country, world);
+            }
+
+            // 造兵结算（EconomyResolver 之后、ConstructionResolver 之前）
+            if (_unitProduction != null && _config != null)
+            {
+                var produced = _unitProduction.ResolveProduction(world, _config);
+                foreach (var unit in produced)
+                {
+                    _events.Publish(new UnitProducedEvent
+                    {
+                        unitId = unit.id,
+                        ownerCountry = unit.ownerCountry,
+                        provinceId = unit.currentProvinceId,
+                        unitType = unit.unitType
+                    });
+                }
+            }
+
+            foreach (var country in world.countries.Values.OrderBy(c => c.id, System.StringComparer.Ordinal))
+            {
                 _construction.ResolveConstruction(country);
             }
         }
+
     }
 }

@@ -91,6 +91,32 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.id));
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.ownerCountry ?? ""));
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.controllerCountry ?? ""));
+                // 静态字段
+                if (p.neighbors != null)
+                {
+                    foreach (var n in p.neighbors)
+                        bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(n));
+                }
+                bytes.AddRange(System.BitConverter.GetBytes(p.gridX));
+                bytes.AddRange(System.BitConverter.GetBytes(p.gridY));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.terrain.ToString()));
+            }
+            // units
+            foreach (var u in world.units.Values.OrderBy(u => u.id, System.StringComparer.Ordinal))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.id));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.unitType));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.ownerCountry));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.currentProvinceId ?? ""));
+                bytes.AddRange(System.BitConverter.GetBytes(u.manpower));
+                bytes.AddRange(System.BitConverter.GetBytes(u.equipment));
+                bytes.AddRange(System.BitConverter.GetBytes(u.organization));
+                bytes.AddRange(System.BitConverter.GetBytes(u.maxManpower));
+                bytes.AddRange(System.BitConverter.GetBytes(u.maxEquipment));
+                bytes.AddRange(System.BitConverter.GetBytes(u.maxOrganization));
+                bytes.AddRange(System.BitConverter.GetBytes(u.morale));
+                bytes.AddRange(System.BitConverter.GetBytes(u.experience));
+                bytes.AddRange(System.BitConverter.GetBytes(u.movesLeft));
             }
             return FnvHash(bytes);
         }
@@ -163,7 +189,10 @@ namespace IronCrown.Application.Tests
                 ownerCountry = "empire_north",
                 controllerCountry = "empire_north",
                 infrastructure = 3,
-                resourceOutput = new[] { "steel" }
+                resourceOutput = new[] { "steel" },
+                neighbors = new[] { "liberty_port" },
+                gridX = 1,
+                gridY = 0
             };
 
             world.provinces["liberty_port"] = new ProvinceState
@@ -174,8 +203,37 @@ namespace IronCrown.Application.Tests
                 ownerCountry = "republic_west",
                 controllerCountry = "republic_west",
                 infrastructure = 4,
-                resourceOutput = new[] { "rareMetal" }
+                resourceOutput = new[] { "rareMetal" },
+                neighbors = new[] { "iron_city" },
+                gridX = 0,
+                gridY = 1
             };
+
+            // 1 支步兵驻 iron_city（满编）
+            world.units["empire_north_inf_1"] = new UnitState
+            {
+                id = "empire_north_inf_1",
+                unitType = "infantry",
+                ownerCountry = "empire_north",
+                currentProvinceId = "iron_city",
+                manpower = 100,
+                maxManpower = 100,
+                equipment = 100,
+                maxEquipment = 100,
+                organization = 60,
+                maxOrganization = 60,
+                morale = 50,
+                experience = 0,
+                baseAttack = 10,
+                baseDefense = 15,
+                baseBreakthrough = 5,
+                armor = 0,
+                piercing = 5,
+                speed = 3,
+                movesLeft = 3,
+                supplyConsumption = 10
+            };
+            world.countries["empire_north"].unitIds.Add("empire_north_inf_1");
 
             return world;
         }
@@ -372,6 +430,80 @@ namespace IronCrown.Application.Tests
 
             Assert.AreEqual(HashWorld(world), HashWorld(loaded),
                 "改档→存→读→续跑 应等价");
+        }
+
+        [Test]
+        public void SaveLoad_Units_PreservedAcrossSave()
+        {
+            // 1 支已损耗 infantry 存→读→hash 等价
+            var world = BuildWorldWithProvinces();
+            var unit = world.units["empire_north_inf_1"];
+            unit.manpower = 80;
+            unit.organization = 30;
+            unit.movesLeft = 1;
+
+            var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "已损耗部队存→读 应 hash 等价");
+            Assert.AreEqual(80, loaded.units["empire_north_inf_1"].manpower);
+            Assert.AreEqual(30, loaded.units["empire_north_inf_1"].organization);
+            Assert.AreEqual(1, loaded.units["empire_north_inf_1"].movesLeft);
+        }
+
+        [Test]
+        public void SaveLoad_UnitProductionQueue_Preserved()
+        {
+            // 下单 → 1 回合 → 存（turnsRemaining=1）→ 读 → 再跑 1 回合 → 完工
+            var config = new TestConfigRegistry();
+            config.Register("global", new EconomyConfig
+            {
+                id = "global",
+                unitProductionTurns = 2,
+                provinceBaseOutputPerResource = 4,
+                provinceInfraOutputBonus = 2,
+                militaryFactoryEquipmentOutput = 4,
+                equipmentSteelCost = 2,
+                equipmentCapitalCost = 1,
+                civilianFactoryUpkeep = 2,
+                militaryFactoryUpkeep = 3,
+                dockyardUpkeep = 4
+            });
+            config.Register("infantry", new UnitConfig
+            {
+                id = "infantry", name = "步兵师",
+                attack = 10, defense = 15, breakthrough = 5,
+                speed = 3, hp = 100, organization = 60,
+                armor = 0, piercing = 5, supplyConsumption = 10,
+                cost = new Dictionary<string, int> { { "steel", 5 }, { "food", 10 }, { "capital", 2 } }
+            });
+
+            var world = BuildWorldWithProvinces();
+            // empire_north 有 steel=50, capital=100，够造 1 支步兵
+            var unitProd = new UnitProductionResolver();
+            var eco = config.Get<EconomyConfig>("global");
+
+            // 入队
+            var result = unitProd.TryEnqueue(world.countries["empire_north"], "infantry", config, eco);
+            Assert.IsTrue(result.accepted);
+
+            // 跑 1 回合
+            unitProd.ResolveProduction(world, config);
+
+            // 存（turnsRemaining=1）
+            var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            Assert.AreEqual(1, loaded.countries["empire_north"].unitProductionQueue.Count);
+            Assert.AreEqual(1, loaded.countries["empire_north"].unitProductionQueue[0].turnsRemaining);
+
+            // 再跑 1 回合 → 完工
+            unitProd.ResolveProduction(loaded, config);
+
+            Assert.AreEqual(0, loaded.countries["empire_north"].unitProductionQueue.Count);
+            Assert.IsTrue(loaded.units.ContainsKey("empire_north_inf_2"), "新部队应生成");
+            Assert.AreEqual(100, loaded.units["empire_north_inf_2"].manpower, "新部队应满编");
         }
     }
 }

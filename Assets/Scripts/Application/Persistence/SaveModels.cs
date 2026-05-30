@@ -46,6 +46,7 @@ namespace IronCrown.Application
         // 资源库存
         public ResourceEntry[] resources;
         public ConstructionOrderSaveData[] constructionQueue;
+        public UnitProductionOrderSaveData[] unitProductionQueue;
 
         public string[] activePolicies;
         public string[] completedTechs;
@@ -105,6 +106,13 @@ namespace IronCrown.Application
     }
 
     [Serializable]
+    public class UnitProductionOrderSaveData
+    {
+        public string unitType;
+        public int turnsRemaining;
+    }
+
+    [Serializable]
     public class UnitSaveData
     {
         public string id;
@@ -114,5 +122,18 @@ namespace IronCrown.Application
         public int manpower;
         public int equipment;
         public int organization;
+        public int maxManpower;
+        public int maxEquipment;
+        public int maxOrganization;
+        public int morale;
+        public int experience;
+        public int baseAttack;
+        public int baseDefense;
+        public int baseBreakthrough;
+        public int armor;
+        public int piercing;
+        public int speed;
+        public int movesLeft;
+        public int supplyConsumption;
     }
 }

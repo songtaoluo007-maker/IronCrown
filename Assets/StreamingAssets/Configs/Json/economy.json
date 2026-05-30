@@ -20,6 +20,7 @@
       "taxStabilityDeltas": [1, 0, -2],
       "civilExpensePercents": [50, 100, 150],
       "civilStabilityDeltas": [-2, 0, 2],
+      "unitProductionTurns": 2,
       "_aiNote": "AI 经济决策阈值（规则14 人类可调）。AI 仅作用于非玩家国。",
       "aiBuildCapitalThreshold": 60,
       "aiMaxCivilianFactories": 20,

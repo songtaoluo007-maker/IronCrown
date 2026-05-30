@@ -105,10 +105,6 @@ namespace IronCrown.PlayMode.Tests
             string before = turnLabel.text;
             Debug.Log($"[SmokeTest] Before advance: {before}");
 
-            // 经控制器公开 API 触发推进。
-            // 不用 advanceBtn.SendEvent(new ClickEvent())：UITK 中 EventBase.target 为 internal set，
-            // 测试无法构造可正确分发的合成点击，回调不会触发（已被实测证实）。
-            // 此处验证的是按钮回调最终执行的同一入口 Advance()（按钮存在性由 HUD_AdvanceButton_Exists 覆盖）。
             var behaviour = Object.FindObjectOfType<MainHudBehaviour>();
             Assert.IsNotNull(behaviour, "MainHudBehaviour 必须存在于场景中");
             Assert.IsNotNull(behaviour.Controller, "MainHudController 必须已注入");
@@ -120,6 +116,55 @@ namespace IronCrown.PlayMode.Tests
             Debug.Log($"[SmokeTest] After advance: {after}");
 
             Assert.AreNotEqual(before, after, $"点击推进后 turn-label 应变化。before='{before}', after='{after}'");
+        }
+
+        [UnityTest]
+        public IEnumerator BuildInfantry_Click_AdvanceTwoTurns_GarrisonIncreases()
+        {
+            yield return LoadMainScene();
+
+            var uiDoc = Object.FindObjectOfType<UIDocument>();
+            AssertRenderPrerequisites(uiDoc);
+
+            var behaviour = Object.FindObjectOfType<MainHudBehaviour>();
+            Assert.IsNotNull(behaviour, "MainHudBehaviour 必须存在");
+            Assert.IsNotNull(behaviour.Controller, "MainHudController 必须已注入");
+
+            // 点训练步兵
+            var buildBtn = uiDoc.rootVisualElement.Q<Button>("build-infantry-btn");
+            Assert.IsNotNull(buildBtn, "build-infantry-btn 必须存在");
+
+            behaviour.Controller.BuildInfantry();
+            yield return null;
+
+            // 推 2 回合
+            for (int t = 0; t < 2; t++)
+            {
+                behaviour.Controller.Advance();
+                yield return null;
+                for (int p = 0; p < 4; p++)
+                {
+                    behaviour.Controller.Advance();
+                    yield return null;
+                }
+            }
+
+            // 检查首都 garrisonBadge
+            var mapArea = uiDoc.rootVisualElement.Q<VisualElement>("map-area");
+            Assert.IsNotNull(mapArea, "map-area 必须存在");
+
+            // 找到首都 tile 的 garrisonBadge
+            bool found = false;
+            foreach (var tile in mapArea.Children())
+            {
+                var badge = tile.Q<Label>(className: "province-garrison-badge");
+                if (badge != null && badge.text == "⚔2")
+                {
+                    found = true;
+                    break;
+                }
+            }
+            Assert.IsTrue(found, "首都应有 ⚔2 驻军标记");
         }
     }
 }
