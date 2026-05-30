@@ -2,7 +2,7 @@
 
 > **用途**:这是**给未来任何会话(Claude 新开窗口、换人、OpenClaw)的恢复点**。读完本文件 + `CHANGELOG.md` 即可无损重建项目全局,不依赖任何一轮对话的上下文。
 > **维护约定**:每个工作单**审查通过后**,更新本文件 §2(当前状态)与 §3(进度);决策变更更新 §4。本文件是浓缩快照+索引;完整流水账在 `CHANGELOG.md`,每阶段细节在 `WorkOrders/`。
-> 最后更新:2026-05-29(C1 闭合 / C2a 已签发待执行)。
+> 最后更新:2026-05-30(C3 实现完成)。
 
 ---
 
@@ -18,9 +18,9 @@
 分工:**Claude=架构设计+逐单审查**;**OpenClaw(DeepSeek V4-Pro)=实现+测试**;**人类=数值/体验/产品方向终审(规则 14)**。
 
 ## 2. 当前状态(最新)
-- **已达成**:MVP 垂直切片 ✅ + B 阶段(可玩性)✅ + **C1 军事地基** ✅(领土邻接+初始驻军+地图标记)。完整循环:选国→建厂/调税民生→推回合→AI 对手发展→存读档,2D 地图可点选省+显示驻军徽章。EditMode 97/97 + PlayMode 5/5 全绿(权威 artifact: `artifacts/c1-editmode5.xml` + `c1-playmode-final.xml`)。
-- **进行中**:**C2a 造兵**已签发 `WorkOrders/C2a-unit-production.md`,**待 OpenClaw 执行**。C2a = 玩家在首都训练 1 支 infantry(扣 `UnitConfig.cost`+manpower、2 回合完工)。本单 Phase 0 **强制收 C1 三项尾巴**:HashWorld 扩 units/省份静态字段、UnitSaveData 扩 13 字段(决策 A 全字段持久)、ReadModelBuilder 遍历 units 按 id 升序。
-- **下一步**:C2a 审查通过 → C2b(单步邻接+movesLeft 移动)→ C3(战斗+占领,复用 BattleResolver)→ C4(战争状态+胜负+军事 AI)。**人类已拍板设计取舍**(规则 14):C2 拆 C2a/C2b 两单 / 移动=单步邻接+movesLeft / 造兵仅首都 / 成本=UnitConfig.cost+manpower+多回合。美术顺延 D。
+- **已达成**:MVP 垂直切片 ✅ + B 阶段(可玩性)✅ + C1 军事地基 ✅ + C2a 造兵 ✅ + C2b 移动 ✅ + **C3 战斗与占领** ✅。完整循环:选国→建厂/调税→造兵→移动→攻击→多回合战斗→占领→存读档。分支 `feature/c3-battle-occupation`(4 commits, 30 files, +1198/-72)。
+- **进行中**:**C3 已实现待审查**。BattleResolver.InitiateAttack(7步验证) + TickBattles(1v1 tick + 占领) + DestroyUnit；GameSessionService MoveUnit 分流(友好→MovementResolver, 敌方→BattleResolver) + 战斗锁定；ReadModelBuilder controllerCountry 取色 + 新字段；SaveMapper activeBattles 双向持久化；USS 战斗样式。20 新测试。
+- **下一步**:C3 审查通过 → 合入 main → 更新 PROJECT_STATE/CHANGELOG(C1~C3 收口) → C4(战争状态+胜负+军事 AI)。
 
 ## 3. 进度时间线(浓缩,细节见 CHANGELOG)
 | 阶段 | 内容 | 状态 |
@@ -39,8 +39,10 @@
 | B2 | 2D 方块地图 + 点击选省看详情 | ✅ |
 | B3 | AI 自主建厂(+TryBuild 重构、playerCountryId)→ **B 阶段收官** | ✅ |
 | C1 | 领土+驻军地基(邻接+初始部队+地图驻军) | ✅ |
-| C2a | 造兵(infantry/首都/2 回合/UnitConfig.cost+manpower) | 🔄 已签发待执行 |
-| C2b/C3/C4 | 单步邻接移动 / 战斗占领 / 战争胜负+军事 AI | ⏳ 规划中 |
+| C2a | 造兵(infantry/首都/2 回合/UnitConfig.cost+manpower) | ✅ |
+| C2b | 单步邻接移动(movesLeft/友好省移动/选中部队) | ✅ |
+| C3 | 战斗与占领(ActiveBattle/TickBattles/占领/清场/战斗锁定) | ✅ 待审查 |
+| C4 | 战争状态+胜负+军事 AI | ⏳ 规划中 |
 
 ## 4. 锁定的关键决策(人类批准,勿无故重提)
 - **确定性**:Simulation 整数优先 + **SplitMix64** 自定义种子 PRNG;`float` 仅表现层;遍历按 id 升序;随机走注入的 `IRandom`。

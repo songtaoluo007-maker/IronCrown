@@ -1,0 +1,45 @@
+﻿* df9b9fb test(c3): P1 鈥?4 ReadModelBuilder C3 tests + controllerColor fix verification
+* a93f548 fix(c3): P2 鈥?garrison cycling bug, duplicate battle guard, multi-tick test
+* cd63616 fix(c3): ReadModelBuilder variable order + test IRandom implementation
+* ac72a0d feat(c3): battle & occupation system - multi-turn HoI-style battles
+* 5adf98f chore(c2b): 鏀跺熬 鈥?Unity 鐢熸垚 meta + C3 宸ヤ綔鍗曠鍙?* ad0c0e3 fix(c2b): PlayMode 娴嬭瘯淇 鈥?鐢?UIDocument + ClickButton helper
+* 54d36d2 fix(c2b): 娴嬭瘯鏋勯€犲嚱鏁拌ˉ IEventPublisher 鍙傛暟
+* 425df3d feat(c2b): 鍗曟閭绘帴绉诲姩 鈥?MovementResolver + SelectUnit + 绉诲姩楂樹寒 + 娴嬭瘯
+*   c9b1b13 Merge branch 'feature/c2a-unit-production'
+|\  
+| * 8039885 fix(c2a): 娴嬭瘯琛?food 璧勬簮 + C2b 宸ヤ綔鍗曠鍙?| * fcc5bd2 fix(c2a): 娴嬭瘯鍥藉琛ュ叏 food/steel/capital 璧勬簮 鈥?淇 BuildUnit TryEnqueue 璧勬簮涓嶈冻
+| * ce1bc58 fix(c2a): BuildWorldWithProvinces 鍔?food 璧勬簮 鈥?淇 TryEnqueue 璧勬簮涓嶈冻琚嫆
+| * 2d66ff3 fix(c2a): SaveLoadEquivalenceTests 鍔?using System.Linq
+| * a0ca332 feat(c2a): 閫犲叺绠＄嚎 鈥?UnitProductionResolver + UnitFactory + 瀛樻。鍏ㄥ瓧娈?+ Phase 0 鏀跺熬
+* | ca80872 docs: C1瀹℃煡閫氳繃 + C2a宸ヤ綔鍗曠鍙?鈥?CHANGELOG/PROJECT_STATE/WorkOrder
+|/  
+* 782d355 feat(c1): 棰嗗湡閭绘帴+鍒濆閮ㄩ槦+鍦板浘椹诲啗 鈥?鍐涗簨闃舵鍦板熀
+* 0630da8 feat(b3): AI缁忔祹鍐崇瓥 鈥?B闃舵鏀跺畼
+* aa7de64 feat(b2): 2D鐪佷唤鍦板浘浜や簰楠ㄦ灦
+* b0b9047 feat(b1.5): 绋庣巼+姘戠敓缁忚惀鏉犳潌
+* 6e48880 fix(scene): add Camera + fix PanelSettings reference
+* 0383f1d fix(b1-fixes): country rows clickable + hover styling
+* 54cf351 fix(b1-fixes): scene PanelSettings reference + HUD visible
+* 98cd656 fix(b1-fixes): PanelSettings theme + rendering assertions + SetPlayerCountry test
+* 30b0fb3 chore: remove stray 'Tests 1' directory, clean up B1 artifacts
+* a67cf66 feat(b1): command pipeline skeleton + country selection + build factory
+* 98eac85 fix: add missing using directive for Presentation namespace in PlayMode tests
+* 5e62237 fix(T7-FIX F3): PlayMode tests use LoadSceneAsync + proper wait
+* d981b86 fix(T7-FIX F5): complete save DTO fields - resources/infrastructure/factories
+* ac0a0eb fix(T7-FIX F3): tighten MvpSmokeTests - no more skip/pass-through
+* 39a237c feat(T7): Integration demo + RUNME.md
+* a62824f feat(T6): Presentation MVP - UI Toolkit HUD
+* 8c61176 feat(T5): Economy MVP - ResolveProduction + config-driven upkeep
+* be3e145 chore: clean up test logs
+* f071de5 feat(T4): Determinism & Save/Load
+* 5a77503 feat(T4-P2/P3): save fields + clock restore + session wiring
+* 828b10a feat(T4-P1): SplitMix64 PRNG + state serialization
+* 4d9bff8 chore(T4-P0): branch setup, tombstone cleanup, repo hygiene
+* 19a01ff chore: sync Claude review changes + fix test expectation
+* e0666bb feat(T3): Application Use-Cases & Contracts
+* 9611c23 feat(T3-P1): migrate events + IEventPublisher to Contracts
+* c3b62b1 fix(T3-P0): EconomyResolver float truncation + test evidence
+* 81f8b2c chore: untrack Library/, Temp/, Obj/ and other generated dirs from git
+* 0b2b11e fix: resolve all Unity compilation errors
+* b458a81 feat(T2): config pipeline 鈥?migrate JSON to StreamingAssets, DTO褰掍綅 Domain/Config, ConfigRegistry + WorldInitializer, validation tests
+* 0e565ca T1-FIX baseline: pre-T2 snapshot
