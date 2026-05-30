@@ -248,6 +248,31 @@ namespace IronCrown.Simulation.Tests
         }
 
         [Test]
+        public void TickBattles_MultiTick_EventuallyShatters()
+        {
+            // 真打多回合，不手动改 org，验证累积伤害链路
+            var resolver = new BattleResolver(_rng, _events);
+            var (world, atk, def, target) = BuildWorldWithUnits();
+
+            resolver.InitiateAttack(world, "atk_1", "target", "empire");
+
+            int maxTicks = 20;
+            int tickCount = 0;
+            for (int i = 0; i < maxTicks; i++)
+            {
+                if (world.activeBattles.Count == 0) break;
+                resolver.TickBattles(world);
+                tickCount++;
+            }
+
+            Assert.AreEqual(0, world.activeBattles.Count, "战斗应在 {maxTicks} 回合内结束（实跑 {tickCount} 回合）");
+            bool atkSurvived = world.units.ContainsKey("atk_1");
+            bool defSurvived = world.units.ContainsKey("def_1");
+            Assert.IsFalse(atkSurvived && defSurvived, "不能双方都存活");
+            Assert.IsTrue(atkSurvived || defSurvived, "至少一方应存活（非平局）或双方阵亡（平局）");
+        }
+
+        [Test]
         public void ActiveBattle_SortedById()
         {
             var resolver = new BattleResolver(_rng, _events);

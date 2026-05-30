@@ -286,15 +286,24 @@ namespace IronCrown.Presentation
             // 选省
             _session.SelectProvince(provinceId);
 
-            // 该省有己方部队 -> 自动选中
+            // 该省有己方部队 -> 自动选中（按 controllerCountry 判断归属）
             if (clickedProvince.garrisonUnitIds != null && clickedProvince.garrisonUnitIds.Length > 0
-                && clickedProvince.ownerCountry == vm.playerCountryId)
+                && clickedProvince.controllerCountry == vm.playerCountryId)
             {
-                // 循环选：当前已选第 i 支 -> 选下一支
-                string current = vm.selectedUnitId;
-                int idx = System.Array.IndexOf(clickedProvince.garrisonUnitIds, current);
-                int next = (idx + 1) % clickedProvince.garrisonUnitIds.Length;
-                _session.SelectUnit(clickedProvince.garrisonUnitIds[next]);
+                // 循环选：当前已选第 i 支 -> 选下一支（只选己方部队）
+                var playerUnitIds = System.Array.FindAll(clickedProvince.garrisonUnitIds,
+                    uid => vm.units != null && vm.units.Exists(u => u.id == uid && u.ownerCountry == vm.playerCountryId));
+                if (playerUnitIds.Length > 0)
+                {
+                    string current = vm.selectedUnitId;
+                    int idx = System.Array.IndexOf(playerUnitIds, current);
+                    int next = (idx + 1) % playerUnitIds.Length;
+                    _session.SelectUnit(playerUnitIds[next]);
+                }
+                else
+                {
+                    _session.SelectUnit(null);
+                }
             }
             else
             {

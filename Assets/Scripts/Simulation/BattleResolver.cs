@@ -98,6 +98,13 @@ namespace IronCrown.Simulation
                     return CommandResult.Reject("部队正在战斗中");
             }
 
+            // 检查目标省是否已有战斗（防止同省多攻方导致静默消失）
+            foreach (var b in world.activeBattles)
+            {
+                if (b.provinceId == targetProvinceId)
+                    return CommandResult.Reject("该省已有战斗进行中");
+            }
+
             // 取守方：target 省内非攻方所属部队，按 id 升序 [0] 为主战
             var defenders = world.units.Values
                 .Where(u => u.currentProvinceId == targetProvinceId && u.ownerCountry != attacker.ownerCountry)
