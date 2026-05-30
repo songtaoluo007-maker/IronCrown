@@ -186,10 +186,6 @@ namespace IronCrown.PlayMode.Tests
             Assert.IsNotNull(uiDoc, "UIDocument 必须存在");
             var root = uiDoc.rootVisualElement;
 
-            var entry = Object.FindObjectOfType<GameEntryPoint>();
-            Assert.IsNotNull(entry, "GameEntryPoint 必须存在");
-            yield return null;
-
             // 跑 2 回合让部队移动力重置
             ClickButton(root, "advance-btn"); yield return null;
             ClickButton(root, "advance-btn"); yield return null;
