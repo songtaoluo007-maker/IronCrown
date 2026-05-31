@@ -53,6 +53,21 @@ namespace IronCrown.Simulation
                 }
             }
 
+            // (1.5) 民用工厂产出 capital（T5 遗漏，C9a 修复）
+            int capitalOutput = country.civilianFactories * eco.civilianFactoryCapitalOutput;
+            if (capitalOutput > 0)
+            {
+                int oldCap = country.GetResource("capital");
+                country.ModifyResource("capital", capitalOutput);
+                _events.Publish(new ResourceChangedEvent
+                {
+                    CountryId = country.id,
+                    ResourceId = "capital",
+                    OldValue = oldCap,
+                    NewValue = oldCap + capitalOutput
+                });
+            }
+
             // (2) 军工产出：steel(+capital) -> equipment（受输入门限）
             int desired = country.militaryFactories * eco.militaryFactoryEquipmentOutput;
             int bySteel = country.GetResource("steel") / Math.Max(1, eco.equipmentSteelCost);

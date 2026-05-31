@@ -10,8 +10,8 @@
             "civilianFactoryUpkeep": 3,
             "militaryFactoryUpkeep": 5,
             "dockyardUpkeep": 4,
-            "civilianFactoryBuildCost": 30,
-            "militaryFactoryBuildCost": 40,
+            "civilianFactoryBuildCost": 25,
+            "militaryFactoryBuildCost": 30,
             "factoryBuildTurns": 3,
             "taxRatePercents": [
                 70,
@@ -58,7 +58,8 @@
             "aiPeaceOfferCooldownTurns": 5,
             "aiPeaceOfferExpiryTurns": 10,
             "aiRedeployVulnerableRatioPct": 80,
-            "aiMaxRedeploysPerTurn": 1
+            "aiMaxRedeploysPerTurn": 1,
+            "civilianFactoryCapitalOutput": 5
         }
     ]
 }

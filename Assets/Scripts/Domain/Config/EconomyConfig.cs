@@ -21,6 +21,7 @@ namespace IronCrown.Domain
 
         // === 建造成本 ===
         public int civilianFactoryBuildCost;
+        public int civilianFactoryCapitalOutput; // 每个民用厂每回合产出 capital
         public int militaryFactoryBuildCost;
         public int factoryBuildTurns;
 

@@ -26,20 +26,29 @@ namespace IronCrown.Bootstrap
 
         public void Start()
         {
-            _logger.Info("[EntryPoint] Game started");
-            _session.NewGame();
-            _logger.Info("[EntryPoint] Session initialized");
+            try
+            {
+                _logger.Info("[EntryPoint] Game started");
+                _session.NewGame();
+                _logger.Info("[EntryPoint] Session initialized");
 
-            // 初始化 UI（场景中必须有 MainHudBehaviour）
-            var hudBehaviour = Object.FindObjectOfType<MainHudBehaviour>();
-            if (hudBehaviour != null)
-            {
-                hudBehaviour.SetController(_hudController);
-                _logger.Info("[EntryPoint] HUD bound");
+                // 初始化 UI（场景中必须有 MainHudBehaviour）
+                var hudBehaviour = Object.FindObjectOfType<MainHudBehaviour>();
+                if (hudBehaviour != null)
+                {
+                    hudBehaviour.SetController(_hudController);
+                    _logger.Info("[EntryPoint] HUD bound");
+                }
+                else
+                {
+                    _logger.Warn("[EntryPoint] MainHudBehaviour not found in scene");
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                _logger.Warn("[EntryPoint] MainHudBehaviour not found in scene");
+                _logger.Error($"[EntryPoint] STARTUP FAILED: {ex}");
+                UnityEngine.Debug.LogError($"[EntryPoint] STARTUP FAILED: {ex}");
+                throw;
             }
         }
     }
