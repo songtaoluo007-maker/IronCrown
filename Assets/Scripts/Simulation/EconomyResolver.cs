@@ -31,7 +31,7 @@ namespace IronCrown.Simulation
 
             // (1) 省份原料产出 → 国库存（按省份 id 升序，确定性）
             var ownedProvinces = world.provinces.Values
-                .Where(p => p.ownerCountry == country.id)
+                .Where(p => p.controllerCountry == country.id)
                 .OrderBy(p => p.id, StringComparer.Ordinal);
 
             foreach (var province in ownedProvinces)
@@ -53,7 +53,25 @@ namespace IronCrown.Simulation
                 }
             }
 
-            // (1.5) 民用工厂产出 capital（T5 遗漏，C9a 修复）
+            // (1.5) 每省基础粮食产出（避免单产出国饿死）
+            foreach (var province in ownedProvinces)
+            {
+                int foodAmt = eco.provinceBaseFoodOutput;
+                if (foodAmt > 0)
+                {
+                    int oldFood = country.GetResource("food");
+                    country.ModifyResource("food", foodAmt);
+                    _events.Publish(new ResourceChangedEvent
+                    {
+                        CountryId = country.id,
+                        ResourceId = "food",
+                        OldValue = oldFood,
+                        NewValue = oldFood + foodAmt
+                    });
+                }
+            }
+
+            // (1.6) 民用工厂产出 capital（T5 遗漏，C9a 修复）
             int capitalOutput = country.civilianFactories * eco.civilianFactoryCapitalOutput;
             if (capitalOutput > 0)
             {

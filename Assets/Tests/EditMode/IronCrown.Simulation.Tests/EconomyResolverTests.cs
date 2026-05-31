@@ -100,6 +100,7 @@ namespace IronCrown.Simulation.Tests
             {
                 id = "p1",
                 ownerCountry = "test",
+                    controllerCountry = "test",
                 infrastructure = 3,
                 resourceOutput = new[] { "steel" }
             };
@@ -126,6 +127,7 @@ namespace IronCrown.Simulation.Tests
             {
                 id = "p2",
                 ownerCountry = "test",
+                    controllerCountry = "test",
                 infrastructure = 2,
                 resourceOutput = new[] { "oil" }
             };
@@ -133,6 +135,7 @@ namespace IronCrown.Simulation.Tests
             {
                 id = "p1",
                 ownerCountry = "test",
+                    controllerCountry = "test",
                 infrastructure = 3,
                 resourceOutput = new[] { "steel" }
             };
@@ -214,6 +217,7 @@ namespace IronCrown.Simulation.Tests
             {
                 id = "p1",
                 ownerCountry = "test",
+                    controllerCountry = "test",
                 infrastructure = 0,
                 resourceOutput = new[] { "steel" }
             };

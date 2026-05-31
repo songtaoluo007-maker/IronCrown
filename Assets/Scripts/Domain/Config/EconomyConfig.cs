@@ -11,6 +11,7 @@ namespace IronCrown.Domain
     {
         public string id;
         public int provinceBaseOutputPerResource;
+        public int provinceBaseFoodOutput;     // 每省每回合基础粮食产出
         public int provinceInfraOutputBonus;
         public int militaryFactoryEquipmentOutput;
         public int equipmentSteelCost;

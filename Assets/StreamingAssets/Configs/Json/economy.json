@@ -59,7 +59,8 @@
             "aiPeaceOfferExpiryTurns": 10,
             "aiRedeployVulnerableRatioPct": 80,
             "aiMaxRedeploysPerTurn": 1,
-            "civilianFactoryCapitalOutput": 5
+            "civilianFactoryCapitalOutput": 5,
+            "provinceBaseFoodOutput": 1
         }
     ]
 }
