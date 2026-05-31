@@ -647,5 +647,25 @@ namespace IronCrown.Application.Tests
             Assert.AreEqual(HashWorld(world), HashWorld(loaded),
                 "停战世界存读应 hash 等价");
         }
+
+        [Test]
+        public void SaveLoad_TruceUntilTurn_Preserved()
+        {
+            var world = BuildWorldWithProvinces();
+            world.truceUntilTurn["empire_north_vs_republic_west"] = 25;
+            world.truceUntilTurn["alliance_east_vs_empire_north"] = 30;
+
+            var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            Assert.AreEqual(25, loaded.truceUntilTurn["empire_north_vs_republic_west"],
+                "truceUntilTurn 存读应一致 (empire_north_vs_republic_west)");
+            Assert.AreEqual(30, loaded.truceUntilTurn["alliance_east_vs_empire_north"],
+                "truceUntilTurn 存读应一致 (alliance_east_vs_empire_north)");
+
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "含 truce 世界存读应 hash 等价");
+        }
     }
+
 }

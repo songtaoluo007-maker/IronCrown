@@ -4,7 +4,7 @@
             "id": "global",
             "provinceBaseOutputPerResource": 2,
             "provinceInfraOutputBonus": 1,
-            "militaryFactoryEquipmentOutput": 5,
+            "militaryFactoryEquipmentOutput": 2,
             "equipmentSteelCost": 2,
             "equipmentCapitalCost": 1,
             "civilianFactoryUpkeep": 3,
@@ -61,7 +61,8 @@
             "aiMaxRedeploysPerTurn": 1,
             "civilianFactoryCapitalOutput": 5,
             "provinceBaseFoodOutput": 1,
-            "provinceBaseSteelOutput": 1
+            "provinceBaseSteelOutput": 1,
+            "aiPeaceTruceTurns": 10
         }
     ]
 }

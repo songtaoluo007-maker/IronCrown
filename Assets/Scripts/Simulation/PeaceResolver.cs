@@ -39,6 +39,7 @@ namespace IronCrown.Simulation
             if (accept)
             {
                 WarRegistry.TryEndWar(world, fromCountry, toCountry, out _);
+                WarRegistry.SetTruce(world, fromCountry, toCountry, world.turnNumber + eco.aiPeaceTruceTurns);
                 from.warExhaustion = Math.Max(0, from.warExhaustion / 2);
                 to.warExhaustion = Math.Max(0, to.warExhaustion / 2);
 
@@ -117,6 +118,7 @@ namespace IronCrown.Simulation
 
             // 复用 C5 停战流程
             WarRegistry.TryEndWar(world, playerCountryId, aiCountryId, out _);
+            WarRegistry.SetTruce(world, playerCountryId, aiCountryId, world.turnNumber + eco.aiPeaceTruceTurns);
             player.warExhaustion = Math.Max(0, player.warExhaustion / 2);
             ai.warExhaustion = Math.Max(0, ai.warExhaustion / 2);
 

@@ -122,6 +122,9 @@ namespace IronCrown.Application
                 startTurn = w.startTurn
             }).ToArray();
 
+            // 停战和平期 (C9d)
+            state.truces = world.truceUntilTurn.Select(t => new TruceEntry { key = t.Key, untilTurn = t.Value }).ToArray();
+
             // 游戏终局
             state.gameOverResult = world.gameOverResult;
             state.gameOverWinnerCountryId = world.gameOverWinnerCountryId;
@@ -280,6 +283,13 @@ namespace IronCrown.Application
                         startTurn = wd.startTurn
                     });
                 }
+            }
+
+            // 停战和平期 (C9d)
+            if (save.truces != null)
+            {
+                foreach (var t in save.truces)
+                    world.truceUntilTurn[t.key] = t.untilTurn;
             }
 
             // 游戏终局

@@ -15,6 +15,7 @@ namespace IronCrown.Domain
         public int turnNumber;
         public string playerCountryId;
         public string selectedUnitId;
+        public Dictionary<string, int> truceUntilTurn = new(); // key="{lo}_vs_{hi}", value=truce截止回合
 
         // === 扩展字段 ===
         public Dictionary<string, CountryState> countries = new();

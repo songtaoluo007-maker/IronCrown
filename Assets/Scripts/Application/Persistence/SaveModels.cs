@@ -9,6 +9,9 @@ namespace IronCrown.Application
 {
     /// <summary>游戏存档数据结构（DTO，非运行时状态）</summary>
     [Serializable]
+    public class TruceEntry { public string key; public int untilTurn; }
+
+    [Serializable]
     public class GameState
     {
         public int turnNumber;
@@ -23,6 +26,7 @@ namespace IronCrown.Application
         public UnitSaveData[] units;
         public ActiveBattleSaveData[] activeBattles;
         public WarRelationSaveData[] warRelations;
+        public TruceEntry[] truces;
         public string gameOverResult;
         public string gameOverWinnerCountryId;
     }

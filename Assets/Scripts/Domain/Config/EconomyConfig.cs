@@ -62,7 +62,8 @@ namespace IronCrown.Domain
 
         // === AI 调防 (C8) ===
         public int aiRedeployVulnerableRatioPct;        // 守军战力 ≤ 邻敌 N% 时触发调防
-        public int aiMaxRedeploysPerTurn;                // 每国每回合最多调防次数
+        public int aiMaxRedeploysPerTurn;
+        public int aiPeaceTruceTurns;           // 停战和平期回合数                // 每国每回合最多调防次数
 
         // === 占领抵抗 (C6) ===
         public int resistanceOnCapture;               // 占领瞬间 resistance 值

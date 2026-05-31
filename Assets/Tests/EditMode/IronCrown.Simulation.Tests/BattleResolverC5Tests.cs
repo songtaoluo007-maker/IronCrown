@@ -386,6 +386,63 @@ namespace IronCrown.Tests
             world.activeBattles.Add(battle);
             return battle;
         }
+
+        [Test]
+        public void InitiateAttack_DuringTruce_Rejects()
+        {
+            var world = CreateWorld(out var atk, out var def);
+            var unit = new UnitState
+            {
+                id = "unitA_1", unitType = "infantry", ownerCountry = "A",
+                currentProvinceId = "P1", movesLeft = 2,
+                manpower = 100, maxManpower = 100, equipment = 100, maxEquipment = 100,
+                organization = 60, maxOrganization = 60,
+                baseAttack = 10, baseDefense = 15, baseBreakthrough = 5, speed = 3
+            };
+            world.units[unit.id] = unit;
+            world.provinces["P2"] = new ProvinceState
+            {
+                id = "P2", name = "Target", ownerCountry = "B", controllerCountry = "B",
+                infrastructure = 1, neighbors = new string[] { "P1" }
+            };
+            var p1N = new System.Collections.Generic.List<string>(world.provinces["P1"].neighbors); p1N.Add("P2"); world.provinces["P1"].neighbors = p1N.ToArray();
+
+            WarRegistry.SetTruce(world, "A", "B", 20);
+            world.turnNumber = 10;
+
+            var resolver = new BattleResolver(new DeterministicRng(42), new NoOpEventPublisher(), _config);
+            var result = resolver.InitiateAttack(world, "unitA_1", "P2", "A");
+            Assert.IsFalse(result.accepted, "和平期内开战应被拒");
+            Assert.IsTrue(result.reason.Contains("和平期"), $"应提示和平期，实际: {result.reason}");
+        }
+
+        [Test]
+        public void InitiateAttack_AfterTruceExpires_Succeeds()
+        {
+            var world = CreateWorld(out var atk, out var def);
+            var unit = new UnitState
+            {
+                id = "unitA_1", unitType = "infantry", ownerCountry = "A",
+                currentProvinceId = "P1", movesLeft = 2,
+                manpower = 100, maxManpower = 100, equipment = 100, maxEquipment = 100,
+                organization = 60, maxOrganization = 60,
+                baseAttack = 10, baseDefense = 15, baseBreakthrough = 5, speed = 3
+            };
+            world.units[unit.id] = unit;
+            world.provinces["P2"] = new ProvinceState
+            {
+                id = "P2", name = "Target", ownerCountry = "B", controllerCountry = "B",
+                infrastructure = 1, neighbors = new string[] { "P1" }
+            };
+            var p1N = new System.Collections.Generic.List<string>(world.provinces["P1"].neighbors); p1N.Add("P2"); world.provinces["P1"].neighbors = p1N.ToArray();
+
+            WarRegistry.SetTruce(world, "A", "B", 10);
+            world.turnNumber = 10; // currentTurn >= untilTurn → 和平期已过
+
+            var resolver = new BattleResolver(new DeterministicRng(42), new NoOpEventPublisher(), _config);
+            var result = resolver.InitiateAttack(world, "unitA_1", "P2", "A");
+            Assert.IsTrue(result.accepted, "和平期过后应可开战");
+        }
     }
 
     /// <summary>丢弃事件的发布者（测试用）</summary>
@@ -397,3 +454,4 @@ namespace IronCrown.Tests
         public void Clear() { }
     }
 }
+

@@ -90,6 +90,10 @@ namespace IronCrown.Simulation
             if (target.controllerCountry == attacker.ownerCountry)
                 return CommandResult.Reject("非敌方控制省份");
 
+            // C9d: 和平期内不能开战
+            if (WarRegistry.IsInTruce(world, attacker.ownerCountry, target.controllerCountry, world.turnNumber))
+                return CommandResult.Reject("和平期内不能开战");
+
             if (attacker.movesLeft < 1)
                 return CommandResult.Reject("移动力不足");
 

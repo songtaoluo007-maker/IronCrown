@@ -139,6 +139,9 @@ namespace IronCrown.Simulation
                     if (!world.provinces.TryGetValue(nId, out var nProv)) continue;
                     if (nProv.controllerCountry == country.id) continue; // 己方
 
+                    // C9d: 和平期内跳过
+                    if (WarRegistry.IsInTruce(world, country.id, nProv.controllerCountry, world.turnNumber)) continue;
+
                     // 目标省已有战斗 → 跳过
                     if (world.activeBattles.Any(b => b.provinceId == nId)) continue;
 

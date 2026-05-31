@@ -70,5 +70,21 @@ namespace IronCrown.Domain
             }
             return false;
         }
+
+        /// <summary>设置停战和平期（停战后调用）</summary>
+        public static void SetTruce(WorldState world, string a, string b, int untilTurn)
+        {
+            var (lo, hi) = Normalize(a, b);
+            var key = lo + "_vs_" + hi;
+            world.truceUntilTurn[key] = untilTurn;
+        }
+
+        /// <summary>当前是否在和平期内</summary>
+        public static bool IsInTruce(WorldState world, string a, string b, int currentTurn)
+        {
+            var (lo, hi) = Normalize(a, b);
+            var key = lo + "_vs_" + hi;
+            return world.truceUntilTurn.TryGetValue(key, out var until) && currentTurn < until;
+        }
     }
 }
