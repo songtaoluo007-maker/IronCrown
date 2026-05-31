@@ -50,5 +50,14 @@ namespace IronCrown.Domain
         public int warSupportPenaltyPerCapitalLoss;  // 首都被占 warSupport -N（一次性）
         public int aiPeaceAcceptExhaustionThreshold; // AI 进入"愿意停战"基础线
         public int aiPeaceAcceptPowerRatioPct;       // AI 实力 ≤ 对方 N% 时下调阈值
+
+        // === 占领抵抗 (C6) ===
+        public int resistanceOnCapture;               // 占领瞬间 resistance 值
+        public int resistanceDecayWithGarrison;        // 有驻军时 resistance 每回合变化（负数=衰减）
+        public int resistanceGrowWithoutGarrison;      // 无驻军时 resistance 每回合变化（正数=增长）
+        public int resistanceUprisingThreshold;        // 触发反抗事件的 resistance 阈值
+        public int resistanceUprisingChancePct;        // 反抗事件触发概率（百分比）
+        public int resistanceGarrisonDamageManpower;   // 有驻军反抗时扣驻军 manpower
+        public int resistanceGarrisonDamageEquipment;  // 有驻军反抗时扣驻军 equipment
     }
 }

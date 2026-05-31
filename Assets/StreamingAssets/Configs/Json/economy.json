@@ -35,7 +35,15 @@
       "warSupportBonusPerVictory": 5,
       "warSupportPenaltyPerCapitalLoss": 15,
       "aiPeaceAcceptExhaustionThreshold": 30,
-      "aiPeaceAcceptPowerRatioPct": 80
+      "aiPeaceAcceptPowerRatioPct": 80,
+      "_occupationNote": "C6 占领抵抗数值（规则14 人类可调）。",
+      "resistanceOnCapture": 50,
+      "resistanceDecayWithGarrison": -2,
+      "resistanceGrowWithoutGarrison": 1,
+      "resistanceUprisingThreshold": 30,
+      "resistanceUprisingChancePct": 10,
+      "resistanceGarrisonDamageManpower": 5,
+      "resistanceGarrisonDamageEquipment": 5
     }
   ]
 }

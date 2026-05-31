@@ -132,6 +132,10 @@ namespace IronCrown.Simulation
                 attacker.currentProvinceId = targetProvinceId;
                 target.controllerCountry = attacker.ownerCountry;
 
+                // C6: 占领瞬间 resistance 设为配置值
+                var eco6 = _config?.Get<EconomyConfig>("global");
+                target.resistance = eco6?.resistanceOnCapture ?? 50;
+
                 _events.Publish(new ProvinceOccupiedEvent
                 {
                     provinceId = targetProvinceId,
@@ -209,6 +213,10 @@ namespace IronCrown.Simulation
                     string prevController = province.controllerCountry;
                     attacker.currentProvinceId = battle.provinceId;
                     province.controllerCountry = attacker.ownerCountry;
+
+                    // C6: 占领瞬间 resistance 设为配置值
+                    var eco6b = _config?.Get<EconomyConfig>("global");
+                    province.resistance = eco6b?.resistanceOnCapture ?? 50;
 
                     _events.Publish(new ProvinceOccupiedEvent
                     {
