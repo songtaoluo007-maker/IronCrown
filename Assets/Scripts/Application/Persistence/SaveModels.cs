@@ -45,6 +45,7 @@ namespace IronCrown.Application
         // C7: AI 求和
         public int peaceOfferCooldown;
         public string pendingPeaceOfferFrom;
+        public int pendingPeaceOfferExpiry;
 
         // 工厂
         public int civilianFactories;

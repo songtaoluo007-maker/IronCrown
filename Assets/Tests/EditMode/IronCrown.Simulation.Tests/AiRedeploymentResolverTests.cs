@@ -209,6 +209,124 @@ namespace IronCrown.Tests
             Assert.AreEqual("P2", world.units["r1"].currentProvinceId);
         }
 
+
+        // ── 边界条件 ──
+
+        [Test]
+        public void NoRedeploy_TargetNotAdjacent()
+        {
+            // 内陆源省不直接邻接目标前线省 → 不调防
+            // 拓扑: P1(前线) -- E1(敌), P2(内陆) 不邻接 P1
+            var ai = new CountryState { id = "ai", name = "AI", stability = 60, warSupport = 50, civilianFactories = 5, militaryFactories = 3 };
+            var enemy = new CountryState { id = "enemy", name = "Enemy", stability = 50, warSupport = 60, civilianFactories = 3, militaryFactories = 2 };
+            var player = new CountryState { id = "player", name = "Player", stability = 70, warSupport = 60, civilianFactories = 10, militaryFactories = 5 };
+
+            var p1 = new ProvinceState { id = "P1", controllerCountry = "ai", ownerCountry = "ai", neighbors = new[] { "E1" } }; // 不邻接 P2
+            var p2 = new ProvinceState { id = "P2", controllerCountry = "ai", ownerCountry = "ai", neighbors = new[] { "P3" } };
+            var p3 = new ProvinceState { id = "P3", controllerCountry = "ai", ownerCountry = "ai", neighbors = new[] { "P2" } };
+            var e1 = new ProvinceState { id = "E1", controllerCountry = "enemy", ownerCountry = "enemy", neighbors = new[] { "P1" } };
+
+            var world = new WorldState
+            {
+                countries = new Dictionary<string, CountryState> { { "ai", ai }, { "player", player }, { "enemy", enemy } },
+                provinces = new Dictionary<string, ProvinceState> { { "P1", p1 }, { "P2", p2 }, { "P3", p3 }, { "E1", e1 } },
+                units = new Dictionary<string, UnitState>(),
+                activeBattles = new List<ActiveBattle>(),
+                warRelations = new List<WarRelation>()
+            };
+
+            AddUnit(world, "g1", "ai", "P1", org: 30, morale: 20);
+            AddUnit(world, "r1", "ai", "P2", org: 80, morale: 50);
+            AddUnit(world, "g2", "ai", "P2", org: 80, morale: 50);
+            AddUnit(world, "e1", "enemy", "E1", org: 100, morale: 80);
+
+            var movement = new MovementResolver();
+            var resolver = new AiRedeploymentResolver(movement);
+            resolver.TryRedeploy(ai, world, _eco);
+
+            // P2 不邻接 P1 → 不能调防
+            Assert.AreEqual("P2", world.units["r1"].currentProvinceId);
+        }
+
+        [Test]
+        public void NoRedeploy_UnitNoMovesLeft()
+        {
+            // 内陆候选单位 movesLeft = 0 → 跳过
+            var world = BuildWorld(out var ai, out _);
+            AddUnit(world, "g1", "ai", "P1", org: 30, morale: 20);
+            AddUnit(world, "r1", "ai", "P2", org: 80, morale: 50, movesLeft: 0); // 无移动力
+            AddUnit(world, "g2", "ai", "P2", org: 80, morale: 50);
+            AddUnit(world, "e1", "enemy", "E1", org: 100, morale: 80);
+
+            var movement = new MovementResolver();
+            var resolver = new AiRedeploymentResolver(movement);
+            resolver.TryRedeploy(ai, world, _eco);
+
+            Assert.AreEqual("P2", world.units["r1"].currentProvinceId);
+        }
+
+        [Test]
+        public void Redeploy_DeterministicOrder()
+        {
+            // 多个候选源省 → 按 id 升序选第一个
+            var ai = new CountryState { id = "ai", name = "AI", stability = 60, warSupport = 50, civilianFactories = 5, militaryFactories = 3 };
+            var enemy = new CountryState { id = "enemy", name = "Enemy", stability = 50, warSupport = 60, civilianFactories = 3, militaryFactories = 2 };
+            var player = new CountryState { id = "player", name = "Player", stability = 70, warSupport = 60, civilianFactories = 10, militaryFactories = 5 };
+
+            // P1(前线) 邻接 E1(敌) 和 S1(内陆) 和 S2(内陆)
+            var p1 = new ProvinceState { id = "P1", controllerCountry = "ai", ownerCountry = "ai", neighbors = new[] { "S1", "S2", "E1" } };
+            var s1 = new ProvinceState { id = "S1", controllerCountry = "ai", ownerCountry = "ai", neighbors = new[] { "P1" } };
+            var s2 = new ProvinceState { id = "S2", controllerCountry = "ai", ownerCountry = "ai", neighbors = new[] { "P1" } };
+            var e1 = new ProvinceState { id = "E1", controllerCountry = "enemy", ownerCountry = "enemy", neighbors = new[] { "P1" } };
+
+            var world = new WorldState
+            {
+                countries = new Dictionary<string, CountryState> { { "ai", ai }, { "player", player }, { "enemy", enemy } },
+                provinces = new Dictionary<string, ProvinceState> { { "P1", p1 }, { "S1", s1 }, { "S2", s2 }, { "E1", e1 } },
+                units = new Dictionary<string, UnitState>(),
+                activeBattles = new List<ActiveBattle>(),
+                warRelations = new List<WarRelation>()
+            };
+
+            AddUnit(world, "g1", "ai", "P1", org: 30, morale: 20);
+            // S2 (id 排序在 S1 之后) 有更多驻军
+            AddUnit(world, "r1", "ai", "S2", org: 80, morale: 50);
+            AddUnit(world, "r2", "ai", "S2", org: 80, morale: 50);
+            // S1 也有驻军但只有 2 支
+            AddUnit(world, "r3", "ai", "S1", org: 80, morale: 50);
+            AddUnit(world, "r4", "ai", "S1", org: 80, morale: 50);
+            AddUnit(world, "e1", "enemy", "E1", org: 100, morale: 80);
+
+            var movement = new MovementResolver();
+            var resolver = new AiRedeploymentResolver(movement);
+            resolver.TryRedeploy(ai, world, _eco);
+
+            // S1 排序在 S2 之前 → 从 S1 调防
+            Assert.AreEqual("P1", world.units["r3"].currentProvinceId,
+                "S1 sorts before S2, should redeploy from S1 first");
+        }
+
+        [Test]
+        public void NoRedeploy_NoEnemyUnitsInNeighbor()
+        {
+            // 邻省是敌控但无敌方部队 → 不算威胁
+            var world = BuildWorld(out var ai, out _);
+            world.provinces["P1"].controllerCountry = "ai";
+            world.provinces["P1"].ownerCountry = "ai";
+
+            AddUnit(world, "g1", "ai", "P1", org: 30, morale: 20);
+            AddUnit(world, "r1", "ai", "P2", org: 80, morale: 50);
+            AddUnit(world, "g2", "ai", "P2", org: 80, morale: 50);
+            // E1 无敌方部队
+            // AddUnit(world, "e1", "enemy", "E1", org: 100, morale: 80);
+
+            var movement = new MovementResolver();
+            var resolver = new AiRedeploymentResolver(movement);
+            resolver.TryRedeploy(ai, world, _eco);
+
+            Assert.AreEqual("P2", world.units["r1"].currentProvinceId);
+        }
+
         // ── 辅助 ──
 
         private WorldState BuildWorld(out CountryState ai, out CountryState player)
@@ -266,7 +384,7 @@ namespace IronCrown.Tests
         }
 
         private void AddUnit(WorldState world, string id, string owner, string provinceId,
-            int org = 80, int morale = 50)
+            int org = 80, int morale = 50, int movesLeft = 2)
         {
             world.units[id] = new UnitState
             {
@@ -277,7 +395,7 @@ namespace IronCrown.Tests
                 maxOrganization = 100,
                 morale = morale,
                 experience = 1,
-                movesLeft = 2,
+                movesLeft = movesLeft,
                 baseAttack = 10,
                 baseDefense = 5,
                 manpower = 100,

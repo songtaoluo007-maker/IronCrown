@@ -103,7 +103,8 @@ namespace IronCrown.Application
                 civilLevel = c.civilLevel,
                 warExhaustion = c.warExhaustion,
                 peaceOfferCooldown = c.peaceOfferCooldown,
-                pendingPeaceOfferFrom = c.pendingPeaceOfferFrom
+                pendingPeaceOfferFrom = c.pendingPeaceOfferFrom,
+                    pendingPeaceOfferExpiry = c.pendingPeaceOfferExpiry
             };
         }
 

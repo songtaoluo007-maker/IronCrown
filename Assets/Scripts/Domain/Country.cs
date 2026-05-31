@@ -75,6 +75,7 @@ namespace IronCrown.Domain
         // === AI 求和 (C7) ===
         public int peaceOfferCooldown;          // 被拒后冷却回合（0=可提议）
         public string pendingPeaceOfferFrom;    // 待处理提议来源（null=无）
+        public int pendingPeaceOfferExpiry;       // 提议过期回合号（<0=无）
 
         // === 方法 ===
 

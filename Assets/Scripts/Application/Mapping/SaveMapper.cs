@@ -32,6 +32,7 @@ namespace IronCrown.Application
                     warExhaustion = c.warExhaustion,
                     peaceOfferCooldown = c.peaceOfferCooldown,
                     pendingPeaceOfferFrom = c.pendingPeaceOfferFrom,
+                    pendingPeaceOfferExpiry = c.pendingPeaceOfferExpiry,
                     civilianFactories = c.civilianFactories,
                     militaryFactories = c.militaryFactories,
                     dockyards = c.dockyards,

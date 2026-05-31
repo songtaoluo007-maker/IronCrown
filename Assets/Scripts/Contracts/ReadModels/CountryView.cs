@@ -31,5 +31,6 @@ namespace IronCrown.Contracts
         // C7: AI 求和
         public int peaceOfferCooldown;
         public string pendingPeaceOfferFrom;
+        public int pendingPeaceOfferExpiry;
     }
 }

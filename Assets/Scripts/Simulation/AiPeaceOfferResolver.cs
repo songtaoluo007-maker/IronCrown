@@ -47,11 +47,27 @@ namespace IronCrown.Simulation
                     continue;
                 }
 
-                // 已有待处理提议（任何方向）
+                // 已有待处理提议（任何方向）— 检查过期
                 if (!string.IsNullOrEmpty(aiCountry.pendingPeaceOfferFrom))
-                    continue;
+                {
+                    if (aiCountry.pendingPeaceOfferExpiry > 0 && currentTurn >= aiCountry.pendingPeaceOfferExpiry)
+                    {
+                        aiCountry.pendingPeaceOfferFrom = null;
+                        aiCountry.pendingPeaceOfferExpiry = 0;
+                    }
+                    else
+                        continue;
+                }
                 if (!string.IsNullOrEmpty(playerCountry.pendingPeaceOfferFrom))
-                    continue;
+                {
+                    if (playerCountry.pendingPeaceOfferExpiry > 0 && currentTurn >= playerCountry.pendingPeaceOfferExpiry)
+                    {
+                        playerCountry.pendingPeaceOfferFrom = null;
+                        playerCountry.pendingPeaceOfferExpiry = 0;
+                    }
+                    else
+                        continue;
+                }
 
                 // 条件 1: warExhaustion ≥ 阈值
                 if (aiCountry.warExhaustion < eco.aiPeaceOfferExhaustionThreshold)
@@ -68,6 +84,7 @@ namespace IronCrown.Simulation
 
                 // 条件满足 → 发提议
                 playerCountry.pendingPeaceOfferFrom = aiCountryId;
+                playerCountry.pendingPeaceOfferExpiry = currentTurn + eco.aiPeaceOfferExpiryTurns;
 
                 _events.Publish(new AiPeaceOfferedEvent
                 {
