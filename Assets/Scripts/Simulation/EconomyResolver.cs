@@ -71,7 +71,25 @@ namespace IronCrown.Simulation
                 }
             }
 
-            // (1.6) 民用工厂产出 capital（T5 遗漏，C9a 修复）
+            // (1.6) 每省基础钢铁产出（避免单产出国饿死）
+            foreach (var province in ownedProvinces)
+            {
+                int steelAmt = eco.provinceBaseSteelOutput;
+                if (steelAmt > 0)
+                {
+                    int oldSteel = country.GetResource("steel");
+                    country.ModifyResource("steel", steelAmt);
+                    _events.Publish(new ResourceChangedEvent
+                    {
+                        CountryId = country.id,
+                        ResourceId = "steel",
+                        OldValue = oldSteel,
+                        NewValue = oldSteel + steelAmt
+                    });
+                }
+            }
+
+            // (1.7) 民用工厂产出 capital（T5 遗漏，C9a 修复）
             int capitalOutput = country.civilianFactories * eco.civilianFactoryCapitalOutput;
             if (capitalOutput > 0)
             {
