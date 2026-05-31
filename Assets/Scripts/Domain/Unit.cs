@@ -69,12 +69,43 @@ namespace IronCrown.Domain
             equipment = System.Math.Min(equipment + equipmentAmount, maxEquipment);
         }
 
-        /// <summary>受伤害</summary>
+        /// <summary>受伤害（C12: 有旅时走旅级分摊）</summary>
         public void TakeDamage(int orgDamage, int strDamage)
         {
             organization = System.Math.Max(0, organization - orgDamage);
-            manpower = System.Math.Max(0, manpower - strDamage);
-            equipment = System.Math.Max(0, equipment - strDamage);
+
+            // C12: 有旅组成 → 按旅 manpower 权重分摊 strDamage
+            if (brigades != null && brigades.Count > 0)
+            {
+                int totalMp = brigades.Sum(b => b.manpower);
+                if (totalMp > 0)
+                {
+                    int distributed = 0;
+                    for (int i = 0; i < brigades.Count; i++)
+                    {
+                        var b = brigades[i];
+                        // 第一个旅承担余数
+                        int share = (i == 0)
+                            ? strDamage - distributed
+                            : strDamage * b.manpower / totalMp;
+                        b.TakeDamage(0, share);
+                        distributed += share;
+                    }
+                }
+
+                // 移除被歼灭的旅
+                brigades.RemoveAll(b => b.IsDestroyed);
+
+                // 旅全灭 → 师溃散
+                if (brigades.Count == 0)
+                    organization = 0;
+            }
+            else
+            {
+                // 旧逻辑：无旅组成时直接扣
+                manpower  = System.Math.Max(0, manpower  - strDamage);
+                equipment = System.Math.Max(0, equipment - strDamage);
+            }
         }
 
         /// <summary>恢复组织度</summary>

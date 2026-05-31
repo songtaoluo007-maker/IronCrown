@@ -12,8 +12,18 @@ namespace IronCrown.Domain
     public sealed class BrigadeState
     {
         public string brigadeType;   // UnitConfig.id
-        public int count;            // 营数量（创建后不变，C12 才做旅级战损）
+        public int count;            // 营数量
         public int manpower;         // 当前总人力
         public int equipment;        // 当前总装备
+
+        // C12: 旅级战损
+        public void TakeDamage(int orgDmg, int strDmg)
+        {
+            manpower  = System.Math.Max(0, manpower  - strDmg);
+            equipment = System.Math.Max(0, equipment - strDmg);
+        }
+
+        /// <summary>旅是否已丧失战力（人力或装备归零）</summary>
+        public bool IsDestroyed => manpower <= 0 || equipment <= 0;
     }
 }
