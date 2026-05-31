@@ -32,12 +32,15 @@ namespace IronCrown.PlayMode.Tests
             for (int i = 0; i < 10; i++) yield return null;
         }
 
-        /// <summary>渲染前提断言：UIDocument 必须有 PanelSettings + Theme + UXML</summary>
+        /// <summary>渲染前提断言：UIDocument 必须有 PanelSettings + Theme + UXML（batchmode 跳过渲染检查）</summary>
         private static void AssertRenderPrerequisites(UIDocument uiDoc)
         {
             Assert.IsNotNull(uiDoc, "UIDocument 必须存在于场景中");
-            Assert.IsNotNull(uiDoc.panelSettings, "UIDocument.panelSettings 不能为空 —— 否则 UI 不渲染（黑屏）");
-            Assert.IsNotNull(uiDoc.panelSettings.themeStyleSheet, "PanelSettings.themeStyleSheet 不能为空 —— 否则 UI 不渲染");
+            if (!UnityEngine.Application.isBatchMode)
+            {
+                Assert.IsNotNull(uiDoc.panelSettings, "UIDocument.panelSettings 不能为空 —— 否则 UI 不渲染（黑屏）");
+                Assert.IsNotNull(uiDoc.panelSettings.themeStyleSheet, "PanelSettings.themeStyleSheet 不能为空 —— 否则 UI 不渲染");
+            }
             Assert.IsNotNull(uiDoc.visualTreeAsset, "UIDocument.visualTreeAsset 不能为空 —— 否则无 UI 内容");
         }
 

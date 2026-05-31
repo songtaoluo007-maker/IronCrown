@@ -117,11 +117,11 @@ namespace IronCrown.Presentation
             _events.Subscribe<BattleConcludedEvent>(e =>
             {
                 if (e.winnerKind == "Attacker")
-                    ShowStatus($"⚔ 占领 {e.provinceId}！");
+                    ShowStatus($"⚔ 攻克 {e.provinceId}！（{e.turnsElapsed} 回合）");
                 else if (e.winnerKind == "Defender")
-                    ShowStatus($"⚔ 攻势受挫：{e.attackerUnitId} 阵亡");
+                    ShowStatus($"⚔ 攻势受挫于 {e.provinceId}（{e.turnsElapsed} 回合）");
                 else
-                    ShowStatus($"⚔ 两败俱伤");
+                    ShowStatus($"⚔ {e.provinceId} 两败俱伤");
                 Render();
             });
             _events.Subscribe<ProvinceOccupiedEvent>(e =>
@@ -152,6 +152,13 @@ namespace IronCrown.Presentation
             _events.Subscribe<PeaceConcludedEvent>(e =>
             {
                 ShowStatus($"☮ 和平降临：{e.countryA} ↔ {e.countryB}（回合 {e.atTurn}）");
+                Render();
+            });
+
+            // C13: 溃退事件
+            _events.Subscribe<UnitRetreatedEvent>(e =>
+            {
+                ShowStatus($"🏃 {e.unitId} 溃退至 {e.retreatProvinceId}（恢复 {1} 回合）");
                 Render();
             });
 
@@ -513,7 +520,15 @@ namespace IronCrown.Presentation
                 if (p.hasActiveBattle)
                 {
                     tile.AddToClassList("province-tile-in-battle");
-                    var battleBadge = new Label("⚔战");
+                    var battle = vm.activeBattles?.Find(b => b.provinceId == p.id);
+                    string battleText = "⚔战";
+                    if (battle != null)
+                    {
+                        int atkPct = battle.attackerMaxOrg > 0 ? battle.attackerOrg * 100 / battle.attackerMaxOrg : 0;
+                        int defPct = battle.defenderMaxOrg > 0 ? battle.defenderOrg * 100 / battle.defenderMaxOrg : 0;
+                        battleText = $"⚔{atkPct}%vs{defPct}%";
+                    }
+                    var battleBadge = new Label(battleText);
                     battleBadge.AddToClassList("province-battle-badge");
                     tile.Add(battleBadge);
                 }
@@ -580,7 +595,11 @@ namespace IronCrown.Presentation
                 var battle = vm.activeBattles.Find(b => b.provinceId == pv.id);
                 if (battle != null)
                 {
-                    sb.Append($"  |  战斗中: 攻 {battle.attackerUnitIds.Count} 师 vs 守 {battle.defenderUnitIds.Count} 师 — {battle.turnsElapsed} 回合");
+                    int atkPct = battle.attackerMaxOrg > 0 ? battle.attackerOrg * 100 / battle.attackerMaxOrg : 0;
+                    int defPct = battle.defenderMaxOrg > 0 ? battle.defenderOrg * 100 / battle.defenderMaxOrg : 0;
+                    sb.Append($"  |  ⚔ 战斗: 攻 {battle.attackerUnitIds.Count} 师 [{battle.attackerOrg}/{battle.attackerMaxOrg} 组织 {atkPct}%]");
+                    sb.Append($" vs 守 {battle.defenderUnitIds.Count} 师 [{battle.defenderOrg}/{battle.defenderMaxOrg} 组织 {defPct}%]");
+                    sb.Append($" — {battle.turnsElapsed} 回合");
                 }
             }
 
@@ -590,9 +609,23 @@ namespace IronCrown.Presentation
                 var selUnit = vm.units.Find(u => u.id == vm.selectedUnitId);
                 if (selUnit != null && selUnit.currentProvinceId == pv.id)
                 {
-                    sb.Append($"  |  已选部队: {selUnit.id} (剩 {selUnit.movesLeft}/{selUnit.speed})");
+                    string divName = selUnit.divisionTemplateName ?? selUnit.id;
+                    sb.Append($"  |  已选: {divName}");
+                    sb.Append($" (移动力 {selUnit.movesLeft}/{selUnit.speed})");
+                    if (!string.IsNullOrEmpty(selUnit.brigadeSummary))
+                        sb.Append($"\n    编制: {selUnit.brigadeSummary}");
+                    int manpowerPct = selUnit.maxManpower > 0 ? selUnit.manpower * 100 / selUnit.maxManpower : 0;
+                    int equipPct = selUnit.maxEquipment > 0 ? selUnit.equipment * 100 / selUnit.maxEquipment : 0;
+                    int orgPct = selUnit.maxOrganization > 0 ? selUnit.organization * 100 / selUnit.maxOrganization : 0;
+                    sb.Append($"\n    人力: {selUnit.manpower}/{selUnit.maxManpower} ({manpowerPct}%)");
+                    sb.Append($"  装备: {selUnit.equipment}/{selUnit.maxEquipment} ({equipPct}%)");
+                    sb.Append($"  组织: {selUnit.organization}/{selUnit.maxOrganization} ({orgPct}%)");
+                    if (selUnit.tacticalLevel > 0)
+                        sb.Append($"\n    战役等级: {selUnit.tacticalLevel}/4 (经验 {selUnit.tacticalExp}/100)");
+                    if (selUnit.isRecovering)
+                        sb.Append($"  🔴 溃退恢复中: 剩余 {selUnit.recoveryTurnsLeft} 回合");
                     if (selUnit.isInBattle)
-                        sb.Append(" [战斗中]");
+                        sb.Append("  ⚔ 战斗中");
                 }
             }
 
@@ -620,6 +653,8 @@ namespace IronCrown.Presentation
             sb.Append(c.treasury);
             sb.Append("  |  稳定: ");
             sb.Append(c.stability);
+            sb.Append("  |  人力: ");
+            sb.Append(c.manpower);
             sb.Append("  |  装备: ");
             sb.Append(c.equipmentStockpile);
 

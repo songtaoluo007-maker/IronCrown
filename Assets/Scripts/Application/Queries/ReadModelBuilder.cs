@@ -195,6 +195,8 @@ namespace IronCrown.Application
                 currentProvinceId = u.currentProvinceId,
                 manpower = u.manpower,
                 maxManpower = u.maxManpower,
+                equipment = u.equipment,
+                maxEquipment = u.maxEquipment,
                 organization = u.organization,
                 maxOrganization = u.maxOrganization,
                 movesLeft = u.movesLeft,

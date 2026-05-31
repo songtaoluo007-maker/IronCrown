@@ -15,6 +15,8 @@ namespace IronCrown.Contracts
         public string currentProvinceId;
         public int manpower;
         public int maxManpower;
+        public int equipment;             // C13
+        public int maxEquipment;          // C13
         public int organization;
         public int maxOrganization;
         public int movesLeft;
