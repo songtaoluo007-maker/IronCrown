@@ -3,6 +3,7 @@
 // 验证 WarTollResolver + PeaceResolver + BattleResolver 战争代价逻辑
 // ============================================================================
 
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using IronCrown.Domain;
@@ -16,11 +17,16 @@ namespace IronCrown.Tests
     {
         private int _seed;
         public DeterministicRng(int seed = 42) { _seed = seed; }
+        public int Seed => _seed;
+        public ulong State => (ulong)_seed;
         public double NextDouble() { _seed = (_seed * 1103515245 + 12345) & 0x7fffffff; return (_seed % 1000) / 1000.0; }
-        public int Next(int max) { return (int)(NextDouble() * max); }
-        public int Next(int min, int max) { return min + Next(max - min); }
-        public IRandom.State GetState() => new IRandom.State { s0 = (ulong)_seed };
-        public void RestoreState(IRandom.State s) { _seed = (int)s.s0; }
+        public int Next(int maxExclusive) { return (int)(NextDouble() * maxExclusive); }
+        public int Range(int minInclusive, int maxExclusive) { return minInclusive + Next(maxExclusive - minInclusive); }
+        public bool Roll(int percentChance) { return Next(100) < percentChance; }
+        public double RangeDouble(double min, double max) { return min + NextDouble() * (max - min); }
+        public void Reset() { _seed = 42; }
+        public void Reset(int newSeed) { _seed = newSeed; }
+        public void RestoreState(ulong state) { _seed = (int)state; }
     }
 
     /// <summary>简易配置注册表（测试用）</summary>
@@ -33,7 +39,13 @@ namespace IronCrown.Tests
             if (typeof(T) == typeof(EconomyConfig) && id == "global") return _eco as T;
             return null;
         }
+        public IReadOnlyList<T> All<T>() where T : class
+        {
+            if (typeof(T) == typeof(EconomyConfig)) return new[] { _eco as T } as IReadOnlyList<T>;
+            return new List<T>();
+        }
         public bool Has<T>(string id) where T : class => Get<T>(id) != null;
+        public void LoadAll() { }
     }
 
     [TestFixture]
@@ -378,6 +390,8 @@ namespace IronCrown.Tests
     internal class NoOpEventPublisher : IEventPublisher
     {
         public void Publish<T>(T evt) { }
-        public void Subscribe<T>(System.Action<T> handler) { }
+        public void Subscribe<T>(Action<T> handler) { }
+        public void Unsubscribe<T>(Action<T> handler) { }
+        public void Clear() { }
     }
 }
