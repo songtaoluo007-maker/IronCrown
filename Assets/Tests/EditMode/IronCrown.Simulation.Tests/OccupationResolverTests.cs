@@ -55,9 +55,7 @@ namespace IronCrown.Tests
             province.resistance = 50;
             unit.currentProvinceId = "other_province"; // 驻军不在省
 
-            // 诊断
-            Assert.IsTrue(province.IsOccupied, "省份应被占领");
-            Assert.AreEqual("occupier", province.controllerCountry);
+            _rng.ForceNext(15); // roll 15 >= 10 → 不触发起义
 
             var resolver = CreateResolver();
             resolver.ResolveOccupation(world, _eco);
@@ -84,6 +82,8 @@ namespace IronCrown.Tests
             var world = CreateWorld(out var province, out var unit);
             province.resistance = 100;
             unit.currentProvinceId = "other";
+
+            _rng.ForceNext(15); // roll 15 >= 10 → 不触发起义
 
             var resolver = CreateResolver();
             resolver.ResolveOccupation(world, _eco);
@@ -210,6 +210,7 @@ namespace IronCrown.Tests
             Assert.AreEqual(98, unit2.manpower);
             Assert.AreEqual(98, unit2.equipment);
         }
+
 
         // ── 辅助 ──
 

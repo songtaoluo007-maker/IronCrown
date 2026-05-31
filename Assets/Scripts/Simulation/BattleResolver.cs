@@ -353,7 +353,7 @@ namespace IronCrown.Simulation
 
         // === C5: 战争代价 ===
 
-        private void ApplyBattleToll(WorldState world, UnitState attacker, UnitState defender, string winnerKind)
+        internal void ApplyBattleToll(WorldState world, UnitState attacker, UnitState defender, string winnerKind)
         {
             var eco = _config?.Get<EconomyConfig>("global");
             if (eco == null) return;
@@ -377,7 +377,7 @@ namespace IronCrown.Simulation
             }
         }
 
-        private void ApplyCapitalLossPenalty(WorldState world, string previousControllerCountry, string provinceId)
+        internal void ApplyCapitalLossPenalty(WorldState world, string previousControllerCountry, string provinceId)
         {
             var eco = _config?.Get<EconomyConfig>("global");
             if (eco == null) return;

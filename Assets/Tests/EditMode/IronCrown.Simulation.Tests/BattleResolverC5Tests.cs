@@ -138,6 +138,7 @@ namespace IronCrown.Tests
         public void BattleToll_AttackerWin_AttackerGainsSupport_DefenderLoses()
         {
             var world = CreateWorld(out var atk, out var def);
+            atk.warSupport = 95; // avoid clamp at 100
             var battle = CreateBattle(world, atk, def, out var atkUnit, out var defUnit);
 
             // 制造攻方必胜：守方只有 1 org
@@ -146,14 +147,15 @@ namespace IronCrown.Tests
             var resolver = new BattleResolver(new DeterministicRng(42), new NoOpEventPublisher(), _config);
             resolver.TickBattles(world);
 
-            Assert.AreEqual(105, atk.warSupport); // +5
-            Assert.AreEqual(95, def.warSupport);  // -5
+            Assert.AreEqual(100, atk.warSupport); // 95 + 5
+            Assert.AreEqual(95, def.warSupport);  // 100 - 5
         }
 
         [Test]
         public void BattleToll_DefenderWin_DefenderGainsSupport_AttackerLoses()
         {
             var world = CreateWorld(out var atk, out var def);
+            def.warSupport = 95; // avoid clamp at 100
             var battle = CreateBattle(world, atk, def, out var atkUnit, out var defUnit);
 
             // 制造守方必胜：攻方只有 1 org
@@ -162,8 +164,8 @@ namespace IronCrown.Tests
             var resolver = new BattleResolver(new DeterministicRng(42), new NoOpEventPublisher(), _config);
             resolver.TickBattles(world);
 
-            Assert.AreEqual(95, atk.warSupport);  // -5
-            Assert.AreEqual(105, def.warSupport); // +5
+            Assert.AreEqual(95, atk.warSupport);  // 100 - 5
+            Assert.AreEqual(100, def.warSupport); // 95 + 5
         }
 
         // ── PeaceResolver ──
