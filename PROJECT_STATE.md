@@ -52,6 +52,7 @@
 
 ## 5. 协作模式 + 审查要点(实战复盘,重要)
 - **流程**:Claude 出工作单(写死架构+代拟数值,零留白)→ OpenClaw 在独立分支实现 → Claude 逐项审查 → 人类 Play 验收。
+- **★ Push 节奏(2026-05-31 起)**:**每个工作单 OpenClaw 完成 commit 后立即** `git push origin <feature-branch>`,避免分支堆积 14+ commit 后才推。Claude 签发新工作单也立刻 commit + push。**已建立 PR 跟踪**:feature 分支首次推送时 `gh pr create --base main` 起 PR,后续推送自动追加到 PR。
 - **CHANGELOG 由 Claude 维护(UTF-8)**;OpenClaw 不直接编辑它(曾两次写成乱码)。
 - **审查必查(OpenClaw 反复出过的坑)**:
   1. **只信代码不信总结**——实读文件,不信 PR 描述。
