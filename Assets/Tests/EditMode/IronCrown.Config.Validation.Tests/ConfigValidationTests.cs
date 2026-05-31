@@ -193,6 +193,8 @@ namespace IronCrown.Config.Validation.Tests
             // C6 占领抵抗
             public int resistanceOnCapture;
             public int resistanceDecayWithGarrison;
+            // C10 treasury→capital
+            public int treasuryToCapitalRatePct;
             public int resistanceGrowWithoutGarrison;
             public int resistanceUprisingThreshold;
             public int resistanceUprisingChancePct;
@@ -212,6 +214,7 @@ namespace IronCrown.Config.Validation.Tests
         {
             public string id;
             public int speed;
+            public int equipmentTrainingCost;
         }
 
         [Test]
@@ -272,6 +275,27 @@ namespace IronCrown.Config.Validation.Tests
             {
                 Assert.Greater(u.speed, 0, $"unitType={u.id} 的 speed 应 > 0");
             }
+        }
+
+        [Test]
+        public void Economy_HasTreasuryToCapitalRate()
+        {
+            var config = LoadConfig<EconomyList>("economy.json");
+            Assert.IsNotNull(config);
+            var eco = config.items.Find(i => i.id == "global");
+            Assert.IsNotNull(eco);
+            Assert.GreaterOrEqual(eco.treasuryToCapitalRatePct, 0, "treasuryToCapitalRatePct >= 0");
+            Assert.LessOrEqual(eco.treasuryToCapitalRatePct, 100, "treasuryToCapitalRatePct <= 100");
+        }
+
+        [Test]
+        public void Units_InfantryHasEquipmentTrainingCost()
+        {
+            var config = LoadConfig<UnitConfigList>("units.json");
+            Assert.IsNotNull(config);
+            var inf = config.items.Find(i => i.id == "infantry");
+            Assert.IsNotNull(inf);
+            Assert.Greater(inf.equipmentTrainingCost, 0, "infantry.equipmentTrainingCost > 0");
         }
     }
 }

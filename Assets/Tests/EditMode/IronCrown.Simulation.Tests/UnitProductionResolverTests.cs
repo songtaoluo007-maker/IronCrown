@@ -34,12 +34,13 @@ namespace IronCrown.Simulation.Tests
                 attack = 10, defense = 15, breakthrough = 5,
                 speed = 3, hp = 100, organization = 60,
                 armor = 0, piercing = 5, supplyConsumption = 10,
+                equipmentTrainingCost = 50,
                 cost = new Dictionary<string, int> { { "steel", 5 }, { "food", 10 }, { "capital", 2 } }
             });
             return config;
         }
 
-        private CountryState CreateCountry(int steel = 50, int food = 100, int capital = 100, int manpower = 50000)
+        private CountryState CreateCountry(int steel = 50, int food = 100, int capital = 100, int manpower = 50000, int equipmentStockpile = 200)
         {
             return new CountryState
             {
@@ -52,7 +53,8 @@ namespace IronCrown.Simulation.Tests
                     { "steel", steel },
                     { "food", food },
                     { "capital", capital }
-                }
+                },
+                equipmentStockpile = equipmentStockpile
             };
         }
 
@@ -72,6 +74,7 @@ namespace IronCrown.Simulation.Tests
             Assert.AreEqual(90, country.GetResource("food"));    // 100 - 10
             Assert.AreEqual(98, country.GetResource("capital")); // 100 - 2
             Assert.AreEqual(49900, country.manpower);            // 50000 - 100
+            Assert.AreEqual(150, country.equipmentStockpile);    // 200 - 50
         }
 
         [Test]
@@ -191,6 +194,60 @@ namespace IronCrown.Simulation.Tests
             Assert.AreEqual(2, produced.Count);
             Assert.AreEqual("a_country_inf_1", produced[0].id);
             Assert.AreEqual("z_country_inf_1", produced[1].id);
+        }
+
+        // ===== C10: 装备库存测试 =====
+
+        [Test]
+        public void TryEnqueue_InsufficientEquipment_Rejects()
+        {
+            var config = CreateConfig();
+            var eco = config.Get<EconomyConfig>("global");
+            var country = CreateCountry(equipmentStockpile: 49); // < 50
+            var resolver = new UnitProductionResolver();
+
+            var result = resolver.TryEnqueue(country, "infantry", config, eco);
+
+            Assert.IsFalse(result.accepted);
+            Assert.AreEqual("装备库存不足", result.reason);
+            Assert.AreEqual(0, country.unitProductionQueue.Count);
+        }
+
+        [Test]
+        public void TryEnqueue_SufficientEquipment_DeductsAndAccepts()
+        {
+            var config = CreateConfig();
+            var eco = config.Get<EconomyConfig>("global");
+            var country = CreateCountry(equipmentStockpile: 100);
+            var resolver = new UnitProductionResolver();
+
+            var result = resolver.TryEnqueue(country, "infantry", config, eco);
+
+            Assert.IsTrue(result.accepted);
+            Assert.AreEqual(50, country.equipmentStockpile); // 100 - 50
+        }
+
+        [Test]
+        public void TryEnqueue_ZeroEquipmentCost_NoCheck()
+        {
+            var config = CreateConfig();
+            // 用 equipmentTrainingCost=0 的 infantry 模板
+            config.Register("infantry", new UnitConfig
+            {
+                id = "infantry", name = "步兵师",
+                attack = 10, defense = 15, breakthrough = 5,
+                speed = 3, hp = 100, organization = 60,
+                armor = 0, piercing = 5, supplyConsumption = 10,
+                equipmentTrainingCost = 0, // 旧单位无装备训练 cost
+                cost = new Dictionary<string, int> { { "steel", 5 }, { "food", 10 }, { "capital", 2 } }
+            });
+            var eco = config.Get<EconomyConfig>("global");
+            var country = CreateCountry(equipmentStockpile: 0); // 0 装备
+            var resolver = new UnitProductionResolver();
+
+            var result = resolver.TryEnqueue(country, "infantry", config, eco);
+
+            Assert.IsTrue(result.accepted, "equipmentTrainingCost=0 不校验装备");
         }
     }
 }

@@ -35,6 +35,12 @@ namespace IronCrown.Simulation
                 return CommandResult.Reject("人力不足");
             c.manpower -= template.hp;
 
+            // C10: 装备库存校验 + 扣减
+            if (template.equipmentTrainingCost > 0 && c.equipmentStockpile < template.equipmentTrainingCost)
+                return CommandResult.Reject("装备库存不足");
+            if (template.equipmentTrainingCost > 0)
+                c.equipmentStockpile -= template.equipmentTrainingCost;
+
             c.unitProductionQueue.Add(new UnitProductionOrder
             {
                 unitType = unitType,

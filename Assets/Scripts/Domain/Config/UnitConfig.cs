@@ -22,6 +22,7 @@ namespace IronCrown.Domain
         public int piercing;
         public int supplyConsumption;
         public string equipmentType;
+        public int equipmentTrainingCost;
         public Dictionary<string, int> cost;
     }
 }

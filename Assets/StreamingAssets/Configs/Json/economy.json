@@ -60,6 +60,7 @@
             "aiRedeployVulnerableRatioPct": 80,
             "aiMaxRedeploysPerTurn": 1,
             "civilianFactoryCapitalOutput": 5,
+            "treasuryToCapitalRatePct": 10,
             "provinceBaseFoodOutput": 1,
             "provinceBaseSteelOutput": 1,
             "aiPeaceTruceTurns": 10

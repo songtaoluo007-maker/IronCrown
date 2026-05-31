@@ -148,6 +148,17 @@ namespace IronCrown.Simulation
             if (country.inflation > 0)
                 country.inflation = Math.Max(0, country.inflation - 1);
 
+            // C10: treasury → capital 自动转化
+            if (country.treasury > 0 && eco != null && eco.treasuryToCapitalRatePct > 0)
+            {
+                int conversion = country.treasury * eco.treasuryToCapitalRatePct / 100;
+                if (conversion > 0)
+                {
+                    country.treasury -= conversion;
+                    country.ModifyResource("capital", conversion);
+                }
+            }
+
             return result;
         }
 

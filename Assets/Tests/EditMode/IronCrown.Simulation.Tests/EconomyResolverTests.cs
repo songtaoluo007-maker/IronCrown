@@ -70,7 +70,8 @@ namespace IronCrown.Simulation.Tests
             taxRatePercents = new[] { 70, 100, 130 },
             taxStabilityDeltas = new[] { 1, 0, -2 },
             civilExpensePercents = new[] { 50, 100, 150 },
-            civilStabilityDeltas = new[] { -2, 0, 2 }
+            civilStabilityDeltas = new[] { -2, 0, 2 },
+            treasuryToCapitalRatePct = 10
         };
 
         [SetUp]
@@ -466,6 +467,96 @@ namespace IronCrown.Simulation.Tests
 
             // civilExpense = 20 * 50 / 100 = 10
             Assert.AreEqual(10, result.civilExpense);
+        }
+
+        // ===== C10: treasury → capital 转化测试 =====
+
+        [Test]
+        public void ResolveEconomy_PositiveTreasury_ConvertsToCapital()
+        {
+            var resolver = CreateResolver();
+            var country = new CountryState
+            {
+                id = "test",
+                stability = 80,
+                taxIncome = 0, tradeIncome = 0,
+                civilExpense = 0, civilLevel = 0,
+                treasury = 1000
+            };
+            country.resources["capital"] = 0;
+            var world = new WorldState();
+
+            resolver.ResolveEconomy(country, world);
+
+            // netIncome=0, treasury stays 1000 → conversion=1000*10/100=100
+            Assert.AreEqual(900, country.treasury);
+            Assert.AreEqual(100, country.GetResource("capital"));
+        }
+
+        [Test]
+        public void ResolveEconomy_ZeroTreasury_AfterNetIncome_ConvertsFromNewIncome()
+        {
+            var resolver = CreateResolver();
+            var country = new CountryState
+            {
+                id = "test",
+                stability = 80,
+                taxIncome = 0, tradeIncome = 0,
+                civilExpense = 0, civilLevel = 0,
+                treasury = 0
+            };
+            country.resources["capital"] = 0;
+            var world = new WorldState();
+
+            // netIncome=0 → treasury stays 0 → conversion=0*10/100=0 → no conversion
+            resolver.ResolveEconomy(country, world);
+
+            Assert.AreEqual(0, country.treasury);
+            Assert.AreEqual(0, country.GetResource("capital"));
+        }
+
+        [Test]
+        public void ResolveEconomy_NegativeTreasury_NoConversion()
+        {
+            var resolver = CreateResolver();
+            var country = new CountryState
+            {
+                id = "test",
+                stability = 80,
+                taxIncome = 0, tradeIncome = 0,
+                civilExpense = 0, civilLevel = 0,
+                treasury = -500
+            };
+            country.resources["capital"] = 0;
+            var world = new WorldState();
+
+            resolver.ResolveEconomy(country, world);
+
+            // treasury=-500, netIncome=0 → treasury=-500, treasury>0 is false → no conversion
+            Assert.AreEqual(-500, country.treasury);
+            Assert.AreEqual(0, country.GetResource("capital"));
+        }
+
+        [Test]
+        public void ResolveEconomy_ConversionFloors_NotFractional()
+        {
+            var resolver = CreateResolver();
+            var country = new CountryState
+            {
+                id = "test",
+                stability = 80,
+                taxIncome = 0, tradeIncome = 0,
+                civilExpense = 0, civilLevel = 0,
+                treasury = 5
+            };
+            country.resources["capital"] = 0;
+            var world = new WorldState();
+
+            resolver.ResolveEconomy(country, world);
+
+            // treasury=5, conversion=5*10/100=0 → no conversion
+            Assert.AreEqual(5, country.treasury);
+            Assert.AreEqual(0, country.GetResource("capital"));
         }
     }
 }
