@@ -28,16 +28,19 @@ namespace IronCrown.Simulation
             {
                 if (!c.HasResources(template.cost))
                     return CommandResult.Reject("资源不足");
-                c.ConsumeResources(template.cost);
             }
 
             if (c.manpower < template.hp)
                 return CommandResult.Reject("人力不足");
-            c.manpower -= template.hp;
 
-            // C10: 装备库存校验 + 扣减
+            // C10: 装备库存校验（资源/人力校验之后、扣减之前）
             if (template.equipmentTrainingCost > 0 && c.equipmentStockpile < template.equipmentTrainingCost)
                 return CommandResult.Reject("装备库存不足");
+
+            // 全部校验通过后才扣减
+            if (template.cost != null)
+                c.ConsumeResources(template.cost);
+            c.manpower -= template.hp;
             if (template.equipmentTrainingCost > 0)
                 c.equipmentStockpile -= template.equipmentTrainingCost;
 

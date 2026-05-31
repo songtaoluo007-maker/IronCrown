@@ -211,6 +211,11 @@ namespace IronCrown.Simulation.Tests
             Assert.IsFalse(result.accepted);
             Assert.AreEqual("装备库存不足", result.reason);
             Assert.AreEqual(0, country.unitProductionQueue.Count);
+            // 资源不应被扣（校验顺序：先检查后扣减）
+            Assert.AreEqual(50, country.GetResource("steel"));
+            Assert.AreEqual(100, country.GetResource("food"));
+            Assert.AreEqual(100, country.GetResource("capital"));
+            Assert.AreEqual(50000, country.manpower);
         }
 
         [Test]

@@ -98,6 +98,12 @@ namespace IronCrown.Application
                 }
             }
 
+            // C10: 每国初始装备库存 100（够训 2 步兵）
+            foreach (var country in world.countries.Values)
+            {
+                country.equipmentStockpile = 100;
+            }
+
             _logger.Info($"[WorldInitializer] 初始化完成: {world.countries.Count} 个国家, {world.provinces.Count} 个省份, {world.units.Count} 支部队");
             return world;
         }
