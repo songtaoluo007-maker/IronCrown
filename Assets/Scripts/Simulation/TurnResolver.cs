@@ -24,6 +24,7 @@ namespace IronCrown.Simulation
         private readonly MovementResolver _movement;
         private readonly VictoryConditionResolver _victory;
         private readonly IConfigRegistry _config;
+        private readonly WarTollResolver _warToll;
 
         public TurnResolver(
             ITurnClock clock,
@@ -38,7 +39,8 @@ namespace IronCrown.Simulation
             UnitProductionResolver unitProduction = null,
             MovementResolver movement = null,
             IConfigRegistry config = null,
-            VictoryConditionResolver victory = null)
+            VictoryConditionResolver victory = null,
+            WarTollResolver warToll = null)
         {
             _clock = clock;
             _events = events;
@@ -53,6 +55,7 @@ namespace IronCrown.Simulation
             _movement = movement;
             _victory = victory;
             _config = config;
+            _warToll = warToll;
         }
 
         public void ExecuteTurn(WorldState world)
@@ -125,6 +128,14 @@ namespace IronCrown.Simulation
 
             // 战斗 tick（Settlement 尾段）
             _battle.TickBattles(world);
+
+            // C5: 战争代价（TickBattles 之后、胜负判定之前）
+            if (_warToll != null && _config != null)
+            {
+                var eco = _config.Get<EconomyConfig>("global");
+                if (eco != null)
+                    _warToll.ApplyTurnToll(world, eco);
+            }
 
             // 胜负判定（TickBattles 之后）
             if (_victory != null)

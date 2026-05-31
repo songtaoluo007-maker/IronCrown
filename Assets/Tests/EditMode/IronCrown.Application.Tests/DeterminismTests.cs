@@ -118,6 +118,7 @@ namespace IronCrown.Application.Tests
             var economy = new EconomyResolver(config, new EventBus());
             var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
+            var peace = new PeaceResolver(new EventBus());
             var supply = new SupplyResolver();
             var construction = new ConstructionResolver();
             var unitProduction = new UnitProductionResolver();
@@ -128,7 +129,7 @@ namespace IronCrown.Application.Tests
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
 
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, new EventBus(), saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, peace, new EventBus(), saveRepo, rng, builder, logger);
             return (session, saveRepo);
         }
 

@@ -51,5 +51,24 @@ namespace IronCrown.Domain
         {
             return string.Compare(a, b, StringComparison.Ordinal) <= 0 ? (a, b) : (b, a);
         }
+
+        /// <summary>尝试结束战争。移除一对 WarRelation。</summary>
+        public static bool TryEndWar(WorldState world, string a, string b, out WarRelation removed)
+        {
+            removed = null;
+            var (lo, hi) = Normalize(a, b);
+            for (int i = 0; i < world.warRelations.Count; i++)
+            {
+                var w = world.warRelations[i];
+                if (string.Equals(w.countryA, lo, StringComparison.Ordinal) &&
+                    string.Equals(w.countryB, hi, StringComparison.Ordinal))
+                {
+                    removed = w;
+                    world.warRelations.RemoveAt(i);
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

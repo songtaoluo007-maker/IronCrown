@@ -33,6 +33,10 @@ namespace IronCrown.Presentation
         private Label _provinceDetailLabel;
         private VisualElement _countryList;
 
+        // C5: 外交
+        private Button _offerPeaceBtn;
+        private Label _warExhaustionLabel;
+
         // Stored callbacks for proper Unregister
         private EventCallback<ClickEvent> _onAdvance;
         private EventCallback<ClickEvent> _onBuildCivilian;
@@ -42,6 +46,7 @@ namespace IronCrown.Presentation
         private EventCallback<ClickEvent> _onTaxDown;
         private EventCallback<ClickEvent> _onCivilUp;
         private EventCallback<ClickEvent> _onCivilDown;
+        private EventCallback<ClickEvent> _onOfferPeace;
 
         public MainHudController(GameSessionService session, IEventPublisher events)
         {
@@ -68,6 +73,10 @@ namespace IronCrown.Presentation
             _provinceDetailLabel = root.Q<Label>("province-detail-label");
             _countryList = root.Q<ScrollView>("country-list");
 
+            // C5: 外交
+            _offerPeaceBtn = root.Q<Button>("offer-peace-btn");
+            _warExhaustionLabel = root.Q<Label>("war-exhaustion-label");
+
             _onAdvance = _ => Advance();
             _onBuildCivilian = _ => BuildCivilian();
             _onBuildMilitary = _ => BuildMilitary();
@@ -76,6 +85,7 @@ namespace IronCrown.Presentation
             _onTaxDown = _ => SetTax(-1);
             _onCivilUp = _ => SetCivil(1);
             _onCivilDown = _ => SetCivil(-1);
+            _onOfferPeace = _ => OfferPeace();
 
             if (_advanceBtn != null) _advanceBtn.RegisterCallback(_onAdvance);
             if (_buildCivilianBtn != null) _buildCivilianBtn.RegisterCallback(_onBuildCivilian);
@@ -85,6 +95,7 @@ namespace IronCrown.Presentation
             if (_taxDownBtn != null) _taxDownBtn.RegisterCallback(_onTaxDown);
             if (_civilUpBtn != null) _civilUpBtn.RegisterCallback(_onCivilUp);
             if (_civilDownBtn != null) _civilDownBtn.RegisterCallback(_onCivilDown);
+            if (_offerPeaceBtn != null) _offerPeaceBtn.RegisterCallback(_onOfferPeace);
 
             _events.Subscribe<TurnStartEvent>(_ => Render());
             _events.Subscribe<TurnEndEvent>(_ => Render());
@@ -119,6 +130,21 @@ namespace IronCrown.Presentation
                 Render();
             });
 
+            // C5: 停战事件
+            _events.Subscribe<PeaceOfferedEvent>(e =>
+            {
+                if (e.accepted)
+                    ShowStatus($"☮ 停战达成：{e.fromCountry} ↔ {e.toCountry}");
+                else
+                    ShowStatus($"停战被拒：{e.reason}");
+                Render();
+            });
+            _events.Subscribe<PeaceConcludedEvent>(e =>
+            {
+                ShowStatus($"☮ 和平降临：{e.countryA} ↔ {e.countryB}（回合 {e.atTurn}）");
+                Render();
+            });
+
             Render();
         }
 
@@ -132,6 +158,7 @@ namespace IronCrown.Presentation
             if (_taxDownBtn != null) _taxDownBtn.UnregisterCallback(_onTaxDown);
             if (_civilUpBtn != null) _civilUpBtn.UnregisterCallback(_onCivilUp);
             if (_civilDownBtn != null) _civilDownBtn.UnregisterCallback(_onCivilDown);
+            if (_offerPeaceBtn != null) _offerPeaceBtn.UnregisterCallback(_onOfferPeace);
         }
 
         public void Advance()
@@ -227,6 +254,31 @@ namespace IronCrown.Presentation
             else
                 ShowStatus($"被拒: {result.reason}");
             Render();
+        }
+
+        public void OfferPeace()
+        {
+            var view = _session.GetWorldView();
+            if (view == null || view.warRelations == null) return;
+
+            var playerWar = view.warRelations.Find(w =>
+                w.countryA == view.playerCountryId || w.countryB == view.playerCountryId);
+            if (playerWar == null)
+            {
+                ShowStatus("当前无交战国家");
+                Render();
+                return;
+            }
+
+            string targetId = playerWar.countryA == view.playerCountryId
+                ? playerWar.countryB : playerWar.countryA;
+
+            _session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.OfferPeace,
+                countryId = _session.PlayerCountryId,
+                targetCountryId = targetId
+            });
         }
 
         public void SelectCountry(string countryId)
@@ -350,6 +402,8 @@ namespace IronCrown.Presentation
                     _taxLevelLabel.text = taxNames[System.Math.Clamp(playerView.taxLevel, 0, 2)];
                 if (_civilLevelLabel != null)
                     _civilLevelLabel.text = civilNames[System.Math.Clamp(playerView.civilLevel, 0, 2)];
+                if (_warExhaustionLabel != null)
+                    _warExhaustionLabel.text = playerView.warExhaustion.ToString();
             }
 
             // 地图渲染
@@ -549,6 +603,12 @@ namespace IronCrown.Presentation
             sb.Append(c.stability);
             sb.Append("  |  装备: ");
             sb.Append(c.equipmentStockpile);
+
+            if (c.warExhaustion > 0)
+            {
+                sb.Append("  |  疲惫: ");
+                sb.Append(c.warExhaustion);
+            }
 
             if (isAtWar)
                 sb.Append("  |  ⚔ 交战中");

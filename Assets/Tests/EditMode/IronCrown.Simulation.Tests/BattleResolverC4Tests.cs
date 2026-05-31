@@ -335,10 +335,11 @@ namespace IronCrown.Tests
 
             var turnResolver = new TurnResolver(clock, events, economy, politics, battle, supply, ai, diplo, construction, unitProduction, movement, config, victory);
             var saveRepo = new InMemorySaveRepository();
+            var peace = new PeaceResolver(events);
 
             var session = new GameSessionService(
                 clock, config, initializer, turnResolver, construction, unitProduction, movement, battle,
-                events, saveRepo, rng, readModel, logger);
+                peace, events, saveRepo, rng, readModel, logger);
 
             session.NewGame();
             var cmd = new GameCommand { commandType = CommandType.BuildCivilianFactory, countryId = "empire_north" };

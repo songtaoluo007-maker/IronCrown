@@ -11,6 +11,7 @@ namespace IronCrown.Contracts
         SetTaxLevel,
         SetCivilLevel,
         BuildUnit,
-        MoveUnit
+        MoveUnit,
+        OfferPeace
     }
 }

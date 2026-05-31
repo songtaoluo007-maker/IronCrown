@@ -30,6 +30,13 @@
             <ui:Label name="status-label" text="" class="status-label" />
         </ui:VisualElement>
 
+        <!-- C5: 外交栏 -->
+        <ui:VisualElement class="diplomacy-bar">
+            <ui:Button name="offer-peace-btn" text="提议停战" class="offer-peace-btn" />
+            <ui:Label text="战争疲惫:" class="gov-label" />
+            <ui:Label name="war-exhaustion-label" text="0" class="war-exhaustion-label" />
+        </ui:VisualElement>
+
         <!-- 分隔线 -->
         <ui:VisualElement class="separator" />
 

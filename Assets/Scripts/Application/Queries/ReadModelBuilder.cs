@@ -100,7 +100,8 @@ namespace IronCrown.Application
                 constructionQueueCount = c.constructionQueue.Count,
                 unitProductionQueueCount = c.unitProductionQueue.Count,
                 taxLevel = c.taxLevel,
-                civilLevel = c.civilLevel
+                civilLevel = c.civilLevel,
+                warExhaustion = c.warExhaustion
             };
         }
 

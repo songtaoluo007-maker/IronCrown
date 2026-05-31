@@ -39,6 +39,9 @@ namespace IronCrown.Application
         public int taxLevel;
         public int civilLevel;
 
+        // C5: 战争疲惫
+        public int warExhaustion;
+
         // 工厂
         public int civilianFactories;
         public int militaryFactories;

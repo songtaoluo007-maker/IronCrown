@@ -27,7 +27,15 @@
       "aiMaxMilitaryFactories": 15,
       "_aiMilitaryNote": "AI 军事进攻阈值（规则14 人类可调）。aiAttackPowerRatio=120 表示攻方需 120% 守方才发动。",
       "aiAttackPowerRatio": 120,
-      "aiMaxAttacksPerTurn": 1
+      "aiMaxAttacksPerTurn": 1,
+      "_warNote": "C5 战争代价数值（规则14 人类可调）。",
+      "warStabilityPenaltyPerTurn": 1,
+      "warExhaustionPerTurn": 1,
+      "warSupportPenaltyPerLoss": 5,
+      "warSupportBonusPerVictory": 5,
+      "warSupportPenaltyPerCapitalLoss": 15,
+      "aiPeaceAcceptExhaustionThreshold": 30,
+      "aiPeaceAcceptPowerRatioPct": 80
     }
   ]
 }

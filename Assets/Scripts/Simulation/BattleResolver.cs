@@ -16,11 +16,13 @@ namespace IronCrown.Simulation
     {
         private readonly IRandom _rng;
         private readonly IEventPublisher _events;
+        private readonly IConfigRegistry _config;
 
-        public BattleResolver(IRandom rng, IEventPublisher events)
+        public BattleResolver(IRandom rng, IEventPublisher events, IConfigRegistry config = null)
         {
             _rng = rng;
             _events = events;
+            _config = config;
         }
 
         public BattleResult ResolveBattle(UnitState attacker, UnitState defender, ProvinceState province)
@@ -138,6 +140,9 @@ namespace IronCrown.Simulation
                     attackerUnitId = attackerUnitId
                 });
 
+                // C5: 首都丢失扣 warSupport
+                ApplyCapitalLossPenalty(world, prevController, targetProvinceId);
+
                 return CommandResult.Accept();
             }
 
@@ -212,6 +217,13 @@ namespace IronCrown.Simulation
                         previousControllerCountry = prevController,
                         attackerUnitId = battle.attackerUnitId
                     });
+
+                    // C5: 首都丢失扣 warSupport
+                    ApplyCapitalLossPenalty(world, prevController, battle.provinceId);
+
+                    // C5: 战斗胜负 warSupport 变化
+                    ApplyBattleToll(world, attacker, defender, "Attacker");
+
                     _events.Publish(new BattleConcludedEvent
                     {
                         battleId = battle.id,
@@ -227,6 +239,10 @@ namespace IronCrown.Simulation
                 {
                     // 攻方消灭
                     DestroyUnit(world, battle.attackerUnitId, "battle");
+
+                    // C5: 战斗胜负 warSupport 变化
+                    ApplyBattleToll(world, attacker, defender, "Defender");
+
                     _events.Publish(new BattleConcludedEvent
                     {
                         battleId = battle.id,
@@ -243,6 +259,10 @@ namespace IronCrown.Simulation
                     // 双方主力消灭
                     DestroyUnit(world, battle.attackerUnitId, "battle");
                     DestroyUnit(world, battle.defenderUnitId, "battle");
+
+                    // C5: 平局双方都按 loss 算
+                    ApplyBattleToll(world, attacker, defender, "Draw");
+
                     _events.Publish(new BattleConcludedEvent
                     {
                         battleId = battle.id,
@@ -321,6 +341,44 @@ namespace IronCrown.Simulation
         {
             float factor = 1f + (float)(_rng.NextDouble() * 2 - 1) * variance;
             return System.Math.Max(1, (int)(baseValue * factor));
+        }
+
+        // === C5: 战争代价 ===
+
+        private void ApplyBattleToll(WorldState world, UnitState attacker, UnitState defender, string winnerKind)
+        {
+            var eco = _config?.Get<EconomyConfig>("global");
+            if (eco == null) return;
+            if (!world.countries.TryGetValue(attacker.ownerCountry, out var atkCountry)) return;
+            if (!world.countries.TryGetValue(defender.ownerCountry, out var defCountry)) return;
+
+            switch (winnerKind)
+            {
+                case "Attacker":
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport + eco.warSupportBonusPerVictory, 0, 100);
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+                case "Defender":
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport + eco.warSupportBonusPerVictory, 0, 100);
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+                case "Draw":
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+            }
+        }
+
+        private void ApplyCapitalLossPenalty(WorldState world, string previousControllerCountry, string provinceId)
+        {
+            var eco = _config?.Get<EconomyConfig>("global");
+            if (eco == null) return;
+            if (string.IsNullOrEmpty(previousControllerCountry)) return;
+            if (!world.countries.TryGetValue(previousControllerCountry, out var country)) return;
+            if (country.capitalProvinceId == provinceId)
+            {
+                country.warSupport = Math.Clamp(country.warSupport - eco.warSupportPenaltyPerCapitalLoss, 0, 100);
+            }
         }
     }
 

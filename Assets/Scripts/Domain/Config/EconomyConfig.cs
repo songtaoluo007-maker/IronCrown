@@ -41,5 +41,14 @@ namespace IronCrown.Domain
         // === AI 军事 ===
         public int aiAttackPowerRatio;      // 百分比，120 = 攻方需 120% 守方才进攻
         public int aiMaxAttacksPerTurn;     // 每国每回合最多进攻次数
+
+        // === 战争代价 (C5) ===
+        public int warStabilityPenaltyPerTurn;       // AtWar 每回合 stability -N
+        public int warExhaustionPerTurn;             // AtWar 每回合 warExhaustion +N
+        public int warSupportPenaltyPerLoss;         // 战败 warSupport -N
+        public int warSupportBonusPerVictory;        // 战胜 warSupport +N
+        public int warSupportPenaltyPerCapitalLoss;  // 首都被占 warSupport -N（一次性）
+        public int aiPeaceAcceptExhaustionThreshold; // AI 进入"愿意停战"基础线
+        public int aiPeaceAcceptPowerRatioPct;       // AI 实力 ≤ 对方 N% 时下调阈值
     }
 }

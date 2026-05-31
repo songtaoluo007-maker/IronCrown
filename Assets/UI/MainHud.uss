@@ -224,3 +224,25 @@
     -unity-font-style: bold;
     color: rgba(255, 60, 60, 1);
 }
+
+/* C5: 外交栏 */
+.diplomacy-bar {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.offer-peace-btn {
+    width: 80px;
+    height: 28px;
+    font-size: 12px;
+    margin-right: 8px;
+    background-color: rgba(60, 140, 80, 0.8);
+}
+
+.war-exhaustion-label {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: rgba(255, 160, 60, 1);
+}

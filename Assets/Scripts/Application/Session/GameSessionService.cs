@@ -20,6 +20,7 @@ namespace IronCrown.Application
         private readonly UnitProductionResolver _unitProduction;
         private readonly MovementResolver _movement;
         private readonly BattleResolver _battle;
+        private readonly PeaceResolver _peace;
         private readonly IEventPublisher _events;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
@@ -42,6 +43,7 @@ namespace IronCrown.Application
             UnitProductionResolver unitProduction,
             MovementResolver movement,
             BattleResolver battle,
+            PeaceResolver peace,
             IEventPublisher events,
             ISaveRepository save,
             IRandom rng,
@@ -56,6 +58,7 @@ namespace IronCrown.Application
             _unitProduction = unitProduction;
             _movement = movement;
             _battle = battle;
+            _peace = peace;
             _events = events;
             _save = save;
             _rng = rng;
@@ -193,6 +196,9 @@ namespace IronCrown.Application
                         }
                         return battleResult;
                     }
+
+                case CommandType.OfferPeace:
+                    return _peace.OfferPeace(_world, cmd.countryId, cmd.targetCountryId, eco);
 
                 default:
                     return CommandResult.Reject("未知命令");

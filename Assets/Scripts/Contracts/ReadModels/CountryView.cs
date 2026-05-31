@@ -26,5 +26,6 @@ namespace IronCrown.Contracts
         public int unitProductionQueueCount;
         public int taxLevel;
         public int civilLevel;
+        public int warExhaustion;
     }
 }
