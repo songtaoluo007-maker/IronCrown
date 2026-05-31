@@ -102,6 +102,8 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(p.gridX));
                 bytes.AddRange(System.BitConverter.GetBytes(p.gridY));
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.terrain.ToString()));
+                bytes.AddRange(System.BitConverter.GetBytes(p.resistance));
+                bytes.AddRange(System.BitConverter.GetBytes(p.compliance));
             }
             // units
             foreach (var u in world.units.Values.OrderBy(u => u.id, System.StringComparer.Ordinal))

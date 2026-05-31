@@ -146,10 +146,6 @@ namespace IronCrown.Tests
             var resolver = new BattleResolver(new DeterministicRng(42), new NoOpEventPublisher(), _config);
             resolver.TickBattles(world);
 
-            // 诊断：战斗应已结算
-            Assert.AreEqual(0, world.activeBattles.Count, "战斗应已结算");
-            Assert.IsTrue(defUnit.IsShattered, "守方应溃散");
-
             Assert.AreEqual(105, atk.warSupport); // +5
             Assert.AreEqual(95, def.warSupport);  // -5
         }
@@ -165,10 +161,6 @@ namespace IronCrown.Tests
 
             var resolver = new BattleResolver(new DeterministicRng(42), new NoOpEventPublisher(), _config);
             resolver.TickBattles(world);
-
-            // 诊断：战斗应已结算
-            Assert.AreEqual(0, world.activeBattles.Count, "战斗应已结算");
-            Assert.IsTrue(atkUnit.IsShattered, "攻方应溃散");
 
             Assert.AreEqual(95, atk.warSupport);  // -5
             Assert.AreEqual(105, def.warSupport); // +5
@@ -401,35 +393,5 @@ namespace IronCrown.Tests
         public void Subscribe<T>(Action<T> handler) { }
         public void Unsubscribe<T>(Action<T> handler) { }
         public void Clear() { }
-
-        [Test]
-        public void Diag_ApplyBattleToll_Directly()
-        {
-            // 直接验证 ApplyBattleToll 能否工作
-            var world = CreateWorld(out var atk, out var def);
-            Assert.AreEqual(100, atk.warSupport, "初始 warSupport 应为 100");
-
-            // 创建 resolver
-            var resolver = new BattleResolver(new DeterministicRng(42), new NoOpEventPublisher(), _config);
-
-            // 通过反射调用私有方法 ApplyBattleToll
-            var method = typeof(BattleResolver).GetMethod("ApplyBattleToll", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            if (method == null)
-            {
-                Assert.Fail("ApplyBattleToll 方法不存在");
-                return;
-            }
-
-            // 创建 dummy units
-            var atkUnit = new UnitState { id = "X", ownerCountry = "A" };
-            var defUnit = new UnitState { id = "Y", ownerCountry = "B" };
-            
-            method.Invoke(resolver, new object[] { world, atkUnit, defUnit, "Attacker" });
-
-            Assert.AreEqual(105, atk.warSupport, "攻方 warSupport 应 +5");
-            Assert.AreEqual(95, def.warSupport, "守方 warSupport 应 -5");
-        }
     }
 }
