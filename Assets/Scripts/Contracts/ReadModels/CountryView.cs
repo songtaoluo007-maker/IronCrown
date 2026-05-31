@@ -32,5 +32,7 @@ namespace IronCrown.Contracts
         public int peaceOfferCooldown;
         public string pendingPeaceOfferFrom;
         public int pendingPeaceOfferExpiry;
+    public string color;
+    public string capitalProvinceId;
     }
 }

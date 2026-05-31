@@ -25,5 +25,6 @@ namespace IronCrown.Contracts
         public string controllerCountry;
         public bool isOccupied;
         public bool hasActiveBattle;
+    public int resistance;           // C9b: 占领抵抗度
     }
 }

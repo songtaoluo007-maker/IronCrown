@@ -6,6 +6,9 @@
         <ui:VisualElement class="top-bar">
             <ui:Label name="turn-label" text="回合 1 · TurnStart" class="turn-label" />
             <ui:Label name="player-label" text="玩家: (无)" class="player-label" />
+            <ui:Label name="treasury-label" text="💰0" class="hud-stat" />
+            <ui:Label name="stability-label" text="🏛100" class="hud-stat" />
+            <ui:Label name="war-support-label" text="⚔100" class="hud-stat" />
             <ui:Button name="advance-btn" text="推进" class="advance-btn" />
         </ui:VisualElement>
 

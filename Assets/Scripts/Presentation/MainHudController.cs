@@ -37,6 +37,11 @@ namespace IronCrown.Presentation
         private Button _offerPeaceBtn;
         private Label _warExhaustionLabel;
 
+        // C9b: HUD 国家状况
+        private Label _treasuryLabel;
+        private Label _stabilityLabel;
+        private Label _warSupportLabel;
+
         // Stored callbacks for proper Unregister
         private EventCallback<ClickEvent> _onAdvance;
         private EventCallback<ClickEvent> _onBuildCivilian;
@@ -76,6 +81,11 @@ namespace IronCrown.Presentation
             // C5: 外交
             _offerPeaceBtn = root.Q<Button>("offer-peace-btn");
             _warExhaustionLabel = root.Q<Label>("war-exhaustion-label");
+
+            // C9b: HUD 国家状况
+            _treasuryLabel = root.Q<Label>("treasury-label");
+            _stabilityLabel = root.Q<Label>("stability-label");
+            _warSupportLabel = root.Q<Label>("war-support-label");
 
             _onAdvance = _ => Advance();
             _onBuildCivilian = _ => BuildCivilian();
@@ -404,6 +414,12 @@ namespace IronCrown.Presentation
                     _civilLevelLabel.text = civilNames[System.Math.Clamp(playerView.civilLevel, 0, 2)];
                 if (_warExhaustionLabel != null)
                     _warExhaustionLabel.text = playerView.warExhaustion.ToString();
+                if (_treasuryLabel != null)
+                    _treasuryLabel.text = $"💰{playerView.treasury}";
+                if (_stabilityLabel != null)
+                    _stabilityLabel.text = $"🏛{playerView.stability}";
+                if (_warSupportLabel != null)
+                    _warSupportLabel.text = $"⚔{playerView.warSupport}";
             }
 
             // 地图渲染
@@ -553,7 +569,10 @@ namespace IronCrown.Presentation
 
             // 被占领省信息
             if (pv.isOccupied)
+            {
                 sb.Append($"  |  法理: {pv.ownerCountry} / 控制: {pv.controllerCountry}");
+                sb.Append($"  |  抵抗: {pv.resistance}/100");
+            }
 
             // 战斗中详情
             if (pv.hasActiveBattle && vm.activeBattles != null)

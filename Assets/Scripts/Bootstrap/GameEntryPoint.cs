@@ -15,12 +15,14 @@ namespace IronCrown.Bootstrap
     {
         private readonly GameSessionService _session;
         private readonly MainHudController _hudController;
+        private readonly NationSelectionController _nationSelection;
         private readonly IAppLogger _logger;
 
-        public GameEntryPoint(GameSessionService session, MainHudController hudController, IAppLogger logger)
+        public GameEntryPoint(GameSessionService session, MainHudController hudController, NationSelectionController nationSelection, IAppLogger logger)
         {
             _session = session;
             _hudController = hudController;
+            _nationSelection = nationSelection;
             _logger = logger;
         }
 
@@ -38,6 +40,14 @@ namespace IronCrown.Bootstrap
                 {
                     hudBehaviour.SetController(_hudController);
                     _logger.Info("[EntryPoint] HUD bound");
+
+                    // C9b: 选国覆盖面板
+                    var uiDoc = hudBehaviour.GetComponent<UnityEngine.UIElements.UIDocument>();
+                    if (uiDoc != null)
+                    {
+                        _nationSelection.Bind(uiDoc.rootVisualElement);
+                        _logger.Info("[EntryPoint] NationSelection bound");
+                    }
                 }
                 else
                 {

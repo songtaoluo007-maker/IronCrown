@@ -56,6 +56,7 @@ namespace IronCrown.Bootstrap
 
             // === Presentation 单例 ===
             builder.Register<MainHudController>(Lifetime.Singleton);
+            builder.Register<NationSelectionController>(Lifetime.Singleton);
 
             // === Entry Point ===
             builder.RegisterEntryPoint<GameEntryPoint>();

@@ -155,7 +155,8 @@ namespace IronCrown.Application
                 garrisonUnitIds = garrisonUnitIds,
                 controllerCountry = p.controllerCountry,
                 isOccupied = p.controllerCountry != null && p.controllerCountry != p.ownerCountry,
-                hasActiveBattle = battleProvinceIds != null && battleProvinceIds.Contains(p.id)
+                hasActiveBattle = battleProvinceIds != null && battleProvinceIds.Contains(p.id),
+                  resistance = p.resistance
             };
         }
 
