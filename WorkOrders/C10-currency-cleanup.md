@@ -8,6 +8,12 @@
 
 C10 = Phase 1 第一单，**治这两个死字段**。维护费 + 人力恢复 + 补员留 C13。
 
+## ⚠ 附带 C9 收尾（人类玩第二局发现，本单顺手做）
+
+人类 27 回合通关验证 C9 系列后两个小尾巴：
+1. **钢铁仍卡 1**——C9d militaryFactoryEquipmentOutput=2 节流不够。算式：N 军工 × 2 装备 × 2 steel = 4N steel/回合消耗，N≥3 净亏。**本单顺手再降一档**：`militaryFactoryEquipmentOutput: 2 → 1`（每军工/回合产 1 装备消耗 2 steel，N=5 军工 = 10 steel 消耗 vs iron_city+5 省基础 ≈ 11 产出 → 净 +1 长期可累积）
+2. **抵抗度详情 UI 缺失**——C9b §3.3 要求 `RenderProvinceDetail` 在 `isOccupied=true` 时显 `抵抗: N/100`，OpenClaw 漏做。**本单顺手补一行 Append**。
+
 ## 范围
 
 ### 双激活
@@ -73,7 +79,7 @@ C10 = Phase 1 第一单，**治这两个死字段**。维护费 + 人力恢复 +
   ```
 
 ### Data
-- `economy.json` — 加 `treasuryToCapitalRatePct: 10`
+- `economy.json` — 加 `treasuryToCapitalRatePct: 10` + **改 `militaryFactoryEquipmentOutput: 2 → 1`**（C9 附带收尾）
 - `units.json` — infantry 加 `equipmentTrainingCost: 50`（其他兵种暂不加，仅 infantry 当前可造）
 
 ### Application
@@ -84,6 +90,11 @@ C10 = Phase 1 第一单，**治这两个死字段**。维护费 + 人力恢复 +
 ### Presentation
 - `MainHudController.cs` — `FormatCountryRow` 既有 `国库:{treasury}` 和 `装备:{equipmentStockpile}` 已显示，**确认无遮挡** + 玩家行追加 `资本投资率: {treasuryToCapitalRatePct}%`（让玩家直观看到 treasury→capital 转化每回合多少）
 - 详情：玩家国 HUD 顶栏可选追加 `📈 投资: +N capital/回合`（计算 = `treasury * rate / 100`，让玩家看到本回合 treasury 会进多少 capital）—— **可选**，最小实现只在 country row 显示数值
+- **★ C9 附带收尾**：`MainHudController.RenderProvinceDetail` 在 `pv.isOccupied == true` 分支末尾追加：
+  ```csharp
+  sb.Append($"  |  抵抗: {pv.resistance}/100");
+  ```
+  位置：在既有 `法理: X / 控制: Y` 之后。仅占领省显示（沿用 C9b 工作单 §3.3 原设计）。
 
 ### Tests
 - `EconomyResolverTests.cs` 追加：
@@ -124,6 +135,8 @@ C10 = Phase 1 第一单，**治这两个死字段**。维护费 + 人力恢复 +
 - [ ] PROJECT_RULES.md / ARCHITECTURE.md / PROJECT_STATE.md / CHANGELOG.md 0 改动
 - [ ] ProjectSettings/ + Packages/ 0 改动
 - [ ] PR 描述含 `## DoD Check List` 逐项打勾
+- [ ] **C9 附带收尾**：`militaryFactoryEquipmentOutput: 2 → 1` 写入 economy.json
+- [ ] **C9 附带收尾**：`RenderProvinceDetail` 占领省显抵抗度（截图为证 `c10-occupation-resistance-shown.png`，验证人类截图过的高峰[首都] 现在显 `抵抗: N/100`）
 
 ## 严禁
 - 改 capital 概念（仍是建造主货币）

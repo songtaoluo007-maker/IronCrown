@@ -4,7 +4,7 @@
             "id": "global",
             "provinceBaseOutputPerResource": 2,
             "provinceInfraOutputBonus": 1,
-            "militaryFactoryEquipmentOutput": 2,
+            "militaryFactoryEquipmentOutput": 1,
             "equipmentSteelCost": 2,
             "equipmentCapitalCost": 1,
             "civilianFactoryUpkeep": 3,
