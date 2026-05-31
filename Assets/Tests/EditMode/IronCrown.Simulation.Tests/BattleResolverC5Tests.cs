@@ -141,7 +141,7 @@ namespace IronCrown.Tests
             var battle = CreateBattle(world, atk, def, out var atkUnit, out var defUnit);
 
             // 制造攻方必胜：守方只有 1 org
-            defUnit.org = 1;
+            defUnit.organization = 1;
 
             var resolver = new BattleResolver(new DeterministicRng(42), new NoOpEventPublisher(), _config);
             resolver.TickBattles(world);
@@ -157,7 +157,7 @@ namespace IronCrown.Tests
             var battle = CreateBattle(world, atk, def, out var atkUnit, out var defUnit);
 
             // 制造守方必胜：攻方只有 1 org
-            atkUnit.org = 1;
+            atkUnit.organization = 1;
 
             var resolver = new BattleResolver(new DeterministicRng(42), new NoOpEventPublisher(), _config);
             resolver.TickBattles(world);
@@ -271,7 +271,7 @@ namespace IronCrown.Tests
             def.capitalProvinceId = "P1";
 
             var battle = CreateBattleAt(world, atk, def, "P1", out var atkUnit, out var defUnit);
-            defUnit.org = 1; // 必败
+            defUnit.organization = 1; // 必败
 
             var resolver = new BattleResolver(new DeterministicRng(42), new NoOpEventPublisher(), _config);
             resolver.TickBattles(world);
@@ -355,7 +355,7 @@ namespace IronCrown.Tests
                 id = "U_A",
                 ownerCountry = "A",
                 currentProvinceId = "P2",
-                org = 100, maxOrg = 100,
+                organization = 100, maxOrganization = 100,
                 baseAttack = 10, baseDefense = 5,
                 experience = 0, armor = 0, piercing = 0
             };
@@ -364,7 +364,7 @@ namespace IronCrown.Tests
                 id = "U_B",
                 ownerCountry = "B",
                 currentProvinceId = provinceId,
-                org = 100, maxOrg = 100,
+                organization = 100, maxOrganization = 100,
                 baseAttack = 10, baseDefense = 5,
                 experience = 0, armor = 0, piercing = 0
             };
