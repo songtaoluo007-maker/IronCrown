@@ -99,6 +99,7 @@ namespace IronCrown.Application
                 resources = new Dictionary<string, int>(c.resources),
                 constructionQueueCount = c.constructionQueue.Count,
                 unitProductionQueueCount = c.unitProductionQueue.Count,
+                unitCount = c.unitIds.Count,
                 taxLevel = c.taxLevel,
                 civilLevel = c.civilLevel,
                 warExhaustion = c.warExhaustion,

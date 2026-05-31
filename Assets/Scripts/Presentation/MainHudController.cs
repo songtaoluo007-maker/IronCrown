@@ -638,6 +638,12 @@ namespace IronCrown.Presentation
                 sb.Append(c.constructionQueueCount);
             }
 
+            if (c.unitCount > 0)
+            {
+                sb.Append("  |  部队: ");
+                sb.Append(c.unitCount);
+            }
+
             if (c.unitProductionQueueCount > 0)
             {
                 sb.Append("  |  在训: ");
