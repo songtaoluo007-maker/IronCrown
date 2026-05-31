@@ -20,5 +20,9 @@ namespace IronCrown.Contracts
         public int movesLeft;
         public int speed;
         public bool isInBattle;
+        public int tacticalExp;           // C13: 战役经验 0-100
+        public int tacticalLevel;         // C13: 战役等级 0-4
+        public int recoveryTurnsLeft;     // C13: 溃退恢复剩余回合
+        public bool isRecovering;         // C13: 是否溃退恢复中
     }
 }

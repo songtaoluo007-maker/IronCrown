@@ -74,5 +74,18 @@ namespace IronCrown.Domain
         public int resistanceUprisingChancePct;        // 反抗事件触发概率（百分比）
         public int resistanceGarrisonDamageManpower;   // 有驻军反抗时扣驻军 manpower
         public int resistanceGarrisonDamageEquipment;  // 有驻军反抗时扣驻军 equipment
+
+        // === C13: 双条补员 + 战役等级 + 溃退 ===
+        public int reinforceRatePct;                  // 补员率（缺口的 N%）
+        public int tacticalExpPerVictory;             // 战胜经验增量
+        public int tacticalExpPerDefeat;              // 战败经验减量
+        public int tacticalExpLevelStep;              // 每级经验步长
+        public int tacticalExpAttackBonusPerLevel;    // 每级攻击力加成%
+        public int tacticalExpDefenseBonusPerLevel;   // 每级防御力加成%
+        public int autoRetreatThresholdPct;           // 自动溃退阈值（manpower ≤ max 的 N%）
+        public int retreatBonusManpower;              // 溃退时补充人力
+        public int retreatBonusEquipment;             // 溃退时补充装备
+        public int retreatMoraleReset;                // 溃退后 morale 重置值
+        public int retreatRecoveryTurns;              // 溃退恢复回合数
     }
 }

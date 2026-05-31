@@ -121,6 +121,9 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(u.morale));
                 bytes.AddRange(System.BitConverter.GetBytes(u.experience));
                 bytes.AddRange(System.BitConverter.GetBytes(u.movesLeft));
+                bytes.AddRange(System.BitConverter.GetBytes(u.tacticalExp));
+                bytes.AddRange(System.BitConverter.GetBytes(u.recoveryTurnsLeft));
+                bytes.AddRange(System.BitConverter.GetBytes(u.isCutoff));
             }
             // activeBattles
             foreach (var b in world.activeBattles)

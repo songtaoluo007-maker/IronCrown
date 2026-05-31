@@ -165,6 +165,10 @@ namespace IronCrown.Application
                     if (!_world.provinces.TryGetValue(cmd.targetProvinceId, out var mvTarget))
                         return CommandResult.Reject("目标省份不存在");
 
+                    // C13: 溃退中禁止进攻敌方省
+                    if (mvUnit.recoveryTurnsLeft > 0 && mvTarget.controllerCountry != mvUnit.ownerCountry)
+                        return CommandResult.Reject("溃退中无法进攻（仅可移动到己方省）");
+
                     if (mvTarget.controllerCountry == mvUnit.ownerCountry)
                     {
                         // 己方省 → 和平移动

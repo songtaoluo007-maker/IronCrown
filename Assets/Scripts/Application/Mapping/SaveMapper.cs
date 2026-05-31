@@ -107,7 +107,10 @@ namespace IronCrown.Application
                         count = b.count,
                         manpower = b.manpower,
                         equipment = b.equipment
-                    }).ToArray()
+                    }).ToArray(),
+                    tacticalExp = u.tacticalExp,
+                    recoveryTurnsLeft = u.recoveryTurnsLeft,
+                    isCutoff = u.isCutoff
                 }).ToArray()
             };
             state.playerCountryId = world.playerCountryId;
@@ -252,7 +255,10 @@ namespace IronCrown.Application
                         piercing = ud.piercing,
                         speed = ud.speed,
                         movesLeft = ud.movesLeft,
-                        supplyConsumption = ud.supplyConsumption
+                        supplyConsumption = ud.supplyConsumption,
+                        tacticalExp = ud.tacticalExp,
+                        recoveryTurnsLeft = ud.recoveryTurnsLeft,
+                        isCutoff = ud.isCutoff
                     };
 
                     // C11: 恢复旅组成（旧存档 fallback）

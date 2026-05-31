@@ -157,11 +157,18 @@ namespace IronCrown.Simulation
                 var ecoC7 = _config.Get<EconomyConfig>("global");
                 if (ecoC7 != null)
                 {
-                    // 找玩家国家 ID（第一个非 AI 国家，简化处理）
                     string playerId = world.countries.Values
                         .FirstOrDefault(c => c.id == "player" || c.id == world.countries.Keys.First())?.id;
                     _aiPeaceOffer.CheckAiPeaceOffers(world, ecoC7, playerId, world.turnNumber);
                 }
+            }
+
+            // C13: 双条补员（Settlement 末尾，胜负判定之前）
+            if (_supply != null && _config != null)
+            {
+                var ecoC13 = _config.Get<EconomyConfig>("global");
+                if (ecoC13 != null)
+                    _supply.ReplenishUnits(world, ecoC13, _config);
             }
 
             // 胜负判定（TickBattles 之后）

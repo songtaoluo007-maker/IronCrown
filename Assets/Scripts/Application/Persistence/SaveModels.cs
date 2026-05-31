@@ -155,6 +155,9 @@ namespace IronCrown.Application
         public int movesLeft;
         public int supplyConsumption;
         public BrigadeSaveData[] brigades;  // C11
+        public int tacticalExp;            // C13
+        public int recoveryTurnsLeft;      // C13
+        public bool isCutoff;              // C13 (C14 激活)
     }
 
     [Serializable]

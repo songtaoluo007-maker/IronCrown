@@ -199,6 +199,10 @@ namespace IronCrown.Application
                 maxOrganization = u.maxOrganization,
                 movesLeft = u.movesLeft,
                 speed = u.speed,
+                tacticalExp = u.tacticalExp,
+                tacticalLevel = u.tacticalExp / 25,  // 0-4
+                recoveryTurnsLeft = u.recoveryTurnsLeft,
+                isRecovering = u.recoveryTurnsLeft > 0,
                 isInBattle = battleUnitIds != null && battleUnitIds.Contains(u.id)
             };
         }

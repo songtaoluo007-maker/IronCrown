@@ -42,6 +42,16 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(c.civilianFactories));
                 bytes.AddRange(System.BitConverter.GetBytes(c.militaryFactories));
                 bytes.AddRange(System.BitConverter.GetBytes(c.equipmentStockpile));
+                bytes.AddRange(System.BitConverter.GetBytes(c.warExhaustion));
+            }
+
+            foreach (var u in world.units.Values.OrderBy(x => x.id))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.id));
+                bytes.AddRange(System.BitConverter.GetBytes(u.organization));
+                bytes.AddRange(System.BitConverter.GetBytes(u.manpower));
+                bytes.AddRange(System.BitConverter.GetBytes(u.tacticalExp));
+                bytes.AddRange(System.BitConverter.GetBytes(u.recoveryTurnsLeft));
             }
 
             foreach (var p in world.provinces.Values.OrderBy(x => x.id))

@@ -29,20 +29,40 @@ namespace IronCrown.Simulation
         // C12: 整数化战斗核心
         // =====================================================================
 
-        /// <summary>单师攻方战力（int × 100 量级）</summary>
-        private int SingleUnitAttackPower(UnitState unit)
+        /// <summary>单师攻方战力（int × 100 量级，含战役等级加成）</summary>
+        private int SingleUnitAttackPower(UnitState unit, EconomyConfig eco = null)
         {
             int orgPct = unit.organization * 100 / Math.Max(1, unit.maxOrganization);
             int expBonus = 100 + unit.experience * 10;
-            return unit.baseAttack * orgPct * expBonus / 10000;
+            int basePower = unit.baseAttack * orgPct * expBonus / 10000;
+
+            // C13: 战役等级加成
+            if (eco != null)
+            {
+                int level = Math.Min(4, unit.tacticalExp / Math.Max(1, eco.tacticalExpLevelStep));
+                int levelBonus = 100 + level * eco.tacticalExpAttackBonusPerLevel;
+                basePower = basePower * levelBonus / 100;
+            }
+
+            return basePower;
         }
 
-        /// <summary>单师守方战力（int × 100 量级）</summary>
-        private int SingleUnitDefensePower(UnitState unit)
+        /// <summary>单师守方战力（int × 100 量级，含战役等级加成）</summary>
+        private int SingleUnitDefensePower(UnitState unit, EconomyConfig eco = null)
         {
             int orgPct = unit.organization * 100 / Math.Max(1, unit.maxOrganization);
             int expBonus = 100 + unit.experience * 10;
-            return unit.baseDefense * orgPct * expBonus / 10000;
+            int basePower = unit.baseDefense * orgPct * expBonus / 10000;
+
+            // C13: 战役等级加成
+            if (eco != null)
+            {
+                int level = Math.Min(4, unit.tacticalExp / Math.Max(1, eco.tacticalExpLevelStep));
+                int levelBonus = 100 + level * eco.tacticalExpDefenseBonusPerLevel;
+                basePower = basePower * levelBonus / 100;
+            }
+
+            return basePower;
         }
 
         /// <summary>地形防御倍率（int，100 = ×1.0）</summary>
@@ -87,12 +107,13 @@ namespace IronCrown.Simulation
             if (attackers.Count == 0 || defenders.Count == 0) return;
 
             // --- 攻方总战力 ---
+            var eco = _config?.Get<EconomyConfig>("global");
             int atkTotal = 0;
-            foreach (var u in attackers) atkTotal += SingleUnitAttackPower(u);
+            foreach (var u in attackers) atkTotal += SingleUnitAttackPower(u, eco);
 
             // --- 守方总战力（含地形） ---
             int defTotal = 0;
-            foreach (var u in defenders) defTotal += SingleUnitDefensePower(u);
+            foreach (var u in defenders) defTotal += SingleUnitDefensePower(u, eco);
             int terrainMult = GetTerrainDefenseMultiplierInt(province.terrain);
             defTotal = defTotal * terrainMult / 100;
 
@@ -384,6 +405,14 @@ namespace IronCrown.Simulation
                     battle.defenderUnitIds.Remove(uid);
                 }
 
+                // C13: 85% 自动溃退判定
+                var eco13 = _config?.Get<EconomyConfig>("global");
+                if (eco13 != null)
+                {
+                    CheckAutoRetreat(world, battle, battle.attackerUnitIds, eco13);
+                    CheckAutoRetreat(world, battle, battle.defenderUnitIds, eco13);
+                }
+
                 // 同 tick 内判胜负
                 if (battle.attackerUnitIds.Count == 0 && battle.defenderUnitIds.Count == 0)
                 {
@@ -411,7 +440,136 @@ namespace IronCrown.Simulation
         }
 
         // =====================================================================
-        // 胜负处理（未改动）
+        // C13: 自动溃退
+        // =====================================================================
+
+        private void CheckAutoRetreat(WorldState world, ActiveBattle battle, List<string> unitIds, EconomyConfig eco)
+        {
+            var toRemove = new List<string>();
+            foreach (var uid in unitIds.ToList())
+            {
+                if (!world.units.TryGetValue(uid, out var unit)) continue;
+
+                // 检查 manpower ≤ max × threshold%（maxManpower=0 时不触发）
+                if (unit.maxManpower <= 0 || unit.manpower * 100 > unit.maxManpower * eco.autoRetreatThresholdPct)
+                    continue;
+
+                // 被切断不溃退（C13 默认 false）
+                if (unit.isCutoff) continue;
+
+                // 找后方己方控制省
+                string retreatProvinceId = FindRetreatProvince(unit, world);
+                if (retreatProvinceId == null)
+                {
+                    // 无可达后方 → 消灭
+                    DestroyUnit(world, uid, "no_retreat_path");
+                    toRemove.Add(uid);
+                    continue;
+                }
+
+                // 执行溃退
+                string fromProvince = unit.currentProvinceId;
+                unit.currentProvinceId = retreatProvinceId;
+                unit.manpower = Math.Min(unit.manpower + eco.retreatBonusManpower, unit.maxManpower);
+                unit.equipment = Math.Min(unit.equipment + eco.retreatBonusEquipment, unit.maxEquipment);
+                unit.morale = eco.retreatMoraleReset;
+                unit.recoveryTurnsLeft = eco.retreatRecoveryTurns;
+
+                // 旅级同步补充
+                if (_config != null && unit.brigades != null && unit.brigades.Count > 0)
+                {
+                    DistributeReinforcementToBrigades(unit, eco.retreatBonusManpower, eco.retreatBonusEquipment);
+                    unit.RecalculateFromBrigades(_config);
+                }
+
+                toRemove.Add(uid);
+                _events.Publish(new UnitRetreatedEvent
+                {
+                    unitId = uid,
+                    fromProvinceId = fromProvince,
+                    retreatProvinceId = retreatProvinceId,
+                    turnNumber = world.turnNumber
+                });
+            }
+            foreach (var uid in toRemove)
+                unitIds.Remove(uid);
+        }
+
+        /// <summary>找己方控制的邻接省（C13 简化：id 升序第一个）</summary>
+        private string FindRetreatProvince(UnitState unit, WorldState world)
+        {
+            if (!world.provinces.TryGetValue(unit.currentProvinceId, out var current))
+                return null;
+            if (current.neighbors == null) return null;
+
+            var candidates = new List<string>();
+            foreach (var nid in current.neighbors)
+            {
+                if (world.provinces.TryGetValue(nid, out var neighbor)
+                    && neighbor.controllerCountry == unit.ownerCountry)
+                {
+                    candidates.Add(nid);
+                }
+            }
+
+            if (candidates.Count == 0) return null;
+            candidates.Sort(StringComparer.Ordinal);
+            return candidates[0];
+        }
+
+        /// <summary>C13: 旅级补员分摊</summary>
+        private void DistributeReinforcementToBrigades(UnitState unit, int manpowerGained, int equipmentGained)
+        {
+            if (unit.brigades == null || unit.brigades.Count == 0) return;
+            int totalMp = unit.brigades.Sum(b => b.manpower);
+            if (totalMp <= 0 && manpowerGained > 0)
+            {
+                // 全灭旅平均分配
+                int perBrigade = manpowerGained / unit.brigades.Count;
+                foreach (var b in unit.brigades)
+                    b.manpower += perBrigade;
+                unit.brigades[0].manpower += manpowerGained - perBrigade * unit.brigades.Count;
+            }
+            else if (manpowerGained > 0)
+            {
+                int distributed = 0;
+                for (int i = 0; i < unit.brigades.Count; i++)
+                {
+                    var b = unit.brigades[i];
+                    int share = (i == unit.brigades.Count - 1)
+                        ? manpowerGained - distributed
+                        : manpowerGained * b.manpower / totalMp;
+                    b.manpower += share;
+                    distributed += share;
+                }
+            }
+
+            // 装备同理
+            int totalEq = unit.brigades.Sum(b => b.equipment);
+            if (totalEq <= 0 && equipmentGained > 0)
+            {
+                int perBrigade = equipmentGained / unit.brigades.Count;
+                foreach (var b in unit.brigades)
+                    b.equipment += perBrigade;
+                unit.brigades[0].equipment += equipmentGained - perBrigade * unit.brigades.Count;
+            }
+            else if (equipmentGained > 0)
+            {
+                int distributed = 0;
+                for (int i = 0; i < unit.brigades.Count; i++)
+                {
+                    var b = unit.brigades[i];
+                    int share = (i == unit.brigades.Count - 1)
+                        ? equipmentGained - distributed
+                        : equipmentGained * b.equipment / totalEq;
+                    b.equipment += share;
+                    distributed += share;
+                }
+            }
+        }
+
+        // =====================================================================
+        // 胜负处理（含 C13 战役经验累积）
         // =====================================================================
 
         private void ResolveAttackerWin(WorldState world, ActiveBattle battle, List<UnitState> attackers, ProvinceState province)
@@ -444,6 +602,22 @@ namespace IronCrown.Simulation
             if (attackers.Count > 0 && !string.IsNullOrEmpty(battle.defenderOwnerCountry))
                 ApplyBattleTollByCountry(world, battle.attackerOwnerCountry, battle.defenderOwnerCountry, "Attacker");
 
+            // C13: 攻胜 → 攻方 +10, 守方 -5
+            var ecoWin = _config?.Get<EconomyConfig>("global");
+            if (ecoWin != null)
+            {
+                foreach (var uid in battle.attackerUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u))
+                        u.tacticalExp = Math.Clamp(u.tacticalExp + ecoWin.tacticalExpPerVictory, 0, 100);
+                }
+                foreach (var uid in battle.defenderUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u))
+                        u.tacticalExp = Math.Clamp(u.tacticalExp + ecoWin.tacticalExpPerDefeat, 0, 100);
+                }
+            }
+
             _events.Publish(new BattleConcludedEvent
             {
                 battleId = battle.id,
@@ -459,6 +633,22 @@ namespace IronCrown.Simulation
         {
             if (defenders.Count > 0 && !string.IsNullOrEmpty(battle.attackerOwnerCountry))
                 ApplyBattleTollByCountry(world, battle.attackerOwnerCountry, battle.defenderOwnerCountry, "Defender");
+
+            // C13: 守胜 → 守方 +10, 攻方 -5
+            var ecoWin = _config?.Get<EconomyConfig>("global");
+            if (ecoWin != null)
+            {
+                foreach (var uid in battle.defenderUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u))
+                        u.tacticalExp = Math.Clamp(u.tacticalExp + ecoWin.tacticalExpPerVictory, 0, 100);
+                }
+                foreach (var uid in battle.attackerUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u))
+                        u.tacticalExp = Math.Clamp(u.tacticalExp + ecoWin.tacticalExpPerDefeat, 0, 100);
+                }
+            }
 
             _events.Publish(new BattleConcludedEvent
             {

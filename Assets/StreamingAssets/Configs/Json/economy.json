@@ -63,7 +63,18 @@
             "treasuryToCapitalRatePct": 10,
             "provinceBaseFoodOutput": 1,
             "provinceBaseSteelOutput": 1,
-            "aiPeaceTruceTurns": 10
+            "aiPeaceTruceTurns": 10,
+            "reinforceRatePct": 50,
+            "tacticalExpPerVictory": 10,
+            "tacticalExpPerDefeat": -5,
+            "tacticalExpLevelStep": 25,
+            "tacticalExpAttackBonusPerLevel": 5,
+            "tacticalExpDefenseBonusPerLevel": 5,
+            "autoRetreatThresholdPct": 15,
+            "retreatBonusManpower": 20,
+            "retreatBonusEquipment": 20,
+            "retreatMoraleReset": 30,
+            "retreatRecoveryTurns": 1
         }
     ]
 }
