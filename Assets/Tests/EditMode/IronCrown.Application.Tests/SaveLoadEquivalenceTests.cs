@@ -77,6 +77,7 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(c.treasury));
                 bytes.AddRange(System.BitConverter.GetBytes(c.stability));
                 bytes.AddRange(System.BitConverter.GetBytes(c.warSupport));
+                bytes.AddRange(System.BitConverter.GetBytes(c.warExhaustion));
                 bytes.AddRange(System.BitConverter.GetBytes(c.manpower));
                 bytes.AddRange(System.BitConverter.GetBytes(c.civilianFactories));
                 bytes.AddRange(System.BitConverter.GetBytes(c.militaryFactories));
@@ -594,6 +595,55 @@ namespace IronCrown.Application.Tests
             // hash 等价
             Assert.AreEqual(HashWorld(world), HashWorld(loaded),
                 "含战斗世界存→读 应 hash 等价");
+        }
+
+        [Test]
+        public void SaveLoad_WarExhaustion_Preserved()
+        {
+            // 构造有 warExhaustion 的世界，验证存读一致
+            var world = BuildWorldWithProvinces();
+            world.countries["empire_north"].warExhaustion = 42;
+            world.countries["republic_west"].warExhaustion = 18;
+
+            // 存 → 读
+            var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            Assert.AreEqual(42, loaded.countries["empire_north"].warExhaustion,
+                "warExhaustion 存读应一致 (empire_north)");
+            Assert.AreEqual(18, loaded.countries["republic_west"].warExhaustion,
+                "warExhaustion 存读应一致 (republic_west)");
+
+            // hash 等价
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "含 warExhaustion 世界存读应 hash 等价");
+        }
+
+        [Test]
+        public void SaveLoad_PeaceConcluded_Preserved()
+        {
+            // 构造战争+停战后 warExhaustion 减半场景，验证存读一致
+            var world = BuildWorldWithProvinces();
+            // 模拟停战后：warExhaustion 已减半
+            world.countries["empire_north"].warExhaustion = 21; // 42/2
+            world.countries["republic_west"].warExhaustion = 9;  // 18/2
+
+            // 添加一条 warRelation 再移除（模拟曾处于战争）
+            WarRegistry.TryDeclareWar(world, "empire_north", "republic_west", 1, out _);
+            WarRegistry.TryEndWar(world, "empire_north", "republic_west", out _);
+
+            // 存 → 读
+            var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            Assert.AreEqual(21, loaded.countries["empire_north"].warExhaustion,
+                "停战后 warExhaustion 存读应一致 (empire_north)");
+            Assert.AreEqual(9, loaded.countries["republic_west"].warExhaustion,
+                "停战后 warExhaustion 存读应一致 (republic_west)");
+
+            // hash 等价
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "停战世界存读应 hash 等价");
         }
     }
 }
