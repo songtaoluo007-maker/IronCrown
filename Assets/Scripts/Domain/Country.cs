@@ -72,6 +72,10 @@ namespace IronCrown.Domain
         // === 战争 ===
         public int warExhaustion;   // 战争疲惫 0-100
 
+        // === AI 求和 (C7) ===
+        public int peaceOfferCooldown;          // 被拒后冷却回合（0=可提议）
+        public string pendingPeaceOfferFrom;    // 待处理提议来源（null=无）
+
         // === 方法 ===
 
         /// <summary>获取资源数量</summary>

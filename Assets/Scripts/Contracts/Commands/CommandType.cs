@@ -12,6 +12,8 @@ namespace IronCrown.Contracts
         SetCivilLevel,
         BuildUnit,
         MoveUnit,
-        OfferPeace
+        OfferPeace,
+        AcceptPeace,
+        RejectPeace
     }
 }

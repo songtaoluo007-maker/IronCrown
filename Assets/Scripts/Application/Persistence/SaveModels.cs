@@ -42,6 +42,10 @@ namespace IronCrown.Application
         // C5: 战争疲惫
         public int warExhaustion;
 
+        // C7: AI 求和
+        public int peaceOfferCooldown;
+        public string pendingPeaceOfferFrom;
+
         // 工厂
         public int civilianFactories;
         public int militaryFactories;

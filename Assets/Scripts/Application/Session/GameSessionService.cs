@@ -200,6 +200,12 @@ namespace IronCrown.Application
                 case CommandType.OfferPeace:
                     return _peace.OfferPeace(_world, cmd.countryId, cmd.targetCountryId, eco);
 
+                case CommandType.AcceptPeace:
+                    return _peace.AcceptPeace(_world, cmd.countryId, cmd.targetCountryId, eco);
+
+                case CommandType.RejectPeace:
+                    return _peace.RejectPeace(_world, cmd.countryId, cmd.targetCountryId, eco);
+
                 default:
                     return CommandResult.Reject("未知命令");
             }

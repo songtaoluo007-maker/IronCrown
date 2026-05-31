@@ -198,6 +198,11 @@ namespace IronCrown.Config.Validation.Tests
             public int resistanceUprisingChancePct;
             public int resistanceGarrisonDamageManpower;
             public int resistanceGarrisonDamageEquipment;
+            // C7 AI主动求和
+            public int aiPeaceOfferExhaustionThreshold;
+            public int aiPeaceOfferPowerRatioPct;
+            public int aiPeaceOfferCooldownTurns;
+            public int aiPeaceOfferExpiryTurns;
         }
 
         [System.Serializable]

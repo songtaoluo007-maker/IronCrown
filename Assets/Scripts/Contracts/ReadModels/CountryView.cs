@@ -27,5 +27,9 @@ namespace IronCrown.Contracts
         public int taxLevel;
         public int civilLevel;
         public int warExhaustion;
+
+        // C7: AI 求和
+        public int peaceOfferCooldown;
+        public string pendingPeaceOfferFrom;
     }
 }

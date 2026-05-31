@@ -101,7 +101,9 @@ namespace IronCrown.Application
                 unitProductionQueueCount = c.unitProductionQueue.Count,
                 taxLevel = c.taxLevel,
                 civilLevel = c.civilLevel,
-                warExhaustion = c.warExhaustion
+                warExhaustion = c.warExhaustion,
+                peaceOfferCooldown = c.peaceOfferCooldown,
+                pendingPeaceOfferFrom = c.pendingPeaceOfferFrom
             };
         }
 

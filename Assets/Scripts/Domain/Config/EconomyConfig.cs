@@ -51,6 +51,12 @@ namespace IronCrown.Domain
         public int aiPeaceAcceptExhaustionThreshold; // AI 进入"愿意停战"基础线
         public int aiPeaceAcceptPowerRatioPct;       // AI 实力 ≤ 对方 N% 时下调阈值
 
+        // === AI 主动求和 (C7) ===
+        public int aiPeaceOfferExhaustionThreshold;  // AI 主动求和 warExhaustion 阈值
+        public int aiPeaceOfferPowerRatioPct;          // AI 国力 ≤ 玩家 N% 时触发
+        public int aiPeaceOfferCooldownTurns;           // 被拒后冷却回合数
+        public int aiPeaceOfferExpiryTurns;              // 提议过期回合数
+
         // === 占领抵抗 (C6) ===
         public int resistanceOnCapture;               // 占领瞬间 resistance 值
         public int resistanceDecayWithGarrison;        // 有驻军时 resistance 每回合变化（负数=衰减）

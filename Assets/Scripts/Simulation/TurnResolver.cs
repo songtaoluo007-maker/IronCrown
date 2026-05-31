@@ -26,6 +26,7 @@ namespace IronCrown.Simulation
         private readonly IConfigRegistry _config;
         private readonly WarTollResolver _warToll;
         private readonly OccupationResolver _occupation;
+        private readonly AiPeaceOfferResolver _aiPeaceOffer;
 
         public TurnResolver(
             ITurnClock clock,
@@ -42,7 +43,8 @@ namespace IronCrown.Simulation
             IConfigRegistry config = null,
             VictoryConditionResolver victory = null,
             WarTollResolver warToll = null,
-            OccupationResolver occupation = null)
+            OccupationResolver occupation = null,
+            AiPeaceOfferResolver aiPeaceOffer = null)
         {
             _clock = clock;
             _events = events;
@@ -59,6 +61,7 @@ namespace IronCrown.Simulation
             _config = config;
             _warToll = warToll;
             _occupation = occupation;
+            _aiPeaceOffer = aiPeaceOffer;
         }
 
         public void ExecuteTurn(WorldState world)
@@ -146,6 +149,19 @@ namespace IronCrown.Simulation
                 var ecoOcc = _config.Get<EconomyConfig>("global");
                 if (ecoOcc != null)
                     _occupation.ResolveOccupation(world, ecoOcc);
+            }
+
+            // C7: AI 主动求和（占领抵抗之后、胜负判定之前）
+            if (_aiPeaceOffer != null && _config != null)
+            {
+                var ecoC7 = _config.Get<EconomyConfig>("global");
+                if (ecoC7 != null)
+                {
+                    // 找玩家国家 ID（第一个非 AI 国家，简化处理）
+                    string playerId = world.countries.Values
+                        .FirstOrDefault(c => c.id == "player" || c.id == world.countries.Keys.First())?.id;
+                    _aiPeaceOffer.CheckAiPeaceOffers(world, ecoC7, playerId, world.turnNumber);
+                }
             }
 
             // 胜负判定（TickBattles 之后）

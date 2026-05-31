@@ -30,6 +30,8 @@ namespace IronCrown.Application
                     taxLevel = c.taxLevel,
                     civilLevel = c.civilLevel,
                     warExhaustion = c.warExhaustion,
+                    peaceOfferCooldown = c.peaceOfferCooldown,
+                    pendingPeaceOfferFrom = c.pendingPeaceOfferFrom,
                     civilianFactories = c.civilianFactories,
                     militaryFactories = c.militaryFactories,
                     dockyards = c.dockyards,
@@ -155,7 +157,9 @@ namespace IronCrown.Application
                         totalManpower = cd.totalManpower,
                         taxLevel = cd.taxLevel,
                         civilLevel = cd.civilLevel,
-                        warExhaustion = cd.warExhaustion
+                        warExhaustion = cd.warExhaustion,
+                        peaceOfferCooldown = cd.peaceOfferCooldown,
+                        pendingPeaceOfferFrom = cd.pendingPeaceOfferFrom
                     };
                     if (cd.resources != null)
                         foreach (var r in cd.resources)
