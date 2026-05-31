@@ -82,6 +82,7 @@ namespace IronCrown.Application
                 {
                     id = u.id,
                     unitType = u.unitType,
+                    divisionTemplateId = u.divisionTemplateId,
                     ownerCountry = u.ownerCountry,
                     currentProvince = u.currentProvinceId,
                     manpower = u.manpower,
@@ -99,7 +100,14 @@ namespace IronCrown.Application
                     piercing = u.piercing,
                     speed = u.speed,
                     movesLeft = u.movesLeft,
-                    supplyConsumption = u.supplyConsumption
+                    supplyConsumption = u.supplyConsumption,
+                    brigades = u.brigades?.Select(b => new BrigadeSaveData
+                    {
+                        brigadeType = b.brigadeType,
+                        count = b.count,
+                        manpower = b.manpower,
+                        equipment = b.equipment
+                    }).ToArray()
                 }).ToArray()
             };
             state.playerCountryId = world.playerCountryId;
@@ -226,6 +234,7 @@ namespace IronCrown.Application
                     {
                         id = ud.id,
                         unitType = ud.unitType,
+                        divisionTemplateId = ud.divisionTemplateId,
                         ownerCountry = ud.ownerCountry,
                         currentProvinceId = ud.currentProvince,
                         manpower = ud.manpower,
@@ -245,6 +254,35 @@ namespace IronCrown.Application
                         movesLeft = ud.movesLeft,
                         supplyConsumption = ud.supplyConsumption
                     };
+
+                    // C11: 恢复旅组成（旧存档 fallback）
+                    if (ud.brigades != null && ud.brigades.Length > 0)
+                    {
+                        foreach (var bd in ud.brigades)
+                        {
+                            u.brigades.Add(new BrigadeState
+                            {
+                                brigadeType = bd.brigadeType,
+                                count = bd.count,
+                                manpower = bd.manpower,
+                                equipment = bd.equipment
+                            });
+                        }
+                    }
+                    else
+                    {
+                        // 旧存档 fallback: 单旅退化
+                        string fallbackType = string.IsNullOrEmpty(ud.unitType) ? "infantry" : ud.unitType;
+                        u.brigades.Add(new BrigadeState
+                        {
+                            brigadeType = fallbackType,
+                            count = 1,
+                            manpower = ud.maxManpower,
+                            equipment = ud.maxEquipment
+                        });
+                        u.divisionTemplateId = "infantry_division_legacy";
+                    }
+
                     world.units[u.id] = u;
                 }
             }

@@ -9,6 +9,8 @@ namespace IronCrown.Contracts
     {
         public string id;
         public string unitType;
+        public string divisionTemplateName;  // C11: 师模板名
+        public string brigadeSummary;         // C11: 如 "9 步兵 + 3 炮兵"
         public string ownerCountry;
         public string currentProvinceId;
         public int manpower;

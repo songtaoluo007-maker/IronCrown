@@ -1,6 +1,6 @@
 // ============================================================================
 // Simulation/UnitProductionResolver.cs — 造兵结算器
-// C2a: 仅 infantry、仅首都、多回合队列
+// C11: 改用 DivisionTemplate（师级训练）
 // ============================================================================
 
 using System.Collections.Generic;
@@ -12,47 +12,70 @@ namespace IronCrown.Simulation
 {
     public sealed class UnitProductionResolver
     {
-        private static readonly HashSet<string> AllowedTypes = new() { "infantry" };
-
-        /// <summary>尝试入队造兵（校验+扣费+入队）</summary>
-        public CommandResult TryEnqueue(CountryState c, string unitType, IConfigRegistry config, EconomyConfig eco)
+        /// <summary>尝试入队训练（C11: 用 divisionTemplateId，兼容旧 UnitConfig）</summary>
+        public CommandResult TryEnqueue(CountryState c, string divisionTemplateId, IConfigRegistry config, EconomyConfig eco)
         {
-            if (!AllowedTypes.Contains(unitType))
-                return CommandResult.Reject($"unitType 不允许: {unitType}");
+            // C11: 查师模板
+            var divTemplate = config.Get<DivisionTemplate>(divisionTemplateId);
 
-            var template = config.Get<UnitConfig>(unitType);
-            if (template == null)
-                return CommandResult.Reject($"未找到 unitType 模板: {unitType}");
-
-            if (template.cost != null)
+            // Fallback: 旧 UnitConfig 模式（无 DivisionTemplate 时）
+            UnitConfig unitConfig = null;
+            if (divTemplate == null)
             {
-                if (!c.HasResources(template.cost))
+                unitConfig = config.Get<UnitConfig>(divisionTemplateId);
+                if (unitConfig == null)
+                    return CommandResult.Reject($"未找到师模板: {divisionTemplateId}");
+
+                // 用 UnitConfig 构造等效校验
+                if (unitConfig.cost != null && !c.HasResources(unitConfig.cost))
+                    return CommandResult.Reject("资源不足");
+                if (unitConfig.equipmentTrainingCost > 0 && c.equipmentStockpile < unitConfig.equipmentTrainingCost)
+                    return CommandResult.Reject("装备库存不足");
+
+                if (unitConfig.cost != null)
+                    c.ConsumeResources(unitConfig.cost);
+                if (unitConfig.equipmentTrainingCost > 0)
+                    c.equipmentStockpile -= unitConfig.equipmentTrainingCost;
+
+                c.unitProductionQueue.Add(new UnitProductionOrder
+                {
+                    unitType = divisionTemplateId,
+                    turnsRemaining = eco.unitProductionTurns
+                });
+                return CommandResult.Accept();
+            }
+
+            // 资源校验
+            if (divTemplate.trainingCost != null)
+            {
+                if (!c.HasResources(divTemplate.trainingCost))
                     return CommandResult.Reject("资源不足");
             }
 
-            if (c.manpower < template.hp)
+            // 人力校验
+            if (c.manpower < divTemplate.trainingManpowerCost)
                 return CommandResult.Reject("人力不足");
 
-            // C10: 装备库存校验（资源/人力校验之后、扣减之前）
-            if (template.equipmentTrainingCost > 0 && c.equipmentStockpile < template.equipmentTrainingCost)
+            // C10: 装备库存校验
+            if (divTemplate.trainingEquipmentCost > 0 && c.equipmentStockpile < divTemplate.trainingEquipmentCost)
                 return CommandResult.Reject("装备库存不足");
 
             // 全部校验通过后才扣减
-            if (template.cost != null)
-                c.ConsumeResources(template.cost);
-            c.manpower -= template.hp;
-            if (template.equipmentTrainingCost > 0)
-                c.equipmentStockpile -= template.equipmentTrainingCost;
+            if (divTemplate.trainingCost != null)
+                c.ConsumeResources(divTemplate.trainingCost);
+            c.manpower -= divTemplate.trainingManpowerCost;
+            if (divTemplate.trainingEquipmentCost > 0)
+                c.equipmentStockpile -= divTemplate.trainingEquipmentCost;
 
             c.unitProductionQueue.Add(new UnitProductionOrder
             {
-                unitType = unitType,
-                turnsRemaining = eco.unitProductionTurns
+                unitType = divisionTemplateId,  // 复用字段存 divisionTemplateId
+                turnsRemaining = divTemplate.trainingTurns
             });
             return CommandResult.Accept();
         }
 
-        /// <summary>结算阶段：推进建造进度，完工则生成部队</summary>
+        /// <summary>结算阶段：推进建造进度，完工则生成师</summary>
         public List<UnitState> ResolveProduction(WorldState world, IConfigRegistry config)
         {
             var produced = new List<UnitState>();
@@ -64,17 +87,31 @@ namespace IronCrown.Simulation
                     order.turnsRemaining--;
                     if (order.turnsRemaining <= 0)
                     {
-                        var template = config.Get<UnitConfig>(order.unitType);
-                        if (template == null) continue;
+                        var divTemplate = config.Get<DivisionTemplate>(order.unitType);
 
-                        int seq = world.units.Values.Count(u => u.ownerCountry == country.id && u.unitType == order.unitType) + 1;
-                        string shortType = order.unitType == "infantry" ? "inf" : order.unitType;
-                        string unitId = $"{country.id}_{shortType}_{seq}";
+                        if (divTemplate != null)
+                        {
+                            // C11: 师级创建
+                            int seq = world.units.Values.Count(u => u.ownerCountry == country.id) + 1;
+                            string unitId = $"{country.id}_div_{seq}";
+                            var unit = UnitFactory.CreateFromDivisionTemplate(unitId, divTemplate, country.id, country.capitalProvinceId, config);
+                            world.units[unitId] = unit;
+                            country.unitIds.Add(unitId);
+                            produced.Add(unit);
+                        }
+                        else
+                        {
+                            // Fallback: 旧 UnitConfig 模式
+                            var unitConfig = config.Get<UnitConfig>(order.unitType);
+                            if (unitConfig == null) continue;
+                            int seq = world.units.Values.Count(u => u.ownerCountry == country.id) + 1;
+                            string unitId = $"{country.id}_{order.unitType}_{seq}";
+                            var unit = UnitFactory.CreateFromTemplate(unitId, order.unitType, country.id, country.capitalProvinceId, unitConfig);
+                            world.units[unitId] = unit;
+                            country.unitIds.Add(unitId);
+                            produced.Add(unit);
+                        }
 
-                        var unit = UnitFactory.CreateFromTemplate(unitId, order.unitType, country.id, country.capitalProvinceId, template);
-                        world.units[unitId] = unit;
-                        country.unitIds.Add(unitId);
-                        produced.Add(unit);
                         completed.Add(order);
                     }
                 }

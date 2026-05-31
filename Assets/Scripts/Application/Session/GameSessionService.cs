@@ -248,6 +248,10 @@ namespace IronCrown.Application
             _initialSeed = gameState.seed;
             _playerCountryId = gameState.playerCountryId;
             _world.playerCountryId = _playerCountryId;
+
+            // C11: 读档后重算师属性（brigrades → baseAttack/...）
+            foreach (var unit in _world.units.Values)
+                unit.RecalculateFromBrigades(_config);
             _rng.Reset(gameState.seed);
             _rng.RestoreState(gameState.rngState);
             var phase = Enum.Parse<GamePhase>(gameState.phase);

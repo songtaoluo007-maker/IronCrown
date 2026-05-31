@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "infantry_division_basic",
+      "name": "基础步兵师",
+      "brigades": [
+        { "brigadeType": "infantry",  "count": 9 },
+        { "brigadeType": "artillery", "count": 3 }
+      ],
+      "trainingTurns": 2,
+      "trainingCost": { "steel": 30, "food": 60, "capital": 15 },
+      "trainingManpowerCost": 1200,
+      "trainingEquipmentCost": 300
+    },
+    {
+      "id": "armor_division",
+      "name": "装甲师",
+      "brigades": [
+        { "brigadeType": "light_tank", "count": 6 },
+        { "brigadeType": "mech_inf",   "count": 3 }
+      ],
+      "trainingTurns": 4,
+      "trainingCost": { "steel": 120, "oil": 50, "rareMetal": 20, "capital": 50 },
+      "trainingManpowerCost": 900,
+      "trainingEquipmentCost": 800
+    },
+    {
+      "id": "cavalry_division",
+      "name": "骑兵师",
+      "brigades": [
+        { "brigadeType": "cavalry", "count": 6 }
+      ],
+      "trainingTurns": 2,
+      "trainingCost": { "food": 90, "capital": 18 },
+      "trainingManpowerCost": 600,
+      "trainingEquipmentCost": 150
+    }
+  ]
+}

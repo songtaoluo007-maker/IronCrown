@@ -50,7 +50,7 @@ namespace IronCrown.Application
 
             var units = world.units.Values
                 .OrderBy(u => u.id, System.StringComparer.Ordinal)
-                .Select(u => BuildUnitView(u, battleUnitIds))
+                .Select(u => BuildUnitView(u, battleUnitIds, config))
                 .ToList();
 
             var activeBattles = world.activeBattles
@@ -161,12 +161,36 @@ namespace IronCrown.Application
             };
         }
 
-        public UnitView BuildUnitView(UnitState u, HashSet<string> battleUnitIds = null)
+        public UnitView BuildUnitView(UnitState u, HashSet<string> battleUnitIds = null, IConfigRegistry config = null)
         {
+            // C11: 生成旅摘要
+            string brigadeSummary = "";
+            if (u.brigades != null && u.brigades.Count > 0)
+            {
+                var parts = new System.Collections.Generic.List<string>();
+                foreach (var b in u.brigades)
+                {
+                    var cfg = config?.Get<UnitConfig>(b.brigadeType);
+                    string name = cfg?.name ?? b.brigadeType;
+                    parts.Add($"{b.count} {name}");
+                }
+                brigadeSummary = string.Join(" + ", parts);
+            }
+
+            // C11: 师模板名
+            string divTemplateName = "";
+            if (!string.IsNullOrEmpty(u.divisionTemplateId) && config != null)
+            {
+                var divT = config.Get<DivisionTemplate>(u.divisionTemplateId);
+                divTemplateName = divT?.name ?? u.divisionTemplateId;
+            }
+
             return new UnitView
             {
                 id = u.id,
                 unitType = u.unitType,
+                divisionTemplateName = divTemplateName,
+                brigadeSummary = brigadeSummary,
                 ownerCountry = u.ownerCountry,
                 currentProvinceId = u.currentProvinceId,
                 manpower = u.manpower,

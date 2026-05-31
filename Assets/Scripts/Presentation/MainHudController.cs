@@ -211,10 +211,10 @@ namespace IronCrown.Presentation
             {
                 commandType = CommandType.BuildUnit,
                 countryId = _session.PlayerCountryId,
-                unitType = "infantry"
+                unitType = "infantry_division_basic"
             });
             if (result.accepted)
-                ShowStatus("已下令训练步兵");
+                ShowStatus("已下令训练步兵师");
             else
                 ShowStatus($"被拒: {result.reason}");
             Render();
@@ -565,7 +565,7 @@ namespace IronCrown.Presentation
                 sb.Append($"  |  产出: {string.Join(", ", pv.resourceOutput)}");
             if (pv.neighbors != null && pv.neighbors.Length > 0)
                 sb.Append($"  |  邻接: {string.Join(", ", pv.neighbors)}");
-            sb.Append($"  |  驻军: {pv.garrisonCount} 支");
+            sb.Append($"  |  驻军: {pv.garrisonCount} 师");
 
             // 被占领省信息
             if (pv.isOccupied)
@@ -580,7 +580,7 @@ namespace IronCrown.Presentation
                 var battle = vm.activeBattles.Find(b => b.provinceId == pv.id);
                 if (battle != null)
                 {
-                    sb.Append($"  |  战斗中: 支 {battle.attackerUnitIds.Count} 支 vs 守 {battle.defenderUnitIds.Count} 支 — {battle.turnsElapsed} 回合");
+                    sb.Append($"  |  战斗中: 攻 {battle.attackerUnitIds.Count} 师 vs 守 {battle.defenderUnitIds.Count} 师 — {battle.turnsElapsed} 回合");
                 }
             }
 

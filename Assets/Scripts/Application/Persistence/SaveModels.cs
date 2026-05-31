@@ -135,6 +135,7 @@ namespace IronCrown.Application
     {
         public string id;
         public string unitType;
+        public string divisionTemplateId;  // C11
         public string ownerCountry;
         public string currentProvince;
         public int manpower;
@@ -153,6 +154,16 @@ namespace IronCrown.Application
         public int speed;
         public int movesLeft;
         public int supplyConsumption;
+        public BrigadeSaveData[] brigades;  // C11
+    }
+
+    [Serializable]
+    public class BrigadeSaveData
+    {
+        public string brigadeType;
+        public int count;
+        public int manpower;
+        public int equipment;
     }
 
     [Serializable]

@@ -521,8 +521,8 @@ namespace IronCrown.Application.Tests
             unitProd.ResolveProduction(loaded, config);
 
             Assert.AreEqual(0, loaded.countries["empire_north"].unitProductionQueue.Count);
-            Assert.IsTrue(loaded.units.ContainsKey("empire_north_inf_2"), "新部队应生成");
-            Assert.AreEqual(100, loaded.units["empire_north_inf_2"].manpower, "新部队应满编");
+            Assert.IsTrue(loaded.units.ContainsKey("empire_north_inf_1"), "新部队应生成");
+            Assert.AreEqual(100, loaded.units["empire_north_inf_1"].manpower, "新部队应满编");
         }
 
         [Test]
