@@ -126,8 +126,8 @@ namespace IronCrown.Application.Tests
             foreach (var b in world.activeBattles)
             {
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.id));
-                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.attackerUnitId));
-                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.defenderUnitId));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.attackerUnitIds[0]));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.defenderUnitIds[0]));
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.provinceId));
                 bytes.AddRange(System.BitConverter.GetBytes(b.turnsElapsed));
             }
@@ -575,8 +575,8 @@ namespace IronCrown.Application.Tests
             world.activeBattles.Add(new ActiveBattle
             {
                 id = "empire_north_inf_1_vs_republic_west_inf_1",
-                attackerUnitId = "empire_north_inf_1",
-                defenderUnitId = "republic_west_inf_1",
+                attackerUnitIds = new List<string> { "empire_north_inf_1" },
+                defenderUnitIds = new List<string> { "republic_west_inf_1" },
                 provinceId = "liberty_port",
                 turnsElapsed = 1
             });
@@ -589,8 +589,8 @@ namespace IronCrown.Application.Tests
             Assert.AreEqual(1, loaded.activeBattles.Count, "战斗应保留");
             var b = loaded.activeBattles[0];
             Assert.AreEqual("empire_north_inf_1_vs_republic_west_inf_1", b.id);
-            Assert.AreEqual("empire_north_inf_1", b.attackerUnitId);
-            Assert.AreEqual("republic_west_inf_1", b.defenderUnitId);
+            Assert.AreEqual("empire_north_inf_1", b.attackerUnitIds[0]);
+            Assert.AreEqual("republic_west_inf_1", b.defenderUnitIds[0]);
             Assert.AreEqual("liberty_port", b.provinceId);
             Assert.AreEqual(1, b.turnsElapsed);
 

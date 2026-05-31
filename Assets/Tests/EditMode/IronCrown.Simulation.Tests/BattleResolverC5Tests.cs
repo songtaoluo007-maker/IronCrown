@@ -378,9 +378,11 @@ namespace IronCrown.Tests
             var battle = new ActiveBattle
             {
                 id = "U_A_vs_U_B",
-                attackerUnitId = "U_A",
-                defenderUnitId = "U_B",
+                attackerUnitIds = new List<string> { "U_A" },
+                defenderUnitIds = new List<string> { "U_B" },
                 provinceId = provinceId,
+                attackerOwnerCountry = "A",
+                defenderOwnerCountry = "B",
                 turnsElapsed = 0
             };
             world.activeBattles.Add(battle);

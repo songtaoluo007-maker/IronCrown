@@ -135,7 +135,7 @@ namespace IronCrown.Simulation
                 .Where(u => u.currentProvinceId == sourceId
                          && u.ownerCountry == countryId
                          && u.movesLeft >= 1
-                         && !world.activeBattles.Any(b => b.attackerUnitId == u.id || b.defenderUnitId == u.id))
+                         && !world.activeBattles.Any(b => b.attackerUnitIds.Contains(u.id) || b.defenderUnitIds.Contains(u.id)))
                 .OrderBy(u => u.id, System.StringComparer.Ordinal)
                 .FirstOrDefault();
         }

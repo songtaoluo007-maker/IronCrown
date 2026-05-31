@@ -580,7 +580,7 @@ namespace IronCrown.Presentation
                 var battle = vm.activeBattles.Find(b => b.provinceId == pv.id);
                 if (battle != null)
                 {
-                    sb.Append($"  |  战斗中: {battle.attackerUnitId}({battle.attackerOrg}/{battle.attackerMaxOrg}) vs {battle.defenderUnitId}({battle.defenderOrg}/{battle.defenderMaxOrg}) — {battle.turnsElapsed} 回合");
+                    sb.Append($"  |  战斗中: 支 {battle.attackerUnitIds.Count} 支 vs 守 {battle.defenderUnitIds.Count} 支 — {battle.turnsElapsed} 回合");
                 }
             }
 

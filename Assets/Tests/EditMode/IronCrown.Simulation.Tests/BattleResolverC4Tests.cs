@@ -480,8 +480,8 @@ namespace IronCrown.Tests
             var active = new ActiveBattle
             {
                 id = "battle_ai6",
-                attackerUnitId = atk.id,
-                defenderUnitId = def.id,
+                attackerUnitIds = new List<string> { atk.id },
+                defenderUnitIds = new List<string> { def.id },
                 provinceId = provB.id,
                 turnsElapsed = 0
             };

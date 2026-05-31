@@ -127,7 +127,7 @@ namespace IronCrown.Simulation
                 if (attacksLeft <= 0) break;
 
                 // 跳过战斗中部队
-                if (world.activeBattles.Any(b => b.attackerUnitId == unit.id || b.defenderUnitId == unit.id))
+                if (world.activeBattles.Any(b => b.attackerUnitIds.Contains(unit.id) || b.defenderUnitIds.Contains(unit.id)))
                     continue;
 
                 if (!world.provinces.TryGetValue(unit.currentProvinceId, out var cur))

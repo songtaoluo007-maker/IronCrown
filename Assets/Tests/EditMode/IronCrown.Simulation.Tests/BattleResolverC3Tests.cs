@@ -82,8 +82,8 @@ namespace IronCrown.Simulation.Tests
 
             Assert.IsTrue(result.accepted);
             Assert.AreEqual(1, world.activeBattles.Count);
-            Assert.AreEqual("atk_1", world.activeBattles[0].attackerUnitId);
-            Assert.AreEqual("def_1", world.activeBattles[0].defenderUnitId);
+            Assert.AreEqual("atk_1", world.activeBattles[0].attackerUnitIds[0]);
+            Assert.AreEqual("def_1", world.activeBattles[0].defenderUnitIds[0]);
             Assert.AreEqual("target", world.activeBattles[0].provinceId);
             Assert.AreEqual(0, world.activeBattles[0].turnsElapsed);
             Assert.AreEqual(0, atk.movesLeft, "发起攻击应消耗移动力");
@@ -240,7 +240,9 @@ namespace IronCrown.Simulation.Tests
             world.countries["republic"].unitIds.Add("def_2");
 
             resolver.InitiateAttack(world, "atk_1", "target", "empire");
+            // C9c: def_2 也被加入战斗，需要一并击溃
             def.organization = 1;
+            def2.organization = 1;
 
             resolver.TickBattles(world);
 

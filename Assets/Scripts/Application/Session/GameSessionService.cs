@@ -156,7 +156,7 @@ namespace IronCrown.Application
                     // 统一战斗锁定检查
                     foreach (var b in _world.activeBattles)
                     {
-                        if (b.attackerUnitId == cmd.unitId || b.defenderUnitId == cmd.unitId)
+                        if (b.attackerUnitIds.Contains(cmd.unitId) || b.defenderUnitIds.Contains(cmd.unitId))
                             return CommandResult.Reject("部队正在战斗中");
                     }
 

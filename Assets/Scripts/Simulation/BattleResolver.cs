@@ -1,5 +1,5 @@
 // ============================================================================
-// Simulation/BattleResolver.cs — 战斗结算器
+// Simulation/BattleResolver.cs — 战斗结算器（C9c 多兵种联合战斗）
 // Phase 5: RandomService → IRandom, EventBus.Instance → IEventPublisher
 // float 公式保持不变
 // ============================================================================
@@ -25,6 +25,7 @@ namespace IronCrown.Simulation
             _config = config;
         }
 
+        /// <summary>向后兼容：1v1 战斗结算（保留，不再被 TickBattles 调用）</summary>
         public BattleResult ResolveBattle(UnitState attacker, UnitState defender, ProvinceState province)
         {
             var result = new BattleResult();
@@ -68,7 +69,7 @@ namespace IronCrown.Simulation
             return result;
         }
 
-        // === C3: 进攻发起 & 战斗 tick ===
+        // === C9c: 多兵种联合战斗 ===
 
         public CommandResult InitiateAttack(WorldState world, string attackerUnitId, string targetProvinceId, string playerCountryId)
         {
@@ -100,15 +101,25 @@ namespace IronCrown.Simulation
             // 检查攻方是否已在战斗中
             foreach (var b in world.activeBattles)
             {
-                if (b.attackerUnitId == attackerUnitId || b.defenderUnitId == attackerUnitId)
+                if (b.attackerUnitIds.Contains(attackerUnitId) || b.defenderUnitIds.Contains(attackerUnitId))
                     return CommandResult.Reject("部队正在战斗中");
             }
 
-            // 检查目标省是否已有战斗（防止同省多攻方导致静默消失）
-            foreach (var b in world.activeBattles)
+            // C9c: 检查目标省是否已有战斗
+            var existingBattle = world.activeBattles.Find(b => b.provinceId == targetProvinceId);
+            if (existingBattle != null)
             {
-                if (b.provinceId == targetProvinceId)
-                    return CommandResult.Reject("该省已有战斗进行中");
+                // 同阵营 → 加入攻方
+                if (existingBattle.attackerOwnerCountry == attacker.ownerCountry)
+                {
+                    attacker.movesLeft -= 1;
+                    existingBattle.attackerUnitIds.Add(attackerUnitId);
+                    return CommandResult.Accept();
+                }
+                else
+                {
+                    return CommandResult.Reject("敌方已对该省发起战斗");
+                }
             }
 
             // 自动宣战（基于 target.ownerCountry 法理主权）
@@ -122,7 +133,7 @@ namespace IronCrown.Simulation
                 });
             }
 
-            // 取守方：target 省内非攻方所属部队，按 id 升序 [0] 为主战
+            // 取守方：target 省内非攻方所属部队
             var defenders = world.units.Values
                 .Where(u => u.currentProvinceId == targetProvinceId && u.ownerCountry != attacker.ownerCountry)
                 .OrderBy(u => u.id, StringComparer.Ordinal)
@@ -154,16 +165,17 @@ namespace IronCrown.Simulation
                 return CommandResult.Accept();
             }
 
-            // 有守方 → 创建 ActiveBattle
-            var defender = defenders[0];
+            // 有守方 → 创建 ActiveBattle（C9c 多对多）
             attacker.movesLeft -= 1;
 
             var battle = new ActiveBattle
             {
-                id = attackerUnitId + "_vs_" + defender.id,
-                attackerUnitId = attackerUnitId,
-                defenderUnitId = defender.id,
+                id = targetProvinceId,
+                attackerUnitIds = new List<string> { attackerUnitId },
+                defenderUnitIds = defenders.Select(u => u.id).ToList(),
                 provinceId = targetProvinceId,
+                attackerOwnerCountry = attacker.ownerCountry,
+                defenderOwnerCountry = defenders[0].ownerCountry,
                 turnsElapsed = 0
             };
             world.activeBattles.Add(battle);
@@ -173,7 +185,7 @@ namespace IronCrown.Simulation
             {
                 battleId = battle.id,
                 attackerUnitId = attackerUnitId,
-                defenderUnitId = defender.id,
+                defenderUnitId = defenders[0].id,
                 provinceId = targetProvinceId
             });
 
@@ -189,105 +201,186 @@ namespace IronCrown.Simulation
 
             foreach (var battle in snapshot)
             {
-                // 防御性：若 unit 已不存在则移除
-                if (!world.units.TryGetValue(battle.attackerUnitId, out var attacker) ||
-                    !world.units.TryGetValue(battle.defenderUnitId, out var defender) ||
-                    !world.provinces.TryGetValue(battle.provinceId, out var province))
+                // 防御性：移除已不存在的 unit
+                battle.attackerUnitIds.RemoveAll(uid => !world.units.ContainsKey(uid));
+                battle.defenderUnitIds.RemoveAll(uid => !world.units.ContainsKey(uid));
+
+                // 获取省份
+                if (!world.provinces.TryGetValue(battle.provinceId, out var province))
                 {
                     world.activeBattles.Remove(battle);
                     continue;
                 }
 
-                // 跑一帧战斗
-                var result = ResolveBattle(attacker, defender, province);
+                // 获取双方存活部队快照
+                var attackers = battle.attackerUnitIds
+                    .Where(uid => world.units.TryGetValue(uid, out _))
+                    .Select(uid => world.units[uid])
+                    .ToList();
+                var defenders = battle.defenderUnitIds
+                    .Where(uid => world.units.TryGetValue(uid, out _))
+                    .Select(uid => world.units[uid])
+                    .ToList();
+
+                // 双方都空 → 移除
+                if (attackers.Count == 0 && defenders.Count == 0)
+                {
+                    world.activeBattles.Remove(battle);
+                    continue;
+                }
+
+                // 一方空 → 判定胜负
+                if (attackers.Count == 0)
+                {
+                    // 守胜
+                    ResolveDefenderWin(world, battle, defenders, province);
+                    world.activeBattles.Remove(battle);
+                    continue;
+                }
+                if (defenders.Count == 0)
+                {
+                    // 攻胜
+                    ResolveAttackerWin(world, battle, attackers, province);
+                    world.activeBattles.Remove(battle);
+                    continue;
+                }
+
+                // 双方都有 → tick 战斗
                 battle.turnsElapsed++;
 
-                if (result.attackerWon)
+                // C9c: sum 战力公式
+                int attackPower = 0;
+                foreach (var u in attackers)
+                    attackPower += (int)(u.baseAttack * u.organization * 100f / Math.Max(1, u.maxOrganization));
+
+                int defendPower = 0;
+                foreach (var u in defenders)
+                    defendPower += (int)(u.baseDefense * u.organization * 100f / Math.Max(1, u.maxOrganization));
+
+                // 地形倍率
+                float terrainMod = GetTerrainDefenseMultiplier(province.terrain);
+                defendPower = (int)(defendPower * terrainMod);
+
+                float combatRatio = (float)attackPower / Math.Max(1, defendPower);
+
+                // 双方统一伤害
+                int atkOrgDmg = ApplyRandom((int)(10 * (1f / Math.Max(0.1f, combatRatio))), 0.2f);
+                int atkStrDmg = ApplyRandom((int)(5 * (1f / Math.Max(0.1f, combatRatio))), 0.2f);
+                int defOrgDmg = ApplyRandom((int)(10 * combatRatio), 0.2f);
+                int defStrDmg = ApplyRandom((int)(5 * combatRatio), 0.2f);
+
+                foreach (var u in attackers)
+                    u.TakeDamage(atkOrgDmg, atkStrDmg);
+                foreach (var u in defenders)
+                    u.TakeDamage(defOrgDmg, defStrDmg);
+
+                // 移除 shattered
+                var shatteredAttackers = attackers.Where(u => u.IsShattered).Select(u => u.id).ToList();
+                var shatteredDefenders = defenders.Where(u => u.IsShattered).Select(u => u.id).ToList();
+                foreach (var uid in shatteredAttackers)
                 {
-                    // 守方主力消灭
-                    DestroyUnit(world, battle.defenderUnitId, "battle");
-                    // 清场该省其他非攻方部队
-                    var toClear = world.units.Values
-                        .Where(u => u.currentProvinceId == battle.provinceId && u.ownerCountry != attacker.ownerCountry)
-                        .Select(u => u.id)
+                    DestroyUnit(world, uid, "battle");
+                    battle.attackerUnitIds.Remove(uid);
+                }
+                foreach (var uid in shatteredDefenders)
+                {
+                    DestroyUnit(world, uid, "battle");
+                    battle.defenderUnitIds.Remove(uid);
+                }
+
+                // C9c: 同 tick 内判胜负
+                if (battle.attackerUnitIds.Count == 0 && battle.defenderUnitIds.Count == 0)
+                {
+                    world.activeBattles.Remove(battle);
+                }
+                else if (battle.defenderUnitIds.Count == 0)
+                {
+                    var survivingAttackers = battle.attackerUnitIds
+                        .Where(uid => world.units.TryGetValue(uid, out _))
+                        .Select(uid => world.units[uid])
                         .ToList();
-                    foreach (var clearId in toClear)
-                        DestroyUnit(world, clearId, "occupation");
-                    // 攻方进省 + 占领
-                    string prevController = province.controllerCountry;
-                    attacker.currentProvinceId = battle.provinceId;
-                    province.controllerCountry = attacker.ownerCountry;
-
-                    // C6: 占领瞬间 resistance 设为配置值
-                    var eco6b = _config?.Get<EconomyConfig>("global");
-                    province.resistance = eco6b?.resistanceOnCapture ?? 50;
-
-                    _events.Publish(new ProvinceOccupiedEvent
-                    {
-                        provinceId = battle.provinceId,
-                        newControllerCountry = attacker.ownerCountry,
-                        previousControllerCountry = prevController,
-                        attackerUnitId = battle.attackerUnitId
-                    });
-
-                    // C5: 首都丢失扣 warSupport
-                    ApplyCapitalLossPenalty(world, prevController, battle.provinceId);
-
-                    // C5: 战斗胜负 warSupport 变化
-                    ApplyBattleToll(world, attacker, defender, "Attacker");
-
-                    _events.Publish(new BattleConcludedEvent
-                    {
-                        battleId = battle.id,
-                        provinceId = battle.provinceId,
-                        winnerKind = "Attacker",
-                        attackerUnitId = battle.attackerUnitId,
-                        defenderUnitId = battle.defenderUnitId,
-                        turnsElapsed = battle.turnsElapsed
-                    });
+                    ResolveAttackerWin(world, battle, survivingAttackers, province);
                     world.activeBattles.Remove(battle);
                 }
-                else if (result.defenderWon)
+                else if (battle.attackerUnitIds.Count == 0)
                 {
-                    // 攻方消灭
-                    DestroyUnit(world, battle.attackerUnitId, "battle");
-
-                    // C5: 战斗胜负 warSupport 变化
-                    ApplyBattleToll(world, attacker, defender, "Defender");
-
-                    _events.Publish(new BattleConcludedEvent
-                    {
-                        battleId = battle.id,
-                        provinceId = battle.provinceId,
-                        winnerKind = "Defender",
-                        attackerUnitId = battle.attackerUnitId,
-                        defenderUnitId = battle.defenderUnitId,
-                        turnsElapsed = battle.turnsElapsed
-                    });
+                    var survivingDefenders = battle.defenderUnitIds
+                        .Where(uid => world.units.TryGetValue(uid, out _))
+                        .Select(uid => world.units[uid])
+                        .ToList();
+                    ResolveDefenderWin(world, battle, survivingDefenders, province);
                     world.activeBattles.Remove(battle);
                 }
-                else if (result.draw)
-                {
-                    // 双方主力消灭
-                    DestroyUnit(world, battle.attackerUnitId, "battle");
-                    DestroyUnit(world, battle.defenderUnitId, "battle");
-
-                    // C5: 平局双方都按 loss 算
-                    ApplyBattleToll(world, attacker, defender, "Draw");
-
-                    _events.Publish(new BattleConcludedEvent
-                    {
-                        battleId = battle.id,
-                        provinceId = battle.provinceId,
-                        winnerKind = "Draw",
-                        attackerUnitId = battle.attackerUnitId,
-                        defenderUnitId = battle.defenderUnitId,
-                        turnsElapsed = battle.turnsElapsed
-                    });
-                    world.activeBattles.Remove(battle);
-                }
-                // else: 双方都未崩，继续下回合
             }
+        }
+
+        private void ResolveAttackerWin(WorldState world, ActiveBattle battle, List<UnitState> attackers, ProvinceState province)
+        {
+            // 清场该省所有非攻方部队
+            var toClear = world.units.Values
+                .Where(u => u.currentProvinceId == battle.provinceId && u.ownerCountry != battle.attackerOwnerCountry)
+                .Select(u => u.id)
+                .ToList();
+            foreach (var clearId in toClear)
+                DestroyUnit(world, clearId, "occupation");
+
+            // 攻方首支进省
+            string prevController = province.controllerCountry;
+            if (attackers.Count > 0)
+            {
+                attackers[0].currentProvinceId = battle.provinceId;
+            }
+            province.controllerCountry = battle.attackerOwnerCountry;
+
+            // C6: 占领瞬间 resistance
+            var eco6 = _config?.Get<EconomyConfig>("global");
+            province.resistance = eco6?.resistanceOnCapture ?? 50;
+
+            _events.Publish(new ProvinceOccupiedEvent
+            {
+                provinceId = battle.provinceId,
+                newControllerCountry = battle.attackerOwnerCountry,
+                previousControllerCountry = prevController,
+                attackerUnitId = attackers.Count > 0 ? attackers[0].id : ""
+            });
+
+            // C5: 首都丢失扣 warSupport
+            ApplyCapitalLossPenalty(world, prevController, battle.provinceId);
+
+            // C5: 战斗胜负 warSupport 变化
+            if (attackers.Count > 0 && !string.IsNullOrEmpty(battle.defenderOwnerCountry))
+            {
+                ApplyBattleTollByCountry(world, battle.attackerOwnerCountry, battle.defenderOwnerCountry, "Attacker");
+            }
+
+            _events.Publish(new BattleConcludedEvent
+            {
+                battleId = battle.id,
+                provinceId = battle.provinceId,
+                winnerKind = "Attacker",
+                attackerUnitId = attackers.Count > 0 ? attackers[0].id : "",
+                defenderUnitId = battle.defenderUnitIds.Count > 0 ? battle.defenderUnitIds[0] : "",
+                turnsElapsed = battle.turnsElapsed
+            });
+        }
+
+        private void ResolveDefenderWin(WorldState world, ActiveBattle battle, List<UnitState> defenders, ProvinceState province)
+        {
+            // C5: 战斗胜负 warSupport 变化
+            if (defenders.Count > 0 && !string.IsNullOrEmpty(battle.attackerOwnerCountry))
+            {
+                ApplyBattleTollByCountry(world, battle.attackerOwnerCountry, battle.defenderOwnerCountry, "Defender");
+            }
+
+            _events.Publish(new BattleConcludedEvent
+            {
+                battleId = battle.id,
+                provinceId = battle.provinceId,
+                winnerKind = "Defender",
+                attackerUnitId = battle.attackerUnitIds.Count > 0 ? battle.attackerUnitIds[0] : "",
+                defenderUnitId = defenders.Count > 0 ? defenders[0].id : "",
+                turnsElapsed = battle.turnsElapsed
+            });
         }
 
         private void DestroyUnit(WorldState world, string unitId, string cause)
@@ -363,6 +456,31 @@ namespace IronCrown.Simulation
             if (eco == null) return;
             if (!world.countries.TryGetValue(attacker.ownerCountry, out var atkCountry)) return;
             if (!world.countries.TryGetValue(defender.ownerCountry, out var defCountry)) return;
+
+            switch (winnerKind)
+            {
+                case "Attacker":
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport + eco.warSupportBonusPerVictory, 0, 100);
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+                case "Defender":
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport + eco.warSupportBonusPerVictory, 0, 100);
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+                case "Draw":
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+            }
+        }
+
+        /// <summary>C9c: 直接按国家 ID 计算战后 warSupport 变化（避免单位已被销毁无法查找）</summary>
+        internal void ApplyBattleTollByCountry(WorldState world, string attackerCountryId, string defenderCountryId, string winnerKind)
+        {
+            var eco = _config?.Get<EconomyConfig>("global");
+            if (eco == null) return;
+            if (!world.countries.TryGetValue(attackerCountryId, out var atkCountry)) return;
+            if (!world.countries.TryGetValue(defenderCountryId, out var defCountry)) return;
 
             switch (winnerKind)
             {

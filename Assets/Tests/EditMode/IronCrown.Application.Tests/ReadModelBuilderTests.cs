@@ -363,8 +363,8 @@ namespace IronCrown.Application.Tests
             world.activeBattles.Add(new ActiveBattle
             {
                 id = "battle_1",
-                attackerUnitId = "atk",
-                defenderUnitId = "def",
+                attackerUnitIds = new List<string> { "atk" },
+                defenderUnitIds = new List<string> { "def" },
                 provinceId = "p1",
                 turnsElapsed = 1
             });
@@ -392,8 +392,8 @@ namespace IronCrown.Application.Tests
             world.activeBattles.Add(new ActiveBattle
             {
                 id = "battle_1",
-                attackerUnitId = "atk",
-                defenderUnitId = "def",
+                attackerUnitIds = new List<string> { "atk" },
+                defenderUnitIds = new List<string> { "def" },
                 provinceId = "p1",
                 turnsElapsed = 0
             });
@@ -433,8 +433,8 @@ namespace IronCrown.Application.Tests
             world.activeBattles.Add(new ActiveBattle
             {
                 id = "battle_1",
-                attackerUnitId = "atk",
-                defenderUnitId = "def",
+                attackerUnitIds = new List<string> { "atk" },
+                defenderUnitIds = new List<string> { "def" },
                 provinceId = "p1",
                 turnsElapsed = 2
             });

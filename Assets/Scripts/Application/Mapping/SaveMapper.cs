@@ -3,6 +3,7 @@
 // ============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using IronCrown.Domain;
 
@@ -104,13 +105,15 @@ namespace IronCrown.Application
             state.playerCountryId = world.playerCountryId;
             state.selectedUnitId = world.selectedUnitId;
 
-            // 活动战斗
+            // 活动战斗 (C9c)
             state.activeBattles = world.activeBattles.Select(b => new ActiveBattleSaveData
             {
                 id = b.id,
-                attackerUnitId = b.attackerUnitId,
-                defenderUnitId = b.defenderUnitId,
+                attackerUnitIds = b.attackerUnitIds,
+                defenderUnitIds = b.defenderUnitIds,
                 provinceId = b.provinceId,
+                attackerOwnerCountry = b.attackerOwnerCountry,
+                defenderOwnerCountry = b.defenderOwnerCountry,
                 turnsElapsed = b.turnsElapsed
             }).ToArray();
 
@@ -263,9 +266,11 @@ namespace IronCrown.Application
                     world.activeBattles.Add(new ActiveBattle
                     {
                         id = bd.id,
-                        attackerUnitId = bd.attackerUnitId,
-                        defenderUnitId = bd.defenderUnitId,
+                        attackerUnitIds = bd.attackerUnitIds ?? new List<string>(),
+                        defenderUnitIds = bd.defenderUnitIds ?? new List<string>(),
                         provinceId = bd.provinceId,
+                        attackerOwnerCountry = bd.attackerOwnerCountry,
+                        defenderOwnerCountry = bd.defenderOwnerCountry,
                         turnsElapsed = bd.turnsElapsed
                     });
                 }

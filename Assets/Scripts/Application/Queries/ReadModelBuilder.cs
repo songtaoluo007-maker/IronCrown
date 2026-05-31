@@ -38,8 +38,8 @@ namespace IronCrown.Application
             var battleProvinceIds = new HashSet<string>();
             foreach (var b in world.activeBattles)
             {
-                battleUnitIds.Add(b.attackerUnitId);
-                battleUnitIds.Add(b.defenderUnitId);
+                foreach (var uid in b.attackerUnitIds) battleUnitIds.Add(uid);
+                foreach (var uid in b.defenderUnitIds) battleUnitIds.Add(uid);
                 battleProvinceIds.Add(b.provinceId);
             }
 
@@ -181,23 +181,30 @@ namespace IronCrown.Application
         public ActiveBattleView BuildActiveBattleView(ActiveBattle b, Dictionary<string, UnitState> units)
         {
             int atkOrg = 0, atkMaxOrg = 0, defOrg = 0, defMaxOrg = 0;
-            if (units.TryGetValue(b.attackerUnitId, out var atk))
+            foreach (var uid in b.attackerUnitIds)
             {
-                atkOrg = atk.organization;
-                atkMaxOrg = atk.maxOrganization;
+                if (units.TryGetValue(uid, out var atk))
+                {
+                    atkOrg += atk.organization;
+                    atkMaxOrg += atk.maxOrganization;
+                }
             }
-            if (units.TryGetValue(b.defenderUnitId, out var def))
+            foreach (var uid in b.defenderUnitIds)
             {
-                defOrg = def.organization;
-                defMaxOrg = def.maxOrganization;
+                if (units.TryGetValue(uid, out var def))
+                {
+                    defOrg += def.organization;
+                    defMaxOrg += def.maxOrganization;
+                }
             }
 
             return new ActiveBattleView
             {
                 id = b.id,
-                attackerUnitId = b.attackerUnitId,
-                defenderUnitId = b.defenderUnitId,
+                attackerUnitIds = b.attackerUnitIds,
+                defenderUnitIds = b.defenderUnitIds,
                 provinceId = b.provinceId,
+                attackerOwnerCountry = b.attackerOwnerCountry,
                 turnsElapsed = b.turnsElapsed,
                 attackerOrg = atkOrg,
                 attackerMaxOrg = atkMaxOrg,

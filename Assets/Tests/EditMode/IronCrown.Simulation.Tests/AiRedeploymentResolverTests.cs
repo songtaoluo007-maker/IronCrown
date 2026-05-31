@@ -195,8 +195,8 @@ namespace IronCrown.Tests
             world.activeBattles.Add(new ActiveBattle
             {
                 id = "battle_1",
-                attackerUnitId = "r1",
-                defenderUnitId = "e1",
+                attackerUnitIds = new List<string> { "r1" },
+                defenderUnitIds = new List<string> { "e1" },
                 provinceId = "P1",
                 turnsElapsed = 0
             });

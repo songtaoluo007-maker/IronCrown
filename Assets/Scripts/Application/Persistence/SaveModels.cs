@@ -4,6 +4,7 @@
 // ============================================================================
 
 using System;
+using System.Collections.Generic;
 
 namespace IronCrown.Application
 {
@@ -158,9 +159,11 @@ namespace IronCrown.Application
     public class ActiveBattleSaveData
     {
         public string id;
-        public string attackerUnitId;
-        public string defenderUnitId;
+        public List<string> attackerUnitIds;
+        public List<string> defenderUnitIds;
         public string provinceId;
+        public string attackerOwnerCountry;
+        public string defenderOwnerCountry;
         public int turnsElapsed;
     }
 
