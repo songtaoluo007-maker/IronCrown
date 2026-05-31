@@ -1,46 +1,64 @@
 {
-  "items": [
-    {
-      "id": "global",
-      "provinceBaseOutputPerResource": 2,
-      "provinceInfraOutputBonus": 1,
-      "militaryFactoryEquipmentOutput": 5,
-      "equipmentSteelCost": 2,
-      "equipmentCapitalCost": 1,
-      "civilianFactoryUpkeep": 3,
-      "militaryFactoryUpkeep": 5,
-      "dockyardUpkeep": 4,
-      "civilianFactoryBuildCost": 30,
-      "militaryFactoryBuildCost": 40,
-      "factoryBuildTurns": 3,
-      "taxRatePercents": [70, 100, 130],
-      "taxStabilityDeltas": [1, 0, -2],
-      "civilExpensePercents": [50, 100, 150],
-      "civilStabilityDeltas": [-2, 0, 2],
-      "unitProductionTurns": 2,
-      "aiBuildCapitalThreshold": 50,
-      "aiMaxCivilianFactories": 10,
-      "aiMaxMilitaryFactories": 8,
-      "aiAttackPowerRatio": 120,
-      "aiMaxAttacksPerTurn": 3,
-      "warStabilityPenaltyPerTurn": 1,
-      "warExhaustionPerTurn": 1,
-      "warSupportPenaltyPerLoss": 5,
-      "warSupportBonusPerVictory": 5,
-      "warSupportPenaltyPerCapitalLoss": 15,
-      "aiPeaceAcceptExhaustionThreshold": 30,
-      "aiPeaceAcceptPowerRatioPct": 80,
-      "resistanceOnCapture": 50,
-      "resistanceDecayWithGarrison": -2,
-      "resistanceGrowWithoutGarrison": 1,
-      "resistanceUprisingThreshold": 30,
-      "resistanceUprisingChancePct": 10,
-      "resistanceGarrisonDamageManpower": 5,
-      "resistanceGarrisonDamageEquipment": 5,
-      "aiPeaceOfferExhaustionThreshold": 40,
-      "aiPeaceOfferPowerRatioPct": 80,
-      "aiPeaceOfferCooldownTurns": 5,
-      "aiPeaceOfferExpiryTurns": 10
-    }
-  ]
+    "items": [
+        {
+            "id": "global",
+            "provinceBaseOutputPerResource": 2,
+            "provinceInfraOutputBonus": 1,
+            "militaryFactoryEquipmentOutput": 5,
+            "equipmentSteelCost": 2,
+            "equipmentCapitalCost": 1,
+            "civilianFactoryUpkeep": 3,
+            "militaryFactoryUpkeep": 5,
+            "dockyardUpkeep": 4,
+            "civilianFactoryBuildCost": 30,
+            "militaryFactoryBuildCost": 40,
+            "factoryBuildTurns": 3,
+            "taxRatePercents": [
+                70,
+                100,
+                130
+            ],
+            "taxStabilityDeltas": [
+                1,
+                0,
+                -2
+            ],
+            "civilExpensePercents": [
+                50,
+                100,
+                150
+            ],
+            "civilStabilityDeltas": [
+                -2,
+                0,
+                2
+            ],
+            "unitProductionTurns": 2,
+            "aiBuildCapitalThreshold": 50,
+            "aiMaxCivilianFactories": 10,
+            "aiMaxMilitaryFactories": 8,
+            "aiAttackPowerRatio": 120,
+            "aiMaxAttacksPerTurn": 3,
+            "warStabilityPenaltyPerTurn": 1,
+            "warExhaustionPerTurn": 1,
+            "warSupportPenaltyPerLoss": 5,
+            "warSupportBonusPerVictory": 5,
+            "warSupportPenaltyPerCapitalLoss": 15,
+            "aiPeaceAcceptExhaustionThreshold": 30,
+            "aiPeaceAcceptPowerRatioPct": 80,
+            "resistanceOnCapture": 50,
+            "resistanceDecayWithGarrison": -2,
+            "resistanceGrowWithoutGarrison": 1,
+            "resistanceUprisingThreshold": 30,
+            "resistanceUprisingChancePct": 10,
+            "resistanceGarrisonDamageManpower": 5,
+            "resistanceGarrisonDamageEquipment": 5,
+            "aiPeaceOfferExhaustionThreshold": 40,
+            "aiPeaceOfferPowerRatioPct": 80,
+            "aiPeaceOfferCooldownTurns": 5,
+            "aiPeaceOfferExpiryTurns": 10,
+            "aiRedeployVulnerableRatioPct": 80,
+            "aiMaxRedeploysPerTurn": 1
+        }
+    ]
 }

@@ -14,12 +14,15 @@ namespace IronCrown.Simulation
         private readonly IConfigRegistry _config;
         private readonly ConstructionResolver _construction;
         private readonly BattleResolver _battle;
+        private readonly AiRedeploymentResolver _redeploy;
 
-        public AIResolver(IConfigRegistry config, ConstructionResolver construction, BattleResolver battle)
+        public AIResolver(IConfigRegistry config, ConstructionResolver construction, BattleResolver battle,
+            AiRedeploymentResolver redeploy = null)
         {
             _config = config;
             _construction = construction;
             _battle = battle;
+            _redeploy = redeploy;
         }
 
         public void MakeDecisions(CountryState country, WorldState world)
@@ -46,6 +49,10 @@ namespace IronCrown.Simulation
 
             // C4: 军事 AI — 主动进攻邻接弱者
             TryAttack(country, world);
+
+            // C8: AI 调防 — 内陆富裕部队调往前线弱守省
+            if (_redeploy != null)
+                _redeploy.TryRedeploy(country, world, eco);
         }
 
         private AIStrategy EvaluateStrategicSituation(CountryState country, WorldState world)

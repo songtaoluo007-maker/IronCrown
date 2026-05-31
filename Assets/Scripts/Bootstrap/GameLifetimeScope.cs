@@ -44,6 +44,7 @@ namespace IronCrown.Bootstrap
             builder.Register<WarTollResolver>(Lifetime.Singleton);
             builder.Register<OccupationResolver>(Lifetime.Singleton);
             builder.Register<AiPeaceOfferResolver>(Lifetime.Singleton);
+            builder.Register<AiRedeploymentResolver>(Lifetime.Singleton);
             builder.Register<SupplyResolver>(Lifetime.Singleton);
             builder.Register<AIResolver>(Lifetime.Singleton);
             builder.Register<DiplomacyResolver>(Lifetime.Singleton);
