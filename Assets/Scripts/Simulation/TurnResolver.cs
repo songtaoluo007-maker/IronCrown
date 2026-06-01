@@ -163,6 +163,10 @@ namespace IronCrown.Simulation
                 }
             }
 
+            // C14: 全局解围检查（补员之前）
+            if (_supply != null)
+                _supply.CheckGlobalRelief(world);
+
             // C13: 双条补员（Settlement 末尾，胜负判定之前）
             if (_supply != null && _config != null)
             {
@@ -171,9 +175,53 @@ namespace IronCrown.Simulation
                     _supply.ReplenishUnits(world, ecoC13, _config);
             }
 
+            // C14: 清理补给耗尽的部队（cutoffTurns >= 4）
+            if (_supply != null)
+                CleanupStarvedUnits(world);
+
             // 胜负判定（TickBattles 之后）
             if (_victory != null)
                 _victory.CheckVictory(world, _clock);
+        }
+
+        // =====================================================================
+        // C14: 清理补给耗尽的部队
+        // =====================================================================
+
+        private void CleanupStarvedUnits(WorldState world)
+        {
+            var deadUnitIds = world.units.Values
+                .Where(u => u.isCutoff && u.cutoffTurns >= 4)
+                .Select(u => u.id)
+                .OrderBy(id => id, System.StringComparer.Ordinal)
+                .ToList();
+
+            foreach (var unitId in deadUnitIds)
+            {
+                if (!world.units.TryGetValue(unitId, out var unit)) continue;
+
+                string provinceId = unit.currentProvinceId;
+                string owner = unit.ownerCountry;
+
+                world.units.Remove(unitId);
+                if (world.countries.TryGetValue(owner, out var country))
+                    country.unitIds.Remove(unitId);
+
+                // 移除活动战斗中的引用
+                foreach (var battle in world.activeBattles)
+                {
+                    battle.attackerUnitIds.Remove(unitId);
+                    battle.defenderUnitIds.Remove(unitId);
+                }
+
+                _events.Publish(new Contracts.UnitDestroyedEvent
+                {
+                    unitId = unitId,
+                    ownerCountry = owner,
+                    provinceId = provinceId,
+                    cause = "supply_starved"
+                });
+            }
         }
 
     }

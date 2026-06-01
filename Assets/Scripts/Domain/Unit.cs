@@ -57,7 +57,11 @@ namespace IronCrown.Domain
         // === C13: 战役经验 + 溃退恢复 ===
         public int tacticalExp;          // 战役经验 0-100
         public int recoveryTurnsLeft;    // 溃退恢复剩余回合（>0 时可移动不可进攻）
-        public bool isCutoff;            // 是否被切断补给（C14 激活，C13 默认 false）
+        public bool isCutoff;            // 是否被切断补给（C14 激活）
+
+        // === C14: 补给系统 ===
+        public int cutoffTurns;          // 被切断补给的累计回合数（≥4 部队消亡）
+        public bool isDisorganized;      // 是否处于混乱状态（补给不足或被切断）
 
         // === 方法 ===
 

@@ -599,6 +599,9 @@ namespace IronCrown.Simulation
 
             ApplyCapitalLossPenalty(world, prevController, battle.provinceId);
 
+            // C14: 解围 A 方案 — 占领后解除该省友方部队的切断状态
+            SupplyResolver.CheckRelief(world, battle.provinceId, battle.attackerOwnerCountry);
+
             if (attackers.Count > 0 && !string.IsNullOrEmpty(battle.defenderOwnerCountry))
                 ApplyBattleTollByCountry(world, battle.attackerOwnerCountry, battle.defenderOwnerCountry, "Attacker");
 
