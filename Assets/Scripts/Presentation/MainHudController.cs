@@ -66,6 +66,13 @@ namespace IronCrown.Presentation
         private EventCallback<ClickEvent> _onCollection;
         private EventCallback<ClickEvent> _onShop;
 
+        // C15a: 将领任命
+        private Button _assignCommanderBtn;
+        private Button _unassignCommanderBtn;
+        private VisualElement _commanderActions;
+        private EventCallback<ClickEvent> _onAssignCommander;
+        private EventCallback<ClickEvent> _onUnassignCommander;
+
         public MainHudController(GameSessionService session, IEventPublisher events)
         {
             _session = session;
@@ -121,6 +128,13 @@ namespace IronCrown.Presentation
             _onCollection = _ => OnCollectionOpen();
             _onShop = _ => OnShopOpen();
 
+            // C15a: 将领任命
+            _commanderActions = root.Q<VisualElement>("commander-actions");
+            _assignCommanderBtn = root.Q<Button>("assign-commander-btn");
+            _unassignCommanderBtn = root.Q<Button>("unassign-commander-btn");
+            _onAssignCommander = _ => AssignCommanderToUnit();
+            _onUnassignCommander = _ => UnassignCommanderFromUnit();
+
             if (_advanceBtn != null) _advanceBtn.RegisterCallback(_onAdvance);
             if (_buildCivilianBtn != null) _buildCivilianBtn.RegisterCallback(_onBuildCivilian);
             if (_buildMilitaryBtn != null) _buildMilitaryBtn.RegisterCallback(_onBuildMilitary);
@@ -134,6 +148,8 @@ namespace IronCrown.Presentation
             if (_gachaDrawBtn != null) _gachaDrawBtn.RegisterCallback(_onGachaDraw);
             if (_collectionBtn != null) _collectionBtn.RegisterCallback(_onCollection);
             if (_shopBtn != null) _shopBtn.RegisterCallback(_onShop);
+            if (_assignCommanderBtn != null) _assignCommanderBtn.RegisterCallback(_onAssignCommander);
+            if (_unassignCommanderBtn != null) _unassignCommanderBtn.RegisterCallback(_onUnassignCommander);
 
             _events.Subscribe<TurnStartEvent>(_ => Render());
             _events.Subscribe<TurnEndEvent>(_ => Render());
@@ -218,6 +234,8 @@ namespace IronCrown.Presentation
             if (_gachaDrawBtn != null) _gachaDrawBtn.UnregisterCallback(_onGachaDraw);
             if (_collectionBtn != null) _collectionBtn.UnregisterCallback(_onCollection);
             if (_shopBtn != null) _shopBtn.UnregisterCallback(_onShop);
+            if (_assignCommanderBtn != null) _assignCommanderBtn.UnregisterCallback(_onAssignCommander);
+            if (_unassignCommanderBtn != null) _unassignCommanderBtn.UnregisterCallback(_onUnassignCommander);
         }
 
         public void Advance()
@@ -363,6 +381,83 @@ namespace IronCrown.Presentation
             var player = view.countries?.Find(c => c.id == _session.PlayerCountryId);
             if (player == null) return;
             ShowStatus($"商城 | 券: {player.gachaTickets}");
+        }
+
+        // ================================================================
+        // C15a: 将领任命 / 解除
+        // ================================================================
+
+        private void AssignCommanderToUnit()
+        {
+            var view = _session.GetWorldView();
+            if (view == null) return;
+
+            // 找当前选中的部队
+            if (string.IsNullOrEmpty(view.selectedUnitId))
+            {
+                ShowStatus("请先选中一支部队");
+                return;
+            }
+
+            var selUnit = view.units?.Find(u => u.id == view.selectedUnitId);
+            if (selUnit == null) return;
+
+            // 已有将领
+            if (!string.IsNullOrEmpty(selUnit.commanderId))
+            {
+                ShowStatus($"该师已有将领: {selUnit.commanderName}");
+                return;
+            }
+
+            // 找一个空闲将领（未满编的）
+            var available = view.commanders?.FindAll(c =>
+                c.ownerCountry == _session.PlayerCountryId
+                && c.isActive
+                && c.commandedDivisions < c.maxDivisions);
+
+            if (available == null || available.Count == 0)
+            {
+                ShowStatus("没有可用将领（全部满编或不存在）");
+                return;
+            }
+
+            var cmdr = available[0];
+            var result = _session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.AssignCommander,
+                commanderId = cmdr.id,
+                unitId = selUnit.id
+            });
+
+            if (result.accepted)
+                ShowStatus($"{cmdr.name} 已任命至该师");
+            else
+                ShowStatus($"任命失败: {result.reason}");
+            Render();
+        }
+
+        private void UnassignCommanderFromUnit()
+        {
+            var view = _session.GetWorldView();
+            if (view == null) return;
+
+            if (string.IsNullOrEmpty(view.selectedUnitId))
+            {
+                ShowStatus("请先选中一支部队");
+                return;
+            }
+
+            var result = _session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.UnassignCommander,
+                unitId = view.selectedUnitId
+            });
+
+            if (result.accepted)
+                ShowStatus("将领已解除");
+            else
+                ShowStatus($"解除失败: {result.reason}");
+            Render();
         }
 
         public void OfferPeace()
@@ -777,6 +872,34 @@ namespace IronCrown.Presentation
             }
 
             _provinceDetailLabel.text = sb.ToString();
+
+            // C15a: 将领任命按钮显隐
+            if (_commanderActions != null)
+            {
+                bool showActions = false;
+                if (!string.IsNullOrEmpty(vm.selectedUnitId) && vm.units != null)
+                {
+                    var su = vm.units.Find(u => u.id == vm.selectedUnitId);
+                    if (su != null && su.ownerCountry == vm.playerCountryId)
+                    {
+                        if (string.IsNullOrEmpty(su.commanderId))
+                        {
+                            // 无将领 → 显示“任命将领”
+                            showActions = true;
+                            if (_assignCommanderBtn != null) _assignCommanderBtn.style.display = DisplayStyle.Flex;
+                            if (_unassignCommanderBtn != null) _unassignCommanderBtn.style.display = DisplayStyle.None;
+                        }
+                        else
+                        {
+                            // 有将领 → 显示“解除将领”
+                            showActions = true;
+                            if (_assignCommanderBtn != null) _assignCommanderBtn.style.display = DisplayStyle.None;
+                            if (_unassignCommanderBtn != null) _unassignCommanderBtn.style.display = DisplayStyle.Flex;
+                        }
+                    }
+                }
+                _commanderActions.style.display = showActions ? DisplayStyle.Flex : DisplayStyle.None;
+            }
         }
 
         private static string FormatPopulation(int pop)

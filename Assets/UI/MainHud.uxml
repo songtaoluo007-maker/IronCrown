@@ -55,6 +55,10 @@
         <!-- 省份详情栏 -->
         <ui:VisualElement name="province-detail" class="province-detail">
             <ui:Label name="province-detail-label" text="点击地图省份查看" class="province-detail-label" />
+            <ui:VisualElement name="commander-actions" class="command-bar" style="display: none;">
+                <ui:Button name="assign-commander-btn" text="任命将领" class="build-btn" />
+                <ui:Button name="unassign-commander-btn" text="解除将领" class="build-btn" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- 分隔线 -->
