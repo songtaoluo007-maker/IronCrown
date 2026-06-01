@@ -12,6 +12,7 @@ namespace IronCrown.Domain
         public string id;
         public string name;
         public string ownerCountry;
+        public string generalCardId;    // C15b: 关联的将军卡模板 ID
 
         // === 军衔（0=尉官 → 1=校官 → 2=将官 → 3=元帅 → 4=大元帅） ===
         public int rank;

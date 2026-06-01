@@ -48,6 +48,7 @@ namespace IronCrown.Simulation
                 id = id,
                 name = cfg.name,
                 ownerCountry = country.id,
+                generalCardId = configId,
                 rank = 0,
                 victories = 0,
                 encirclements = 0,

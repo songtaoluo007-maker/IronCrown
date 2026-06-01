@@ -53,6 +53,17 @@ namespace IronCrown.Simulation
                 basePower = basePower * cmdrBuffPct / 100;
             }
 
+            // C15b: 将军卡技能攻击 buff（在军衔之后、最终缩放前）
+            if (_commander != null && world != null && !string.IsNullOrEmpty(unit.commanderId) && _config != null)
+            {
+                var cmdr = world.commanders.TryGetValue(unit.commanderId, out var c) ? c : null;
+                if (cmdr != null)
+                {
+                    int cardAtkPct = CommanderSkillEvaluator.EvalAttack(_config, cmdr, unit, null, world);
+                    basePower = basePower * cardAtkPct / 100;
+                }
+            }
+
             return basePower;
         }
 
@@ -76,6 +87,17 @@ namespace IronCrown.Simulation
             {
                 int cmdrBuffPct = _commander.GetCommanderDefenseBuffPct(world, unit.commanderId);
                 basePower = basePower * cmdrBuffPct / 100;
+            }
+
+            // C15b: 将军卡技能防御 buff
+            if (_commander != null && world != null && !string.IsNullOrEmpty(unit.commanderId) && _config != null)
+            {
+                var cmdr = world.commanders.TryGetValue(unit.commanderId, out var c) ? c : null;
+                if (cmdr != null)
+                {
+                    int cardDefPct = CommanderSkillEvaluator.EvalDefense(_config, cmdr, unit, null, world);
+                    basePower = basePower * cardDefPct / 100;
+                }
             }
 
             return basePower;

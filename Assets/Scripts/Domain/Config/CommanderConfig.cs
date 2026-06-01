@@ -26,5 +26,19 @@ namespace IronCrown.Domain
         // === 兼容旧字段 ===
         public int logisticsBonus;
         public int moraleBonus;
+
+        // === C15b: 技能列表 ===
+        public GeneralSkillEntry[] skills;
+    }
+
+    /// <summary>将军技能条目（数据驱动）</summary>
+    [System.Serializable]
+    public class GeneralSkillEntry
+    {
+        public string type;           // 技能类型（attackBonus/defenseBonus/moraleBonus/...）
+        public int value;             // 数值
+        public string brigadeType;    // brigadeBonus 专用：兵种类型
+        public string stat;           // brigadeBonus 专用：加成属性
+        public string terrain;        // terrainBonus 专用：地形类型
     }
 }

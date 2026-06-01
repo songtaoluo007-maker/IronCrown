@@ -20,7 +20,7 @@ namespace IronCrown.Simulation
         /// BFS 补给检查：首都出发，沿己方/友方控制省 BFS，
         /// 标记所有可达省的补给值，不可达省上的部队标记 isCutoff。
         /// </summary>
-        public void CheckSupply(CountryState country, WorldState world)
+        public void CheckSupply(CountryState country, WorldState world, IConfigRegistry config = null)
         {
             // 1) BFS 计算补给网络
             var supplyMap = BuildSupplyNetwork(country, world);
@@ -37,7 +37,7 @@ namespace IronCrown.Simulation
                 {
                     // === 被切断 ===
                     unit.isCutoff = true;
-                    ApplyCutoffEffects(unit, world);
+                    ApplyCutoffEffects(unit, world, config);
                 }
                 else
                 {
@@ -157,15 +157,22 @@ namespace IronCrown.Simulation
         // =====================================================================
 
         /// <summary>应用被切断补给效果</summary>
-        private void ApplyCutoffEffects(UnitState unit, WorldState world)
+        private void ApplyCutoffEffects(UnitState unit, WorldState world, IConfigRegistry config = null)
         {
             unit.cutoffTurns++;
 
-            // 组织度每回合 -15
-            unit.organization = Math.Max(0, unit.organization - 15);
+            // C15b: 将军卡切断衰减倍率（救火队员 -50%）
+            int decayMultiplier = 100;
+            if (config != null && !string.IsNullOrEmpty(unit.commanderId) && world.commanders.TryGetValue(unit.commanderId, out var cmdr) && cmdr.isActive)
+            {
+                decayMultiplier = CommanderSkillEvaluator.EvalCutoffDecayMultiplier(config, cmdr);
+            }
 
-            // 士气每回合 -20
-            unit.morale = Math.Max(0, unit.morale - 20);
+            // 组织度每回合 -15（按倍率缩放）
+            unit.organization = Math.Max(0, unit.organization - 15 * decayMultiplier / 100);
+
+            // 士气每回合 -20（按倍率缩放）
+            unit.morale = Math.Max(0, unit.morale - 20 * decayMultiplier / 100);
 
             // 标记 disorganized
             unit.isDisorganized = true;
@@ -327,6 +334,13 @@ namespace IronCrown.Simulation
                     int reinforceRate = unit.isDisorganized
                         ? eco.reinforceRatePct / 2
                         : eco.reinforceRatePct;
+
+                    // C15b: 将军卡补员速率加成
+                    if (!string.IsNullOrEmpty(unit.commanderId) && world.commanders.TryGetValue(unit.commanderId, out var cmdr) && cmdr.isActive)
+                    {
+                        int reinforceBonus = CommanderSkillEvaluator.EvalReinforceRateBonus(config, cmdr);
+                        reinforceRate = reinforceRate * (100 + reinforceBonus) / 100;
+                    }
 
                     // --- 人力补员 ---
                     int manpowerNeeded = unit.maxManpower - unit.manpower;
