@@ -35,6 +35,9 @@ namespace IronCrown.Presentation
 
         // C5: 外交
         private Button _offerPeaceBtn;
+
+        // C15a: 将领
+        private Button _recruitCommanderBtn;
         private Label _warExhaustionLabel;
 
         // C9b: HUD 国家状况
@@ -52,6 +55,7 @@ namespace IronCrown.Presentation
         private EventCallback<ClickEvent> _onCivilUp;
         private EventCallback<ClickEvent> _onCivilDown;
         private EventCallback<ClickEvent> _onOfferPeace;
+        private EventCallback<ClickEvent> _onRecruitCommander;
 
         public MainHudController(GameSessionService session, IEventPublisher events)
         {
@@ -80,6 +84,7 @@ namespace IronCrown.Presentation
 
             // C5: 外交
             _offerPeaceBtn = root.Q<Button>("offer-peace-btn");
+            _recruitCommanderBtn = root.Q<Button>("recruit-commander-btn");
             _warExhaustionLabel = root.Q<Label>("war-exhaustion-label");
 
             // C9b: HUD 国家状况
@@ -96,6 +101,7 @@ namespace IronCrown.Presentation
             _onCivilUp = _ => SetCivil(1);
             _onCivilDown = _ => SetCivil(-1);
             _onOfferPeace = _ => OfferPeace();
+            _onRecruitCommander = _ => RecruitCommander();
 
             if (_advanceBtn != null) _advanceBtn.RegisterCallback(_onAdvance);
             if (_buildCivilianBtn != null) _buildCivilianBtn.RegisterCallback(_onBuildCivilian);
@@ -106,6 +112,7 @@ namespace IronCrown.Presentation
             if (_civilUpBtn != null) _civilUpBtn.RegisterCallback(_onCivilUp);
             if (_civilDownBtn != null) _civilDownBtn.RegisterCallback(_onCivilDown);
             if (_offerPeaceBtn != null) _offerPeaceBtn.RegisterCallback(_onOfferPeace);
+            if (_recruitCommanderBtn != null) _recruitCommanderBtn.RegisterCallback(_onRecruitCommander);
 
             _events.Subscribe<TurnStartEvent>(_ => Render());
             _events.Subscribe<TurnEndEvent>(_ => Render());
@@ -186,6 +193,7 @@ namespace IronCrown.Presentation
             if (_civilUpBtn != null) _civilUpBtn.UnregisterCallback(_onCivilUp);
             if (_civilDownBtn != null) _civilDownBtn.UnregisterCallback(_onCivilDown);
             if (_offerPeaceBtn != null) _offerPeaceBtn.UnregisterCallback(_onOfferPeace);
+            if (_recruitCommanderBtn != null) _recruitCommanderBtn.UnregisterCallback(_onRecruitCommander);
         }
 
         public void Advance()
@@ -278,6 +286,21 @@ namespace IronCrown.Presentation
                 string[] names = { "紧缩", "正常", "宽裕" };
                 ShowStatus($"民生: {names[newLevel]}");
             }
+            else
+                ShowStatus($"被拒: {result.reason}");
+            Render();
+        }
+
+        public void RecruitCommander()
+        {
+            var result = _session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.RecruitCommander,
+                countryId = _session.PlayerCountryId,
+                configId = "general_test_basic"
+            });
+            if (result.accepted)
+                ShowStatus("已招募将领");
             else
                 ShowStatus($"被拒: {result.reason}");
             Render();
@@ -670,6 +693,25 @@ namespace IronCrown.Presentation
                         sb.Append("  🟢 补给正常");
                     if (selUnit.isInBattle)
                         sb.Append("  ⚔ 战斗中");
+                    // C15a: 将领信息
+                    if (!string.IsNullOrEmpty(selUnit.commanderName))
+                        sb.Append($"\n    将领: {selUnit.commanderName} ({selUnit.commanderRank})");
+                }
+            }
+
+            // C15a: 玩家将领列表
+            if (vm.commanders != null && vm.commanders.Count > 0)
+            {
+                var playerCmdrs = vm.commanders.FindAll(c => c.ownerCountry == vm.playerCountryId);
+                if (playerCmdrs.Count > 0)
+                {
+                    sb.Append("\n\n=== 将领 ===");
+                    foreach (var cmdr in playerCmdrs)
+                    {
+                        sb.Append($"\n  {cmdr.name} [{cmdr.rankName}] 攻+{cmdr.rankAttackBonusPct}% 防+{cmdr.rankDefenseBonusPct}% 指挥{cmdr.maxDivisions}师");
+                        sb.Append($" (胜场:{cmdr.victories} 包围:{cmdr.encirclements})");
+                        if (cmdr.canPromote) sb.Append(" 可晋升!");
+                    }
                 }
             }
 
