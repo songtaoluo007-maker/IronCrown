@@ -14,7 +14,7 @@ namespace IronCrown.Domain
         public string ownerCountry;
         public string generalCardId;    // C15b: 关联的将军卡模板 ID
 
-        // === 军衔（0=尉官 → 1=校官 → 2=将官 → 3=元帅 → 4=大元帅） ===
+        // === 军衔（0=少将 → 1=中将 → 2=上将 → 3=大将 → 4=元帅） ===
         public int rank;
         public int victories;           // 累计胜场（含包围加权）
         public int encirclements;       // 累计包围歼敌次数
@@ -24,7 +24,7 @@ namespace IronCrown.Domain
         public int baseDefense;         // 基础防御加成
 
         // === 指挥容量 ===
-        public int maxDivisions;        // 麾下师上限（rank 5 → +5）
+        public int maxDivisions;        // 麾下师上限（= rank + 1，少将1 → 元帅5）
 
         // === C16: 星级（每星 +5% 战斗 buff） ===
         public int starLevel;           // 0-5
@@ -36,7 +36,7 @@ namespace IronCrown.Domain
         public static readonly int[] RankThresholds = { 0, 5, 15, 35, 75 };
 
         // === 军衔名称 ===
-        public static readonly string[] RankNames = { "尉官", "校官", "将官", "元帅", "大元帅" };
+        public static readonly string[] RankNames = { "少将", "中将", "上将", "大将", "元帅" };
 
         /// <summary>当前军衔名称</summary>
         public string RankName => RankNames[System.Math.Clamp(rank, 0, 4)];
@@ -55,7 +55,7 @@ namespace IronCrown.Domain
         {
             if (!CanPromote) return false;
             rank++;
-            maxDivisions = 5 + rank; // 基础 5 + 每级 +1
+            maxDivisions = rank + 1; // 少将1 → 元帅5
             return true;
         }
 

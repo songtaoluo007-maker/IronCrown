@@ -26,7 +26,7 @@ namespace IronCrown.Simulation
         // =====================================================================
 
         /// <summary>购买 10 连券包</summary>
-        public bool BuyBundle(CountryState country, EconomyConfig eco)
+        public bool BuyBundle(CountryState country, EconomyConfig eco, int currentTurn)
         {
             if (country.gachaTickets < eco.shopBundle10DrawsCost)
                 return false;
@@ -39,7 +39,7 @@ namespace IronCrown.Simulation
                 buyerCountry = country.id,
                 itemKind = "bundle_10",
                 cost = eco.shopBundle10DrawsCost,
-                atTurn = 0
+                atTurn = currentTurn
             });
             return true;
         }
@@ -50,7 +50,7 @@ namespace IronCrown.Simulation
 
         /// <summary>购买 SSR 保底兑换券</summary>
         public CommanderState BuySsrTicket(CountryState country, WorldState world,
-            IRandom rng, IConfigRegistry config, EconomyConfig eco)
+            IRandom rng, IConfigRegistry config, EconomyConfig eco, int currentTurn)
         {
             if (country.gachaTickets < eco.shopSsrTicketCost)
                 return null;
@@ -72,7 +72,7 @@ namespace IronCrown.Simulation
                 buyerCountry = country.id,
                 itemKind = "ssr_ticket",
                 cost = eco.shopSsrTicketCost,
-                atTurn = 0
+                atTurn = currentTurn
             });
             return cmdr;
         }
@@ -83,7 +83,7 @@ namespace IronCrown.Simulation
 
         /// <summary>购买特定卡兑换券</summary>
         public CommanderState BuySpecificCardTicket(CountryState country, WorldState world,
-            IConfigRegistry config, EconomyConfig eco, string cardId)
+            IConfigRegistry config, EconomyConfig eco, string cardId, int currentTurn)
         {
             if (string.IsNullOrEmpty(cardId))
                 return null;
@@ -103,7 +103,7 @@ namespace IronCrown.Simulation
                 buyerCountry = country.id,
                 itemKind = "specific_card",
                 cost = eco.shopSpecificCardTicketCost,
-                atTurn = 0
+                atTurn = currentTurn
             });
             return cmdr;
         }

@@ -82,7 +82,7 @@ namespace IronCrown.Simulation.Tests
         public void BuyBundle_Deducts8Grants10()
         {
             var (country, world) = MakeWorld(100);
-            bool ok = _shop.BuyBundle(country, _eco);
+            bool ok = _shop.BuyBundle(country, _eco, 5);
             Assert.IsTrue(ok);
             Assert.AreEqual(100 - 8 + 10, country.gachaTickets); // 净 +2
         }
@@ -91,7 +91,7 @@ namespace IronCrown.Simulation.Tests
         public void BuyBundle_InsufficientTickets_Rejects()
         {
             var (country, world) = MakeWorld(7);
-            bool ok = _shop.BuyBundle(country, _eco);
+            bool ok = _shop.BuyBundle(country, _eco, 5);
             Assert.IsFalse(ok);
             Assert.AreEqual(7, country.gachaTickets); // 不变
         }
@@ -104,7 +104,7 @@ namespace IronCrown.Simulation.Tests
         public void BuySsrTicket_Deducts200_GrantsSsr()
         {
             var (country, world) = MakeWorld(300);
-            var cmdr = _shop.BuySsrTicket(country, world, new RandomService(42), _config, _eco);
+            var cmdr = _shop.BuySsrTicket(country, world, new RandomService(42), _config, _eco, 5);
             Assert.IsNotNull(cmdr);
             Assert.AreEqual(100, country.gachaTickets); // 300 - 200
             var card = _config.Get<CommanderConfig>(cmdr.generalCardId);
@@ -115,7 +115,7 @@ namespace IronCrown.Simulation.Tests
         public void BuySsrTicket_InsufficientTickets_Rejects()
         {
             var (country, world) = MakeWorld(199);
-            var cmdr = _shop.BuySsrTicket(country, world, new RandomService(42), _config, _eco);
+            var cmdr = _shop.BuySsrTicket(country, world, new RandomService(42), _config, _eco, 5);
             Assert.IsNull(cmdr);
             Assert.AreEqual(199, country.gachaTickets);
         }
@@ -128,7 +128,7 @@ namespace IronCrown.Simulation.Tests
         public void BuySpecificCardTicket_Deducts100_GrantsSpecificCard()
         {
             var (country, world) = MakeWorld(200);
-            var cmdr = _shop.BuySpecificCardTicket(country, world, _config, _eco, "general_engineer");
+            var cmdr = _shop.BuySpecificCardTicket(country, world, _config, _eco, "general_engineer", 5);
             Assert.IsNotNull(cmdr);
             Assert.AreEqual(100, country.gachaTickets); // 200 - 100
             Assert.AreEqual("general_engineer", cmdr.generalCardId);
@@ -139,11 +139,11 @@ namespace IronCrown.Simulation.Tests
         {
             var (country, world) = MakeWorld(300);
             // 第一次获得
-            var first = _shop.BuySpecificCardTicket(country, world, _config, _eco, "general_engineer");
+            var first = _shop.BuySpecificCardTicket(country, world, _config, _eco, "general_engineer", 5);
             Assert.IsNotNull(first);
             Assert.AreEqual(0, first.starLevel);
             // 第二次 → 升星
-            var second = _shop.BuySpecificCardTicket(country, world, _config, _eco, "general_engineer");
+            var second = _shop.BuySpecificCardTicket(country, world, _config, _eco, "general_engineer", 6);
             Assert.IsNotNull(second);
             Assert.AreEqual(1, second.starLevel);
             Assert.AreEqual(100, country.gachaTickets); // 300 - 100 - 100
@@ -153,7 +153,7 @@ namespace IronCrown.Simulation.Tests
         public void BuySpecificCardTicket_UnknownCard_Rejects()
         {
             var (country, world) = MakeWorld(200);
-            var cmdr = _shop.BuySpecificCardTicket(country, world, _config, _eco, "nonexistent");
+            var cmdr = _shop.BuySpecificCardTicket(country, world, _config, _eco, "nonexistent", 5);
             Assert.IsNull(cmdr);
             Assert.AreEqual(200, country.gachaTickets);
         }
@@ -162,7 +162,7 @@ namespace IronCrown.Simulation.Tests
         public void BuySpecificCardTicket_InsufficientTickets_Rejects()
         {
             var (country, world) = MakeWorld(99);
-            var cmdr = _shop.BuySpecificCardTicket(country, world, _config, _eco, "general_engineer");
+            var cmdr = _shop.BuySpecificCardTicket(country, world, _config, _eco, "general_engineer", 5);
             Assert.IsNull(cmdr);
             Assert.AreEqual(99, country.gachaTickets);
         }
@@ -171,7 +171,7 @@ namespace IronCrown.Simulation.Tests
         public void BuySpecificCardTicket_TestCard_Rejects()
         {
             var (country, world) = MakeWorld(200);
-            var cmdr = _shop.BuySpecificCardTicket(country, world, _config, _eco, "general_test_basic");
+            var cmdr = _shop.BuySpecificCardTicket(country, world, _config, _eco, "general_test_basic", 5);
             Assert.IsNull(cmdr);
             Assert.AreEqual(200, country.gachaTickets);
         }

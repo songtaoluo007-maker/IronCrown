@@ -56,7 +56,7 @@ namespace IronCrown.Simulation.Tests
         [Test]
         public void Recruit_Success()
         {
-            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic");
+            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic", _world);
 
             Assert.IsNotNull(cmdr);
             Assert.AreEqual("测试将军", cmdr.name);
@@ -72,7 +72,7 @@ namespace IronCrown.Simulation.Tests
         public void Recruit_InsufficientCapital()
         {
             _country.ModifyResource("capital", -450); // 只剩 50
-            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic");
+            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic", _world);
             Assert.IsNull(cmdr);
         }
 
@@ -80,7 +80,7 @@ namespace IronCrown.Simulation.Tests
         public void Recruit_InsufficientManpower()
         {
             _country.manpower = 400;
-            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic");
+            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic", _world);
             Assert.IsNull(cmdr);
         }
 
@@ -91,7 +91,7 @@ namespace IronCrown.Simulation.Tests
         [Test]
         public void Promote_RankThresholds()
         {
-            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic");
+            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic", _world);
             _world.commanders[cmdr.id] = cmdr;
 
             // 0 → 1 需要 5 胜
@@ -100,13 +100,13 @@ namespace IronCrown.Simulation.Tests
             Assert.IsTrue(cmdr.CanPromote);
             _resolver.CheckPromotions(_world);
             Assert.AreEqual(1, cmdr.rank);
-            Assert.AreEqual(6, cmdr.maxDivisions); // 5+1
+            Assert.AreEqual(2, cmdr.maxDivisions); // rank1: 1+1=2
         }
 
         [Test]
         public void Promote_EncirclementCountsTriple()
         {
-            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic");
+            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic", _world);
             _world.commanders[cmdr.id] = cmdr;
 
             // 1 次包围 = 3 胜场
@@ -124,14 +124,14 @@ namespace IronCrown.Simulation.Tests
         [Test]
         public void Promote_MaxRank5()
         {
-            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic");
+            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic", _world);
             _world.commanders[cmdr.id] = cmdr;
 
             // 直接推到满级
             cmdr.victories = 75;
             _resolver.CheckPromotions(_world);
-            Assert.AreEqual(4, cmdr.rank); // 大元帅
-            Assert.AreEqual(9, cmdr.maxDivisions); // 5+4
+            Assert.AreEqual(4, cmdr.rank); // 元帅
+            Assert.AreEqual(5, cmdr.maxDivisions); // rank4: 4+1=5
             Assert.IsFalse(cmdr.CanPromote); // 已满级
         }
 
@@ -142,7 +142,7 @@ namespace IronCrown.Simulation.Tests
         [Test]
         public void CommandCapacity_Limit()
         {
-            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic");
+            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic", _world);
             _world.commanders[cmdr.id] = cmdr;
 
             // 创建 5 个师
@@ -212,7 +212,7 @@ namespace IronCrown.Simulation.Tests
         [Test]
         public void CommanderBuff_Rank5Equals25Pct()
         {
-            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic");
+            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic", _world);
             _world.commanders[cmdr.id] = cmdr;
 
             // 军衔 0: baseAttack=5 → 100+5 = 105%
@@ -230,12 +230,12 @@ namespace IronCrown.Simulation.Tests
         [Test]
         public void CommanderBuff_DualLayerMultiply()
         {
-            // 师战役级 +20% × 将军元帅 +20% ≈ +44%
+            // 师战役级 +20% × 将军元帅(4) +20% ≈ +44%
             // 战役等级 2: 100+2*5=110%
-            // 将军 rank 4 (大元帅): 100+5+4*5=125%
+            // 将军 rank 4 (元帅): 100+5+4*5=125%
             // 总计: 110% × 125% = 137.5% ≈ +37.5%
             // rank 4 baseAttack=5: 100+5+20=125%
-            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic");
+            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic", _world);
             _world.commanders[cmdr.id] = cmdr;
             cmdr.victories = 75;
             _resolver.CheckPromotions(_world);
@@ -257,7 +257,7 @@ namespace IronCrown.Simulation.Tests
         [Test]
         public void Unassign_Works()
         {
-            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic");
+            var cmdr = _resolver.RecruitCommander(_country, "general_test_basic", _world);
             _world.commanders[cmdr.id] = cmdr;
 
             var unit = new UnitState { id = "U1", ownerCountry = "TEST", currentProvinceId = "P1" };

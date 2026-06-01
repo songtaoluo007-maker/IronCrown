@@ -25,6 +25,7 @@ namespace IronCrown.Application
         public CountrySaveData[] countries;
         public ProvinceSaveData[] provinces;
         public UnitSaveData[] units;
+        public CommanderSaveData[] commanders; // C15a: 将领
         public ActiveBattleSaveData[] activeBattles;
         public WarRelationSaveData[] warRelations;
         public TruceEntry[] truces;
@@ -68,6 +69,10 @@ namespace IronCrown.Application
 
         public string[] activePolicies;
         public string[] completedTechs;
+
+        // C16: 抽卡系统
+        public int gachaTickets;
+        public int gachaPityCounter;
     }
 
     [Serializable]
@@ -137,6 +142,7 @@ namespace IronCrown.Application
         public string unitType;
         public string divisionTemplateId;  // C11
         public string ownerCountry;
+        public string commanderId;          // C15a: 指挥将领
         public string currentProvince;
         public int manpower;
         public int equipment;
@@ -187,5 +193,22 @@ namespace IronCrown.Application
         public string countryA;
         public string countryB;
         public int startTurn;
+    }
+
+    [Serializable]
+    public class CommanderSaveData
+    {
+        public string id;
+        public string name;
+        public string ownerCountry;
+        public string generalCardId;
+        public int rank;
+        public int victories;
+        public int encirclements;
+        public int baseAttack;
+        public int baseDefense;
+        public int maxDivisions;
+        public int starLevel;
+        public bool isActive;
     }
 }

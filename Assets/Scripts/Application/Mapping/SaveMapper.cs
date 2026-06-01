@@ -51,7 +51,9 @@ namespace IronCrown.Application
                         turnsRemaining = q.turnsRemaining
                     }).ToArray(),
                     activePolicies = c.activePolicies.ToArray(),
-                    completedTechs = c.completedTechs.ToArray()
+                    completedTechs = c.completedTechs.ToArray(),
+                    gachaTickets = c.gachaTickets,
+                    gachaPityCounter = c.gachaPityCounter
                 }).ToArray(),
                 provinces = world.provinces.Values.Select(p => new ProvinceSaveData
                 {
@@ -110,9 +112,29 @@ namespace IronCrown.Application
                     }).ToArray(),
                     tacticalExp = u.tacticalExp,
                     recoveryTurnsLeft = u.recoveryTurnsLeft,
-                    isCutoff = u.isCutoff
+                    isCutoff = u.isCutoff,
+                    commanderId = u.commanderId
                 }).ToArray()
             };
+
+            // 将领（C15a/C15b/C16）
+            state.commanders = world.commanders.Values
+                .OrderBy(c => c.id, System.StringComparer.Ordinal)
+                .Select(c => new CommanderSaveData
+                {
+                    id = c.id,
+                    name = c.name,
+                    ownerCountry = c.ownerCountry,
+                    generalCardId = c.generalCardId,
+                    rank = c.rank,
+                    victories = c.victories,
+                    encirclements = c.encirclements,
+                    baseAttack = c.baseAttack,
+                    baseDefense = c.baseDefense,
+                    maxDivisions = c.maxDivisions,
+                    starLevel = c.starLevel,
+                    isActive = c.isActive
+                }).ToArray();
             state.playerCountryId = world.playerCountryId;
             state.selectedUnitId = world.selectedUnitId;
 
@@ -192,6 +214,11 @@ namespace IronCrown.Application
                         foreach (var p in cd.activePolicies) c.activePolicies.Add(p);
                     if (cd.completedTechs != null)
                         foreach (var t in cd.completedTechs) c.completedTechs.Add(t);
+
+                    // C16: 抽卡状态
+                    c.gachaTickets = cd.gachaTickets;
+                    c.gachaPityCounter = cd.gachaPityCounter;
+
                     world.countries[c.id] = c;
                 }
             }
@@ -258,7 +285,8 @@ namespace IronCrown.Application
                         supplyConsumption = ud.supplyConsumption,
                         tacticalExp = ud.tacticalExp,
                         recoveryTurnsLeft = ud.recoveryTurnsLeft,
-                        isCutoff = ud.isCutoff
+                        isCutoff = ud.isCutoff,
+                        commanderId = ud.commanderId
                     };
 
                     // C11: 恢复旅组成（旧存档 fallback）
@@ -301,6 +329,36 @@ namespace IronCrown.Application
                 if (world.countries.TryGetValue(u.ownerCountry, out var owner))
                     owner.unitIds.Add(u.id);
             }
+
+            // 将领（C15a/C15b/C16）
+            if (save.commanders != null)
+            {
+                foreach (var cd in save.commanders)
+                {
+                    world.commanders[cd.id] = new CommanderState
+                    {
+                        id = cd.id,
+                        name = cd.name,
+                        ownerCountry = cd.ownerCountry,
+                        generalCardId = cd.generalCardId,
+                        rank = cd.rank,
+                        victories = cd.victories,
+                        encirclements = cd.encirclements,
+                        baseAttack = cd.baseAttack,
+                        baseDefense = cd.baseDefense,
+                        maxDivisions = cd.maxDivisions,
+                        starLevel = cd.starLevel,
+                        isActive = cd.isActive
+                    };
+                }
+            }
+
+            // 重建 commanderIds（不读存档，从 commanders 按 owner 升序重建）
+            foreach (var c in world.countries.Values)
+                c.commanderIds.Clear();
+            foreach (var cmdr in world.commanders.Values.OrderBy(c => c.id, System.StringComparer.Ordinal))
+                if (world.countries.TryGetValue(cmdr.ownerCountry, out var owner))
+                    owner.commanderIds.Add(cmdr.id);
 
             // 活动战斗
             if (save.activeBattles != null)

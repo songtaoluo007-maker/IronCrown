@@ -13,11 +13,24 @@ namespace IronCrown.Simulation
     public sealed class CommanderResolver
     {
         private readonly IConfigRegistry _config;
-        private int _nextCommanderId = 1;
 
         public CommanderResolver(IConfigRegistry config)
         {
             _config = config;
+        }
+
+        /// <summary>确定性生成 commander id：扫描该国现有最大序号 +1（读档后仍唯一）</summary>
+        public string GenerateCommanderId(WorldState world, string countryId)
+        {
+            int max = 0;
+            foreach (var c in world.commanders.Values)
+            {
+                if (c.ownerCountry != countryId) continue;
+                var parts = c.id.Split('_');
+                if (parts.Length > 0 && int.TryParse(parts[parts.Length - 1], out int n))
+                    max = System.Math.Max(max, n);
+            }
+            return $"cmdr_{countryId}_{max + 1}";
         }
 
         // =====================================================================
@@ -25,7 +38,7 @@ namespace IronCrown.Simulation
         // =====================================================================
 
         /// <summary>招募将领（消耗 capital + manpower）</summary>
-        public CommanderState RecruitCommander(CountryState country, string configId)
+        public CommanderState RecruitCommander(CountryState country, string configId, WorldState world)
         {
             var cfg = _config.Get<CommanderConfig>(configId);
             if (cfg == null) return null;
@@ -41,8 +54,8 @@ namespace IronCrown.Simulation
             country.ModifyResource("capital", -capitalCost);
             country.manpower -= manpowerCost;
 
-            // 创建将领
-            string id = $"cmdr_{country.id}_{_nextCommanderId++}";
+            // 创建将领（确定性 id）
+            string id = GenerateCommanderId(world, country.id);
             var commander = new CommanderState
             {
                 id = id,
@@ -54,10 +67,11 @@ namespace IronCrown.Simulation
                 encirclements = 0,
                 baseAttack = cfg.baseAttack,
                 baseDefense = cfg.baseDefense,
-                maxDivisions = cfg.baseMaxDivisions > 0 ? cfg.baseMaxDivisions : 5,
+                maxDivisions = cfg.baseMaxDivisions > 0 ? cfg.baseMaxDivisions : 1,
                 isActive = true
             };
 
+            world.commanders[id] = commander;
             country.commanderIds.Add(id);
             return commander;
         }

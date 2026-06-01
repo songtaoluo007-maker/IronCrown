@@ -223,10 +223,9 @@ namespace IronCrown.Application
                 case CommandType.RecruitCommander:
                     if (string.IsNullOrEmpty(cmd.configId))
                         return CommandResult.Reject("缺少将领配置ID");
-                    var newCmdr = _commander.RecruitCommander(country, cmd.configId);
+                    var newCmdr = _commander.RecruitCommander(country, cmd.configId, _world);
                     if (newCmdr == null)
                         return CommandResult.Reject("资源不足或配置不存在");
-                    _world.commanders[newCmdr.id] = newCmdr;
                     _logger.Info($"[Session] {cmd.countryId} 招募将领 {newCmdr.name} ({newCmdr.RankName})");
                     return CommandResult.Accept();
 
@@ -269,7 +268,7 @@ namespace IronCrown.Application
                     var ecoShop1 = _config.Get<EconomyConfig>("global");
                     if (ecoShop1 == null)
                         return CommandResult.Reject("经济配置未加载");
-                    if (!_shop.BuyBundle(shopCountry1, ecoShop1))
+                    if (!_shop.BuyBundle(shopCountry1, ecoShop1, _world.turnNumber))
                         return CommandResult.Reject("券不足");
                     _logger.Info($"[Session] 购买10连券包，净增{ecoShop1.shopBundle10DrawsGrants - ecoShop1.shopBundle10DrawsCost}券");
                     return CommandResult.Accept();
@@ -283,7 +282,7 @@ namespace IronCrown.Application
                     var ecoShop2 = _config.Get<EconomyConfig>("global");
                     if (ecoShop2 == null)
                         return CommandResult.Reject("经济配置未加载");
-                    var ssrCmdr = _shop.BuySsrTicket(shopCountry2, _world, _rng, _config, ecoShop2);
+                    var ssrCmdr = _shop.BuySsrTicket(shopCountry2, _world, _rng, _config, ecoShop2, _world.turnNumber);
                     if (ssrCmdr == null)
                         return CommandResult.Reject("SSR券购买失败");
                     _logger.Info($"[Session] 购买SSR保底券: {ssrCmdr.name}");
@@ -300,7 +299,7 @@ namespace IronCrown.Application
                     var ecoShop3 = _config.Get<EconomyConfig>("global");
                     if (ecoShop3 == null)
                         return CommandResult.Reject("经济配置未加载");
-                    var specificCmdr = _shop.BuySpecificCardTicket(shopCountry3, _world, _config, ecoShop3, cmd.targetCardId);
+                    var specificCmdr = _shop.BuySpecificCardTicket(shopCountry3, _world, _config, ecoShop3, cmd.targetCardId, _world.turnNumber);
                     if (specificCmdr == null)
                         return CommandResult.Reject("特定卡券购买失败");
                     _logger.Info($"[Session] 购买特定卡券: {specificCmdr.name}");

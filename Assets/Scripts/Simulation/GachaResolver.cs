@@ -3,7 +3,6 @@
 // gachaTickets + DrawCard + 稀有度概率 + 保底 + 升星
 // ============================================================================
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using IronCrown.Domain;
@@ -186,7 +185,7 @@ namespace IronCrown.Simulation
         /// <summary>从将军卡模板创建将领（不消耗资源）</summary>
         private CommanderState CreateCommanderFromCard(CommanderConfig card, CountryState country, WorldState world)
         {
-            string id = $"cmdr_{country.id}_{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+            string id = _commander.GenerateCommanderId(world, country.id);
             var commander = new CommanderState
             {
                 id = id,

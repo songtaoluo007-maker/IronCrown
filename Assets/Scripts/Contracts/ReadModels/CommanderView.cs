@@ -11,7 +11,7 @@ namespace IronCrown.Contracts
         public string name;
         public string ownerCountry;
         public int rank;
-        public string rankName;          // "尉官"/"校官"/"将官"/"元帅"/"大元帅"
+        public string rankName;          // "少将"/"中将"/"上将"/"大将"/"元帅"
         public int victories;
         public int encirclements;
         public int baseAttack;
