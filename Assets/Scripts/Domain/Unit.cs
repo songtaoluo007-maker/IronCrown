@@ -125,7 +125,10 @@ namespace IronCrown.Domain
 
         // === C11: 师属性合成 ===
 
-        /// <summary>从旅组成重算师属性（创建时调用，C12 旅级战损后也调用）</summary>
+        /// <summary>
+        /// 从旅组成重算 max/base 属性（创建时调用，C12 旅级战损后也调用）。
+        /// 注意：只重算 max/base 值，不触碰 current 值（organization/morale/manpower/equipment）。
+        /// </summary>
         public void RecalculateFromBrigades(IConfigRegistry config)
         {
             if (brigades == null || brigades.Count == 0) return;
@@ -134,7 +137,7 @@ namespace IronCrown.Domain
             int maxArmor = 0, maxPiercing = 0;
             int minSpeed = int.MaxValue;
             int totalMaxManpower = 0, totalMaxEquipment = 0;
-            int totalOrg = 0, orgCount = 0;
+            int totalOrgWeighted = 0, totalOrgCount = 0;
             int totalSupply = 0;
 
             foreach (var b in brigades)
@@ -150,8 +153,8 @@ namespace IronCrown.Domain
                 if (cfg.speed < minSpeed) minSpeed = cfg.speed;
                 totalMaxManpower += cfg.hp * b.count;
                 totalMaxEquipment += cfg.hp * b.count;
-                totalOrg += cfg.organization;
-                orgCount++;
+                totalOrgWeighted += cfg.organization * b.count;
+                totalOrgCount += b.count;
                 totalSupply += cfg.supplyConsumption * b.count;
             }
 
@@ -163,7 +166,7 @@ namespace IronCrown.Domain
             speed = minSpeed == int.MaxValue ? 1 : minSpeed;
             maxManpower = totalMaxManpower;
             maxEquipment = totalMaxEquipment;
-            maxOrganization = orgCount > 0 ? totalOrg / orgCount : 60;
+            maxOrganization = totalOrgCount > 0 ? totalOrgWeighted / totalOrgCount : 60;
             supplyConsumption = totalSupply;
         }
     }
