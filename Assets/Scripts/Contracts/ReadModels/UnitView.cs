@@ -32,5 +32,10 @@ namespace IronCrown.Contracts
         public int cutoffTurns;           // 被切断累计回合数
         public bool isDisorganized;       // 是否混乱状态
         public int morale;                // 士气 0-100
+
+        // === C15a: 将领 ===
+        public string commanderId;
+        public string commanderName;
+        public string commanderRank;     // 军衔名称
     }
 }

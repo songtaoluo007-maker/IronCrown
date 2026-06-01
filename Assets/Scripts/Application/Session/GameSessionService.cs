@@ -21,6 +21,7 @@ namespace IronCrown.Application
         private readonly MovementResolver _movement;
         private readonly BattleResolver _battle;
         private readonly PeaceResolver _peace;
+        private readonly CommanderResolver _commander; // C15a
         private readonly IEventPublisher _events;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
@@ -44,6 +45,7 @@ namespace IronCrown.Application
             MovementResolver movement,
             BattleResolver battle,
             PeaceResolver peace,
+            CommanderResolver commander,
             IEventPublisher events,
             ISaveRepository save,
             IRandom rng,
@@ -59,6 +61,7 @@ namespace IronCrown.Application
             _movement = movement;
             _battle = battle;
             _peace = peace;
+            _commander = commander;
             _events = events;
             _save = save;
             _rng = rng;
@@ -209,6 +212,32 @@ namespace IronCrown.Application
 
                 case CommandType.RejectPeace:
                     return _peace.RejectPeace(_world, cmd.countryId, cmd.targetCountryId, eco);
+
+                // === C15a: 将领系统 ===
+                case CommandType.RecruitCommander:
+                    if (string.IsNullOrEmpty(cmd.configId))
+                        return CommandResult.Reject("缺少将领配置ID");
+                    var newCmdr = _commander.RecruitCommander(country, cmd.configId);
+                    if (newCmdr == null)
+                        return CommandResult.Reject("资源不足或配置不存在");
+                    _world.commanders[newCmdr.id] = newCmdr;
+                    _logger.Info($"[Session] {cmd.countryId} 招募将领 {newCmdr.name} ({newCmdr.RankName})");
+                    return CommandResult.Accept();
+
+                case CommandType.AssignCommander:
+                    if (string.IsNullOrEmpty(cmd.commanderId) || string.IsNullOrEmpty(cmd.unitId))
+                        return CommandResult.Reject("缺少将领ID或师ID");
+                    if (!_commander.AssignDivision(_world, cmd.unitId, cmd.commanderId))
+                        return CommandResult.Reject("分配失败（容量满/将领不存在/师不存在）");
+                    _logger.Info($"[Session] 将领 {cmd.commanderId} 指挥师 {cmd.unitId}");
+                    return CommandResult.Accept();
+
+                case CommandType.UnassignCommander:
+                    if (string.IsNullOrEmpty(cmd.unitId))
+                        return CommandResult.Reject("缺少师ID");
+                    _commander.UnassignDivision(_world, cmd.unitId);
+                    _logger.Info($"[Session] 师 {cmd.unitId} 解除将领指挥");
+                    return CommandResult.Accept();
 
                 default:
                     return CommandResult.Reject("未知命令");

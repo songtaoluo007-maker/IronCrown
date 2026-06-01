@@ -58,6 +58,7 @@ namespace IronCrown.Domain
 
         // === 军事 ===
         public List<string> unitIds = new();  // 拥有的部队 ID 列表
+        public List<string> commanderIds = new(); // C15a: 拥有的将领 ID 列表
 
         // === 建造队列 ===
         public List<ConstructionOrder> constructionQueue = new();

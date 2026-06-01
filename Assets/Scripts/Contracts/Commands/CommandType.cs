@@ -14,6 +14,9 @@ namespace IronCrown.Contracts
         MoveUnit,
         OfferPeace,
         AcceptPeace,
-        RejectPeace
+        RejectPeace,
+        RecruitCommander,    // C15a: 招募将领
+        AssignCommander,    // C15a: 分配将领到师
+        UnassignCommander   // C15a: 解除将领指挥
     }
 }

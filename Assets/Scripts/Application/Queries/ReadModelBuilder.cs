@@ -50,7 +50,7 @@ namespace IronCrown.Application
 
             var units = world.units.Values
                 .OrderBy(u => u.id, System.StringComparer.Ordinal)
-                .Select(u => BuildUnitView(u, battleUnitIds, config))
+                .Select(u => BuildUnitView(u, battleUnitIds, config, world.commanders))
                 .ToList();
 
             var activeBattles = world.activeBattles
@@ -74,6 +74,11 @@ namespace IronCrown.Application
                     .OrderBy(w => w.countryA, System.StringComparer.Ordinal)
                     .ThenBy(w => w.countryB, System.StringComparer.Ordinal)
                     .Select(BuildWarRelationView)
+                    .ToList(),
+                // C15a: 将领列表
+                commanders = world.commanders.Values
+                    .OrderBy(c => c.id, System.StringComparer.Ordinal)
+                    .Select(BuildCommanderView)
                     .ToList(),
                 gameOverResult = world.gameOverResult,
                 gameOverWinnerCountryId = world.gameOverWinnerCountryId
@@ -162,7 +167,7 @@ namespace IronCrown.Application
             };
         }
 
-        public UnitView BuildUnitView(UnitState u, HashSet<string> battleUnitIds = null, IConfigRegistry config = null)
+        public UnitView BuildUnitView(UnitState u, HashSet<string> battleUnitIds = null, IConfigRegistry config = null, Dictionary<string, CommanderState> commanders = null)
         {
             // C11: 生成旅摘要
             string brigadeSummary = "";
@@ -210,7 +215,11 @@ namespace IronCrown.Application
                 isCutoff = u.isCutoff,
                 cutoffTurns = u.cutoffTurns,
                 isDisorganized = u.isDisorganized,
-                morale = u.morale
+                morale = u.morale,
+                // C15a: 将领信息
+                commanderId = u.commanderId,
+                commanderName = (commanders != null && !string.IsNullOrEmpty(u.commanderId) && commanders.TryGetValue(u.commanderId, out var cmdr)) ? cmdr.name : null,
+                commanderRank = (commanders != null && !string.IsNullOrEmpty(u.commanderId) && commanders.TryGetValue(u.commanderId, out var cmdr2)) ? cmdr2.RankName : null
             };
         }
 
@@ -256,6 +265,30 @@ namespace IronCrown.Application
                 countryA = w.countryA,
                 countryB = w.countryB,
                 startTurn = w.startTurn
+            };
+        }
+
+        // === C15a: 将领视图 ===
+        public CommanderView BuildCommanderView(CommanderState c)
+        {
+            return new CommanderView
+            {
+                id = c.id,
+                name = c.name,
+                ownerCountry = c.ownerCountry,
+                rank = c.rank,
+                rankName = c.RankName,
+                victories = c.victories,
+                encirclements = c.encirclements,
+                baseAttack = c.baseAttack,
+                baseDefense = c.baseDefense,
+                rankAttackBonusPct = c.RankAttackBonusPct,
+                rankDefenseBonusPct = c.RankDefenseBonusPct,
+                maxDivisions = c.maxDivisions,
+                commandedDivisions = 0, // 由 HUD 层计算
+                isActive = c.isActive,
+                canPromote = c.CanPromote,
+                buffDescription = c.GetBuffDescription()
             };
         }
     }

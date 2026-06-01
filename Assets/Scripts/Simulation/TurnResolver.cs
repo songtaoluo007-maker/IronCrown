@@ -27,6 +27,7 @@ namespace IronCrown.Simulation
         private readonly WarTollResolver _warToll;
         private readonly OccupationResolver _occupation;
         private readonly AiPeaceOfferResolver _aiPeaceOffer;
+        private readonly CommanderResolver _commander; // C15a
 
         public TurnResolver(
             ITurnClock clock,
@@ -44,7 +45,8 @@ namespace IronCrown.Simulation
             VictoryConditionResolver victory = null,
             WarTollResolver warToll = null,
             OccupationResolver occupation = null,
-            AiPeaceOfferResolver aiPeaceOffer = null)
+            AiPeaceOfferResolver aiPeaceOffer = null,
+            CommanderResolver commander = null)
         {
             _clock = clock;
             _events = events;
@@ -62,6 +64,7 @@ namespace IronCrown.Simulation
             _warToll = warToll;
             _occupation = occupation;
             _aiPeaceOffer = aiPeaceOffer;
+            _commander = commander;
         }
 
         public void ExecuteTurn(WorldState world)
@@ -178,6 +181,10 @@ namespace IronCrown.Simulation
             // C14: 清理补给耗尽的部队（cutoffTurns >= 4）
             if (_supply != null)
                 CleanupStarvedUnits(world);
+
+            // C15a: 将领军衔晋升检查（战斗结算之后）
+            if (_commander != null)
+                _commander.CheckPromotions(world);
 
             // 胜负判定（TickBattles 之后）
             if (_victory != null)

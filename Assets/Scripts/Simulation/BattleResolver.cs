@@ -17,20 +17,22 @@ namespace IronCrown.Simulation
         private readonly IRandom _rng;
         private readonly IEventPublisher _events;
         private readonly IConfigRegistry _config;
+        private readonly CommanderResolver _commander; // C15a
 
-        public BattleResolver(IRandom rng, IEventPublisher events, IConfigRegistry config = null)
+        public BattleResolver(IRandom rng, IEventPublisher events, IConfigRegistry config = null, CommanderResolver commander = null)
         {
             _rng = rng;
             _events = events;
             _config = config;
+            _commander = commander;
         }
 
         // =====================================================================
         // C12: 整数化战斗核心
         // =====================================================================
 
-        /// <summary>单师攻方战力（int × 100 量级，含战役等级加成）</summary>
-        private int SingleUnitAttackPower(UnitState unit, EconomyConfig eco = null)
+        /// <summary>单师攻方战力（int × 100 量级，含战役等级 + 将军 buff）</summary>
+        private int SingleUnitAttackPower(UnitState unit, EconomyConfig eco = null, WorldState world = null)
         {
             int orgPct = unit.organization * 100 / Math.Max(1, unit.maxOrganization);
             int expBonus = 100 + unit.experience * 10;
@@ -44,11 +46,18 @@ namespace IronCrown.Simulation
                 basePower = basePower * levelBonus / 100;
             }
 
+            // C15a: 将军军衔攻击 buff（与战役等级相乘）
+            if (_commander != null && world != null && !string.IsNullOrEmpty(unit.commanderId))
+            {
+                int cmdrBuffPct = _commander.GetCommanderAttackBuffPct(world, unit.commanderId);
+                basePower = basePower * cmdrBuffPct / 100;
+            }
+
             return basePower;
         }
 
-        /// <summary>单师守方战力（int × 100 量级，含战役等级加成）</summary>
-        private int SingleUnitDefensePower(UnitState unit, EconomyConfig eco = null)
+        /// <summary>单师守方战力（int × 100 量级，含战役等级 + 将军 buff）</summary>
+        private int SingleUnitDefensePower(UnitState unit, EconomyConfig eco = null, WorldState world = null)
         {
             int orgPct = unit.organization * 100 / Math.Max(1, unit.maxOrganization);
             int expBonus = 100 + unit.experience * 10;
@@ -60,6 +69,13 @@ namespace IronCrown.Simulation
                 int level = Math.Min(4, unit.tacticalExp / Math.Max(1, eco.tacticalExpLevelStep));
                 int levelBonus = 100 + level * eco.tacticalExpDefenseBonusPerLevel;
                 basePower = basePower * levelBonus / 100;
+            }
+
+            // C15a: 将军军衔防御 buff（与战役等级相乘）
+            if (_commander != null && world != null && !string.IsNullOrEmpty(unit.commanderId))
+            {
+                int cmdrBuffPct = _commander.GetCommanderDefenseBuffPct(world, unit.commanderId);
+                basePower = basePower * cmdrBuffPct / 100;
             }
 
             return basePower;
@@ -101,19 +117,19 @@ namespace IronCrown.Simulation
         // C12: ResolveMultiBattle — 师级团战核心
         // =====================================================================
 
-        /// <summary>多师团战结算（C12 核心）</summary>
-        public void ResolveMultiBattle(List<UnitState> attackers, List<UnitState> defenders, ProvinceState province)
+        /// <summary>多师团战结算（C12 核心 + C15a 将军 buff）</summary>
+        public void ResolveMultiBattle(List<UnitState> attackers, List<UnitState> defenders, ProvinceState province, WorldState world = null)
         {
             if (attackers.Count == 0 || defenders.Count == 0) return;
 
             // --- 攻方总战力 ---
             var eco = _config?.Get<EconomyConfig>("global");
             int atkTotal = 0;
-            foreach (var u in attackers) atkTotal += SingleUnitAttackPower(u, eco);
+            foreach (var u in attackers) atkTotal += SingleUnitAttackPower(u, eco, world);
 
             // --- 守方总战力（含地形） ---
             int defTotal = 0;
-            foreach (var u in defenders) defTotal += SingleUnitDefensePower(u, eco);
+            foreach (var u in defenders) defTotal += SingleUnitDefensePower(u, eco, world);
             int terrainMult = GetTerrainDefenseMultiplierInt(province.terrain);
             defTotal = defTotal * terrainMult / 100;
 
@@ -199,13 +215,14 @@ namespace IronCrown.Simulation
         // =====================================================================
 
         /// <summary>向后兼容：1v1 战斗结算（内部委托 ResolveMultiBattle）</summary>
-        public BattleResult ResolveBattle(UnitState attacker, UnitState defender, ProvinceState province)
+        public BattleResult ResolveBattle(UnitState attacker, UnitState defender, ProvinceState province, WorldState world = null)
         {
             var result = new BattleResult();
             ResolveMultiBattle(
                 new List<UnitState> { attacker },
                 new List<UnitState> { defender },
-                province);
+                province,
+                world);
 
             result.attackerWon = defender.IsShattered && !attacker.IsShattered;
             result.defenderWon = attacker.IsShattered && !defender.IsShattered;
@@ -249,6 +266,15 @@ namespace IronCrown.Simulation
             // C9d: 和平期内不能开战
             if (WarRegistry.IsInTruce(world, attacker.ownerCountry, target.controllerCountry, world.turnNumber))
                 return CommandResult.Reject("和平期内不能开战");
+
+            // C15a: 同省 5 师容量限制（攻方）
+            int attackerCountInTarget = world.units.Values.Count(u =>
+                u.currentProvinceId == targetProvinceId && u.ownerCountry == attacker.ownerCountry);
+            // 加上正在向该省进攻的师
+            attackerCountInTarget += world.activeBattles.Count(b =>
+                b.provinceId == targetProvinceId && b.attackerOwnerCountry == attacker.ownerCountry);
+            if (attackerCountInTarget >= 5)
+                return CommandResult.Reject("该省攻方已达 5 师上限");
 
             if (attacker.movesLeft < 1)
                 return CommandResult.Reject("移动力不足");
@@ -387,9 +413,9 @@ namespace IronCrown.Simulation
                     continue;
                 }
 
-                // 双方都有 → tick 战斗（C12: 整数化 + 旅级战损）
+                // 双方都有 → tick 战斗（C12: 整数化 + 旅级战损 + C15a 将军 buff）
                 battle.turnsElapsed++;
-                ResolveMultiBattle(attackers, defenders, province);
+                ResolveMultiBattle(attackers, defenders, province, world);
 
                 // 移除 shattered
                 var shatteredAttackers = attackers.Where(u => u.IsShattered).Select(u => u.id).ToList();
@@ -621,6 +647,16 @@ namespace IronCrown.Simulation
                 }
             }
 
+            // C15a: 攻胜 → 攻方将领记录胜场
+            if (_commander != null)
+            {
+                foreach (var uid in battle.attackerUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u) && !string.IsNullOrEmpty(u.commanderId))
+                        _commander.RecordBattleVictory(world, u.commanderId);
+                }
+            }
+
             _events.Publish(new BattleConcludedEvent
             {
                 battleId = battle.id,
@@ -650,6 +686,16 @@ namespace IronCrown.Simulation
                 {
                     if (world.units.TryGetValue(uid, out var u))
                         u.tacticalExp = Math.Clamp(u.tacticalExp + ecoWin.tacticalExpPerDefeat, 0, 100);
+                }
+            }
+
+            // C15a: 守胜 → 守方将领记录胜场
+            if (_commander != null)
+            {
+                foreach (var uid in battle.defenderUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u) && !string.IsNullOrEmpty(u.commanderId))
+                        _commander.RecordBattleVictory(world, u.commanderId);
                 }
             }
 

@@ -21,6 +21,7 @@ namespace IronCrown.Domain
         public Dictionary<string, CountryState> countries = new();
         public Dictionary<string, ProvinceState> provinces = new();
         public Dictionary<string, UnitState> units = new();
+        public Dictionary<string, CommanderState> commanders = new(); // C15a: 将领
         public List<ActiveBattle> activeBattles = new();
         public List<WarRelation> warRelations = new();
         public List<DiplomacyRelation> relations = new();

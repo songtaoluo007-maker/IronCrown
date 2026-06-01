@@ -30,6 +30,7 @@ namespace IronCrown.Application
             LoadTable<ProvinceConfig>("provinces");
             LoadTable<EconomyConfig>("economy");
             LoadTable<DivisionTemplate>("divisionTemplates");
+            LoadTable<CommanderConfig>("commanders");
         }
 
         public T Get<T>(string id) where T : class
