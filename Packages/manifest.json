@@ -1,4 +1,4 @@
-{
+﻿{
     "scopedRegistries": [
         {
             "name": "package.openupm.com",
@@ -59,3 +59,4 @@
         "com.unity.modules.xr": "1.0.0"
     }
 }
+
