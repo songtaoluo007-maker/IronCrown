@@ -10,6 +10,31 @@
 ### Added
 - 2026-06-01 [Phase1-closeout 签发] Claude 闭合审查 C5→C17（57 commit / 196 文件 / +14709/-542）后**打回**，签发 `WorkOrders/Phase1-closeout.md`（执行方 OpenClaw）。必修（🔴 上线红线）：**F1** SaveMapper 持久化 commanders/gachaTickets/gachaPityCounter/unit.commanderId（现存读档玩家将领·券·星级·任命全清零）；**F2** HashWorld 纳入新字段 + 续跑等价测试（防 F1 盲区，C1 老毛病）；**F3** GachaResolver 去 `Guid.NewGuid()` 改确定性 id（违 SplitMix64 决策 + 读档撞号隐患，附修 RecruitCommander 未放进 world.commanders 的潜伏 bug）；**F4** C15a-fix 真落地（军衔 少→中→上→大→帅、maxDivisions=rank+1——此前只签发未执行，规则 6 跳过指派重犯）。应修（🟡）：F5 ShopResolver atTurn 接真实回合；F6 删 compile_errors.log + 还原 ProjectSettings/Packages 到 main；F7 补齐 `phase1-closeout-{editmode,playmode}.xml`（`git add -f`）+ 5 张 Play 截图。涉规则 6/7/9/12。GitHub 同步已核：本地=origin=PR #1 `98c712a`，mergeable CLEAN。
 - 2026-06-01 [治理待补·已知] CHANGELOG 自 C4 后未追加（违规则 7，断 C5→C17）、PROJECT_STATE 停在 C3、PR #1 描述停在 C5-C13——**完整流水账 + 状态快照待 Claude 单独补录**（OpenClaw 不直接编辑本文件，曾两次写乱码）。
+- 2026-06-01 [C4–C17 批量补录·说明] 以下为 C4→C17 流水账回填（CHANGELOG 自 C4 起一度断更，由 Claude 据 git log + 工作单于 2026-06-01 回填，按时间正序）。**Phase 1 = C4→C17 已全部实现，整体处于收口待审**（见顶部 Phase1-closeout 签发；红线未清前不合 main）。
+- 2026-05-31 [C4] AI 军事 AI + 战争状态 + 胜负终局：`WarRelation`/`VictoryConditionResolver`/`AIResolver`；`ITurnClock.SetGameOver` + GameOver UI；占领全部敌方首都判胜。
+- 2026-05-31 [C5] 外交扩展 — 停战 + 战争代价：`DiplomacyResolver`/`PeaceResolver`/`WarTollResolver`、`warExhaustion`/战争稳定惩罚；规范 `UnitState` 字段名 `organization/maxOrganization`；test stubs 补全接口 + Unity .meta。
+- 2026-05-31 [C6] 占领抵抗：省份 `resistance/compliance` 衰减/增长 + 起义事件（`OccupationResolver`）；`HashWorld` 加 resistance/compliance；顺带还原 Packages + 清散落日志。
+- 2026-05-31 [C5/C6 审查修复] 5 项必修 + 2 项应修（7bfd573）。
+- 2026-05-31 [C7] AI 主动求和：`AiPeaceOfferResolver` — AI 疲惫时向玩家提议停战 + 玩家 Accept/Reject + 提议过期机制。
+- 2026-05-31 [C8] AI 调防：`AiRedeploymentResolver` — AI 内陆富裕部队自动调往前线弱守省。
+- 2026-05-31 [优先级修复批次] 累积 4 测试失败修复（BattleToll Clamp + WithoutGarrison RNG）+ C7 过期 + C8 补 4 测试 + ReadModelBuilder 映射（d41f73e/b7a6fff）。⚠ 当时 commit 标 "P1"=优先级 1 修复，与本次 **Phase 1** 概念无关。
+- 2026-05-31 [C9a + hotfix×2] 经济修复：民用工厂产出 `capital`（修 T5 遗漏），`civilianFactoryCapitalOutput=5`、建造成本 30→25/40→30；占领获产 + 每省基础粮食产出；每省 +1 steel 基础产出（修无钢国无法训兵）。
+- 2026-05-31 [C9b] UI 最小集：选国面板 + HUD 三字段（treasury/stability/warSupport）+ 抵抗度显示。
+- 2026-05-31 [C9c] 多兵种联合战斗 + GameOver UI。
+- 2026-05-31 [C9d-hotfix] 钢铁节流 + 停战和平期（`truceUntilTurn`）。
+- 2026-05-31 [C9-cleanup + asmdef] 军工装备产出 2→1；PlayMode asmdef 移除 `UnityEditor.TestRunner` 引用（修 Player 模式闪退）。
+- 2026-05-31 [C10] 货币清理：`treasury→capital` 转化 + 装备库存激活；`CountryView.unitCount` HUD 显示部队数；修「训练被拒无提示/资源白扣/初始装备为 0」。
+- 2026-05-31 [C11] 师-旅系统：`DivisionTemplate` + `BrigadeState` + 双模式 fallback（旧档单旅退化）。EditMode 247/247。
+- 2026-05-31 [push 节奏规则] 设立「每工作单 commit 后立即 push」约定（14e203a）。
+- 2026-05-31 [C12] 团战整数化（**规则 9 例外大重构·人类批准**）：float→int `BattleResolver` + 旅级战损分配。EditMode 257/257。
+- 2026-05-31 [C13] 补员 + 战役经验（tacticalExp）+ 85% 自动溃退 + `SupplyResolver` 初版；HUD 战斗 org 条/溃退提示/单位详情。
+- 2026-06-01 [C13-fix] 师 `organization/morale` 初始化遗漏修复 + 加权 `maxOrganization`。
+- 2026-06-01 [C14] `SupplyResolver` 完整：BFS 补给链 + 切断/4 回合死亡窗口/解围/夹击士气/disorganized 状态；HUD 补给显示 + ReadModel C14 字段；顺带钢铁产出 vs 军工消耗再平衡（143ab13）。
+- 2026-06-01 [C15a] 将领系统：EU4 将军卡 + HoI4 集团军 + 5 阶军衔晋升 + 同省 5 师容量；`CommanderState`/`CommanderResolver`/`CommanderView`；HUD 将领显示/招募/任命·解除；移除夜战。（多个 fix 为测试构造签名调整 + AssignCommander/Unassign 缺 countryId 修复。）
+- 2026-06-01 [C15a-fix 签发·**未执行**] 军衔命名（少→中→上→大→帅）+ `maxDivisions=rank+1` 回归 Claude 原设计。**OpenClaw 只签发未实现** → 由 `Phase1-closeout` F4 执行（规则 6 跳过指派重犯）。
+- 2026-06-01 [C15b] 12 张原创将军卡（4SSR/4SR/3R/1N）+ `CommanderSkillEvaluator`（12 skill type）+ `BattleResolver`/`SupplyResolver` 集成。卡名全原创（避版权），SSR 攻击上限 +20（≤+25）。
+- 2026-06-01 [C16] 单机抽卡：`gachaTickets` + `DrawCard`（稀有度概率/SSR 保底/升星）+ 战斗胜场累积券。⚠ 审查发现用 `Guid` 生成 commander id 违确定性 → Phase1-closeout F3 修。
+- 2026-06-01 [C17] 商城（`ShopResolver`：10 连券包/SSR 保底券/特定卡券）+ 抽卡面板 + 收藏页 + HUD 按钮 → **Phase 1 + 抽卡养成体验闭环（待收口审查）**。⚠ 审查发现 `SaveMapper` 未持久化将领/券（存档红线）→ Phase1-closeout F1 修。
 - 2026-05-30 [C3 实现] 战斗与占领系统 — 多回合 HoI 风格战斗。`ActiveBattle` 数据结构（id/attacker/defender/province/turnsElapsed）；`BattleResolver.InitiateAttack`（7 步验证：unit存在→归属→target存在→邻接→非己方控制→移动力≥1→不在战斗中 + 目标省无已有战斗）+ `TickBattles`（1v1 tick + 胜方占领 + 败方消灭 + 清场）+ `DestroyUnit`；`TurnResolver` Settlement 尾段调用 TickBattles；`GameSessionService` MoveUnit 按 controllerCountry 分流（己方→MovementResolver，敌方→BattleResolver）+ 战斗锁定检查；`ReadModelBuilder` 按 controllerCountry 取色 + controllerCountry/isOccupied/hasActiveBattle/isInBattle/activeBattles 列表；`SaveMapper` activeBattles 双向持久化；`MainHudController` 攻击目标红高亮 + 战斗标记 + 事件订阅；USS 新增 attack-target/in-battle/battle-badge 样式。4 事件：BattleInitiatedEvent/BattleConcludedEvent/ProvinceOccupiedEvent/UnitDestroyedEvent。**P2 修复**：garrison cycling 改按 controllerCountry+ownerCountry 过滤（防选中敌部队）；InitiateAttack 拒绝目标省已有战斗（防静默消失）；真多 tick 累积伤害测试。**20 测试**：BattleResolverC3Tests(12) + GameSessionServiceTests(+3) + ReadModelBuilderTests(+4) + SaveLoadEquivalenceTests(+1)。规则 3/4/5/8/9 全守。30 files, +1198/-72。
 
 - 2026-05-29 [C2a 签发] `WorkOrders/C2a-unit-production.md`（执行方 OpenClaw）：军事阶段第二步·部分一——玩家在首都训练 1 支步兵，下单一次性扣 `infantry.cost` + manpower=hp，2 回合后完工驻首都。**人类拍板的设计取舍**（规则 14）：C2a 造兵 / C2b 移动拆两单；移动模型=单步邻接+movesLeft；造兵地点仅首都；成本=`UnitConfig.cost`+manpower+多回合队列。**Phase 0 强制收 C1 三项尾巴**：① `SaveLoadEquivalenceTests.HashWorld` 扩 units 13 字段 + 省份静态字段（C1 续跑等价测试本身是空检查的盲区）；② `UnitSaveData` 扩 13 字段（决策 A：全字段持久化）+ `SaveMapper.ToRuntime` 重建 `country.unitIds`（激活 C1 起的死字段）；③ `ReadModelBuilder` 遍历 units 按 id 升序。新增 `Simulation/UnitProductionResolver`、`Domain/UnitFactory`（与 C1 WorldInitializer 步兵创建块共享，规则 3）、`Contracts/UnitProducedEvent`。**新数值**（Claude 代拟）：`economy.json` 加 `unitProductionTurns=2`（规则 14 可调）。
