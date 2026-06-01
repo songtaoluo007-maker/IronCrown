@@ -63,10 +63,10 @@ namespace IronCrown.Simulation
                     basePower = basePower * cardAtkPct / 100;
 
                     // C16: 星级加成（每星 +5%）
-                    var eco = _config.Get<EconomyConfig>("global");
-                    if (eco != null && cmdr.starLevel > 0)
+                    var gachaEco = _config.Get<EconomyConfig>("global");
+                    if (gachaEco != null && cmdr.starLevel > 0)
                     {
-                        int starPct = 100 + cmdr.starLevel * eco.starBonusPerStar;
+                        int starPct = 100 + cmdr.starLevel * gachaEco.starBonusPerStar;
                         basePower = basePower * starPct / 100;
                     }
                 }
@@ -107,10 +107,10 @@ namespace IronCrown.Simulation
                     basePower = basePower * cardDefPct / 100;
 
                     // C16: 星级加成（每星 +5%）
-                    var eco = _config.Get<EconomyConfig>("global");
-                    if (eco != null && cmdr.starLevel > 0)
+                    var gachaEco = _config.Get<EconomyConfig>("global");
+                    if (gachaEco != null && cmdr.starLevel > 0)
                     {
-                        int starPct = 100 + cmdr.starLevel * eco.starBonusPerStar;
+                        int starPct = 100 + cmdr.starLevel * gachaEco.starBonusPerStar;
                         basePower = basePower * starPct / 100;
                     }
                 }
