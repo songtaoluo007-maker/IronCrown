@@ -164,6 +164,10 @@ namespace IronCrown.Application
         public int tacticalExp;            // C13
         public int recoveryTurnsLeft;      // C13
         public bool isCutoff;              // C13 (C14 激活)
+        public int cutoffTurns;              // C14
+        public bool isDisorganized;          // C14
+        public bool isEntrenched;            // C9c
+        public int entrenchmentBonus;        // C9c
     }
 
     [Serializable]

@@ -112,8 +112,12 @@ namespace IronCrown.Application
                     }).ToArray(),
                     tacticalExp = u.tacticalExp,
                     recoveryTurnsLeft = u.recoveryTurnsLeft,
+                    commanderId = u.commanderId,
                     isCutoff = u.isCutoff,
-                    commanderId = u.commanderId
+                    cutoffTurns = u.cutoffTurns,
+                    isDisorganized = u.isDisorganized,
+                    isEntrenched = u.isEntrenched,
+                    entrenchmentBonus = u.entrenchmentBonus
                 }).ToArray()
             };
 
@@ -199,7 +203,8 @@ namespace IronCrown.Application
                         civilLevel = cd.civilLevel,
                         warExhaustion = cd.warExhaustion,
                         peaceOfferCooldown = cd.peaceOfferCooldown,
-                        pendingPeaceOfferFrom = cd.pendingPeaceOfferFrom
+                        pendingPeaceOfferFrom = cd.pendingPeaceOfferFrom,
+                        pendingPeaceOfferExpiry = cd.pendingPeaceOfferExpiry
                     };
                     if (cd.resources != null)
                         foreach (var r in cd.resources)
@@ -285,8 +290,12 @@ namespace IronCrown.Application
                         supplyConsumption = ud.supplyConsumption,
                         tacticalExp = ud.tacticalExp,
                         recoveryTurnsLeft = ud.recoveryTurnsLeft,
+                        commanderId = ud.commanderId,
                         isCutoff = ud.isCutoff,
-                        commanderId = ud.commanderId
+                        cutoffTurns = ud.cutoffTurns,
+                        isDisorganized = ud.isDisorganized,
+                        isEntrenched = ud.isEntrenched,
+                        entrenchmentBonus = ud.entrenchmentBonus
                     };
 
                     // C11: 恢复旅组成（旧存档 fallback）

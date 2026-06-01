@@ -55,6 +55,11 @@ namespace IronCrown.Simulation.Tests
                 id = "general_ironwall", name = "铁壁元帅", rarity = "SSR",
                 baseAttack = 5, baseDefense = 15, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0]
             });
+            _config.Register("general_blitz", new CommanderConfig
+            {
+                id = "general_blitz", name = "突击先锋", rarity = "SR",
+                baseAttack = 20, baseDefense = -5, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0]
+            });
 
             _events = new EventBus();
             var commander = new CommanderResolver(_config);

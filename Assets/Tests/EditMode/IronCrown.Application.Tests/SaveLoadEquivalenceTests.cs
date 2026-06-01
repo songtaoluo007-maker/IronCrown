@@ -87,6 +87,8 @@ namespace IronCrown.Application.Tests
                     bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(r.Key));
                     bytes.AddRange(System.BitConverter.GetBytes(r.Value));
                 }
+                bytes.AddRange(System.BitConverter.GetBytes(c.gachaTickets));
+                bytes.AddRange(System.BitConverter.GetBytes(c.gachaPityCounter));
             }
             foreach (var p in world.provinces.Values)
             {
@@ -124,6 +126,31 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(u.tacticalExp));
                 bytes.AddRange(System.BitConverter.GetBytes(u.recoveryTurnsLeft));
                 bytes.AddRange(System.BitConverter.GetBytes(u.isCutoff));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.commanderId ?? ""));
+            }
+            // commanders
+            foreach (var cmdr in world.commanders.Values.OrderBy(c => c.id, System.StringComparer.Ordinal))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(cmdr.id));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(cmdr.ownerCountry));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(cmdr.generalCardId ?? ""));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.rank));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.victories));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.starLevel));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.isActive));
+            }
+            // warRelations
+            foreach (var w in world.warRelations)
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(w.countryA));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(w.countryB));
+                bytes.AddRange(System.BitConverter.GetBytes(w.startTurn));
+            }
+            // truceUntilTurn
+            foreach (var t in world.truceUntilTurn.OrderBy(kv => kv.Key))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(t.Key));
+                bytes.AddRange(System.BitConverter.GetBytes(t.Value));
             }
             // activeBattles
             foreach (var b in world.activeBattles)

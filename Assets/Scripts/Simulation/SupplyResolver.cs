@@ -269,6 +269,23 @@ namespace IronCrown.Simulation
                     unit.isDisorganized = false;
                 }
             }
+
+            // 同时检查邻省中被切断的友方部队
+            if (province.neighbors != null)
+            {
+                foreach (var neighborId in province.neighbors)
+                {
+                    var neighborUnits = world.units.Values
+                        .Where(u => u.currentProvinceId == neighborId && u.ownerCountry == relieverCountryId && u.isCutoff)
+                        .ToList();
+                    foreach (var unit in neighborUnits)
+                    {
+                        unit.isCutoff = false;
+                        unit.cutoffTurns = 0;
+                        unit.isDisorganized = false;
+                    }
+                }
+            }
         }
 
         /// <summary>

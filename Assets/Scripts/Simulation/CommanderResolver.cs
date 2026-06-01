@@ -86,7 +86,7 @@ namespace IronCrown.Simulation
             foreach (var cmdr in world.commanders.Values)
             {
                 if (!cmdr.isActive) continue;
-                if (cmdr.CanPromote)
+                while (cmdr.CanPromote)
                 {
                     cmdr.TryPromote();
                 }

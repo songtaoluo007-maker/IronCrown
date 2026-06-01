@@ -32,7 +32,7 @@ namespace IronCrown.Simulation
                         bonus += skill.value;
                         break;
                     case "brigadeBonus":
-                        if (unit != null && skill.stat == "attack")
+                        if (unit != null && (skill.stat == "attack" || skill.stat == "attackDefense"))
                             bonus += EvalBrigadeBonus(unit, skill.brigadeType, skill.value);
                         break;
                     case "terrainBonus":
