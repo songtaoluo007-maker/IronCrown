@@ -45,7 +45,7 @@ namespace IronCrown.Application
             MovementResolver movement,
             BattleResolver battle,
             PeaceResolver peace,
-            CommanderResolver commander,
+            CommanderResolver commander = null,
             IEventPublisher events,
             ISaveRepository save,
             IRandom rng,
