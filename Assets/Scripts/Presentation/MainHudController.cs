@@ -425,6 +425,7 @@ namespace IronCrown.Presentation
             var result = _session.IssueCommand(new GameCommand
             {
                 commandType = CommandType.AssignCommander,
+                countryId = _session.PlayerCountryId,
                 commanderId = cmdr.id,
                 unitId = selUnit.id
             });
@@ -450,6 +451,7 @@ namespace IronCrown.Presentation
             var result = _session.IssueCommand(new GameCommand
             {
                 commandType = CommandType.UnassignCommander,
+                countryId = _session.PlayerCountryId,
                 unitId = view.selectedUnitId
             });
 
