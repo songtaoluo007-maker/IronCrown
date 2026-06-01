@@ -5,7 +5,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using IronCrown.Contracts;
-using IronCrown.Domain;
 
 namespace IronCrown.Presentation
 {
