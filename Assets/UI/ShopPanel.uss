@@ -1,0 +1,61 @@
+/* ShopPanel.uss — C17 商城样式 */
+
+.panel-root {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    align-items: center;
+    justify-content: center;
+}
+
+.panel-title {
+    font-size: 28px;
+    color: #FFD700;
+    margin-bottom: 15px;
+}
+
+.tickets-display {
+    font-size: 20px;
+    color: #FFD700;
+    margin-bottom: 20px;
+}
+
+.shop-item {
+    width: 350px;
+    padding: 15px;
+    margin-bottom: 10px;
+    background-color: #1a1a2e;
+    border-width: 1px;
+    border-color: #444444;
+    border-radius: 6px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.item-name {
+    font-size: 16px;
+    color: #FFFFFF;
+    flex-grow: 1;
+}
+
+.item-desc {
+    font-size: 13px;
+    color: #AAAAAA;
+    margin-left: 10px;
+}
+
+.btn-action {
+    width: 80px;
+    height: 35px;
+    margin-left: 10px;
+    background-color: #2d5a27;
+    color: #FFFFFF;
+}
+
+.btn-secondary {
+    width: 200px;
+    height: 40px;
+    margin-top: 20px;
+    background-color: #444444;
+    color: #FFFFFF;
+}
