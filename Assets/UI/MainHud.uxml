@@ -9,6 +9,7 @@
             <ui:Label name="treasury-label" text="💰0" class="hud-stat" />
             <ui:Label name="stability-label" text="🏛100" class="hud-stat" />
             <ui:Label name="war-support-label" text="⚔100" class="hud-stat" />
+            <ui:Label name="gacha-tickets-label" text="🎫0" class="hud-stat" />
             <ui:Button name="advance-btn" text="推进" class="advance-btn" />
         </ui:VisualElement>
 
@@ -18,6 +19,9 @@
             <ui:Button name="build-military-btn" text="建军用厂" class="build-btn" />
             <ui:Button name="build-infantry-btn" text="训练步兵" class="build-btn" />
             <ui:Button name="recruit-commander-btn" text="招募将领" class="build-btn" />
+            <ui:Button name="gacha-draw-btn" text="抽卡" class="build-btn" />
+            <ui:Button name="collection-btn" text="我的将领" class="build-btn" />
+            <ui:Button name="shop-btn" text="商城" class="build-btn" />
         </ui:VisualElement>
 
         <!-- 内政栏 -->

@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:Style>
+        <StyleFile path="Assets/UI/CollectionPanel.uss" />
+    </ui:Style>
+
+    <ui:VisualElement name="collection-panel" class="panel-root" style="display: none;">
+        <ui:Label name="title" text="我的将领" class="panel-title" />
+        <ui:ScrollView name="commander-list" class="card-list">
+            <!-- 动态填充 -->
+        </ui:ScrollView>
+        <ui:Button name="btn-close" text="返回" class="btn-secondary" />
+    </ui:VisualElement>
+</ui:UXML>

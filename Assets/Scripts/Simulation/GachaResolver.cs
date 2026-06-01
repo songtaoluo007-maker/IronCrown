@@ -113,6 +113,58 @@ namespace IronCrown.Simulation
         }
 
         // =====================================================================
+        // 直接授予卡牌（商城特定卡券 / SSR 保底券调用）
+        // =====================================================================
+
+        /// <summary>直接授予指定卡牌（不消耗券，不走概率）</summary>
+        public CommanderState GrantCard(CountryState country, WorldState world, IConfigRegistry config, string cardId)
+        {
+            var card = config.Get<CommanderConfig>(cardId);
+            if (card == null) return null;
+
+            // 检查是否已有此卡
+            var existing = world.commanders.Values
+                .FirstOrDefault(c => c.ownerCountry == country.id && c.generalCardId == cardId);
+
+            if (existing != null)
+            {
+                var eco = config.Get<EconomyConfig>("global");
+                int maxStar = eco?.maxStarLevel ?? 5;
+                if (existing.starLevel < maxStar)
+                {
+                    existing.starLevel++;
+                    _events.Publish(new CardStarUpgradedEvent
+                    {
+                        commanderId = existing.id,
+                        cardId = cardId,
+                        newStar = existing.starLevel
+                    });
+                }
+                else
+                {
+                    existing.victories += 5;
+                    _events.Publish(new CardConvertedToExpEvent
+                    {
+                        commanderId = existing.id,
+                        cardId = cardId,
+                        expGained = 5
+                    });
+                }
+                return existing;
+            }
+
+            // 新卡
+            var newCmdr = CreateCommanderFromCard(card, country, world);
+            _events.Publish(new CardDrawnEvent
+            {
+                rarity = card.rarity ?? "N",
+                cardId = cardId,
+                commanderId = newCmdr.id
+            });
+            return newCmdr;
+        }
+
+        // =====================================================================
         // gachaTickets 累积（BattleResolver 调用）
         // =====================================================================
 

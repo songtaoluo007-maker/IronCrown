@@ -100,5 +100,11 @@ namespace IronCrown.Domain
         public int gachaSsrPityThreshold;             // SSR 保底抽数
         public int starBonusPerStar;                  // 每星战斗 buff %
         public int maxStarLevel;                      // 最大星级
+
+        // === C17: 商城 ===
+        public int shopBundle10DrawsCost;               // 10 连券包成本
+        public int shopBundle10DrawsGrants;             // 10 连券包给予抽数
+        public int shopSsrTicketCost;                   // SSR 保底券成本
+        public int shopSpecificCardTicketCost;          // 特定卡券成本
     }
 }

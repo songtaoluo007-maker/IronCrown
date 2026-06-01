@@ -39,6 +39,7 @@ namespace IronCrown.Presentation
         // C15a: 将领
         private Button _recruitCommanderBtn;
         private Label _warExhaustionLabel;
+        private Label _gachaTicketsLabel; // C17
 
         // C9b: HUD 国家状况
         private Label _treasuryLabel;
@@ -56,6 +57,14 @@ namespace IronCrown.Presentation
         private EventCallback<ClickEvent> _onCivilDown;
         private EventCallback<ClickEvent> _onOfferPeace;
         private EventCallback<ClickEvent> _onRecruitCommander;
+
+        // C17: 抽卡/商城/收藏
+        private Button _gachaDrawBtn;
+        private Button _collectionBtn;
+        private Button _shopBtn;
+        private EventCallback<ClickEvent> _onGachaDraw;
+        private EventCallback<ClickEvent> _onCollection;
+        private EventCallback<ClickEvent> _onShop;
 
         public MainHudController(GameSessionService session, IEventPublisher events)
         {
@@ -86,6 +95,7 @@ namespace IronCrown.Presentation
             _offerPeaceBtn = root.Q<Button>("offer-peace-btn");
             _recruitCommanderBtn = root.Q<Button>("recruit-commander-btn");
             _warExhaustionLabel = root.Q<Label>("war-exhaustion-label");
+            _gachaTicketsLabel = root.Q<Label>("gacha-tickets-label");
 
             // C9b: HUD 国家状况
             _treasuryLabel = root.Q<Label>("treasury-label");
@@ -103,6 +113,14 @@ namespace IronCrown.Presentation
             _onOfferPeace = _ => OfferPeace();
             _onRecruitCommander = _ => RecruitCommander();
 
+            // C17: 抽卡/商城/收藏
+            _gachaDrawBtn = root.Q<Button>("gacha-draw-btn");
+            _collectionBtn = root.Q<Button>("collection-btn");
+            _shopBtn = root.Q<Button>("shop-btn");
+            _onGachaDraw = _ => OnGachaDraw();
+            _onCollection = _ => OnCollectionOpen();
+            _onShop = _ => OnShopOpen();
+
             if (_advanceBtn != null) _advanceBtn.RegisterCallback(_onAdvance);
             if (_buildCivilianBtn != null) _buildCivilianBtn.RegisterCallback(_onBuildCivilian);
             if (_buildMilitaryBtn != null) _buildMilitaryBtn.RegisterCallback(_onBuildMilitary);
@@ -113,6 +131,9 @@ namespace IronCrown.Presentation
             if (_civilDownBtn != null) _civilDownBtn.RegisterCallback(_onCivilDown);
             if (_offerPeaceBtn != null) _offerPeaceBtn.RegisterCallback(_onOfferPeace);
             if (_recruitCommanderBtn != null) _recruitCommanderBtn.RegisterCallback(_onRecruitCommander);
+            if (_gachaDrawBtn != null) _gachaDrawBtn.RegisterCallback(_onGachaDraw);
+            if (_collectionBtn != null) _collectionBtn.RegisterCallback(_onCollection);
+            if (_shopBtn != null) _shopBtn.RegisterCallback(_onShop);
 
             _events.Subscribe<TurnStartEvent>(_ => Render());
             _events.Subscribe<TurnEndEvent>(_ => Render());
@@ -194,6 +215,9 @@ namespace IronCrown.Presentation
             if (_civilDownBtn != null) _civilDownBtn.UnregisterCallback(_onCivilDown);
             if (_offerPeaceBtn != null) _offerPeaceBtn.UnregisterCallback(_onOfferPeace);
             if (_recruitCommanderBtn != null) _recruitCommanderBtn.UnregisterCallback(_onRecruitCommander);
+            if (_gachaDrawBtn != null) _gachaDrawBtn.UnregisterCallback(_onGachaDraw);
+            if (_collectionBtn != null) _collectionBtn.UnregisterCallback(_onCollection);
+            if (_shopBtn != null) _shopBtn.UnregisterCallback(_onShop);
         }
 
         public void Advance()
@@ -304,6 +328,41 @@ namespace IronCrown.Presentation
             else
                 ShowStatus($"被拒: {result.reason}");
             Render();
+        }
+
+        // ================================================================
+        // C17: 抽卡 / 收藏 / 商城
+        // ================================================================
+
+        private void OnGachaDraw()
+        {
+            var result = _session.IssueCommand(new GameCommand
+            {
+                commandType = CommandType.DrawCard,
+                countryId = _session.PlayerCountryId
+            });
+            if (result.accepted)
+                ShowStatus("抽卡成功！");
+            else
+                ShowStatus($"被拒: {result.reason}");
+            Render();
+        }
+
+        private void OnCollectionOpen()
+        {
+            var view = _session.GetWorldView();
+            if (view == null) return;
+            var commanders = view.commanders ?? new System.Collections.Generic.List<CommanderView>();
+            ShowStatus($"将领收藏: {commanders.Count} 位");
+        }
+
+        private void OnShopOpen()
+        {
+            var view = _session.GetWorldView();
+            if (view == null) return;
+            var player = view.countries?.Find(c => c.id == _session.PlayerCountryId);
+            if (player == null) return;
+            ShowStatus($"商城 | 券: {player.gachaTickets}");
         }
 
         public void OfferPeace()
@@ -460,6 +519,8 @@ namespace IronCrown.Presentation
                     _stabilityLabel.text = $"🏛{playerView.stability}";
                 if (_warSupportLabel != null)
                     _warSupportLabel.text = $"⚔{playerView.warSupport}";
+                if (_gachaTicketsLabel != null)
+                    _gachaTicketsLabel.text = $"🎫{playerView.gachaTickets}";
             }
 
             // 地图渲染

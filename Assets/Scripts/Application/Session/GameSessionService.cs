@@ -23,6 +23,7 @@ namespace IronCrown.Application
         private readonly PeaceResolver _peace;
         private readonly CommanderResolver _commander; // C15a
         private readonly GachaResolver _gacha;         // C16
+        private readonly ShopResolver _shop;           // C17
         private readonly IEventPublisher _events;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
@@ -52,7 +53,8 @@ namespace IronCrown.Application
             ReadModelBuilder builder,
             IAppLogger logger,
             CommanderResolver commander = null,
-            GachaResolver gacha = null)
+            GachaResolver gacha = null,
+            ShopResolver shop = null)
         {
             _clock = clock;
             _config = config;
@@ -65,6 +67,7 @@ namespace IronCrown.Application
             _peace = peace;
             _commander = commander;
             _gacha = gacha;
+            _shop = shop;
             _events = events;
             _save = save;
             _rng = rng;
@@ -255,6 +258,52 @@ namespace IronCrown.Application
                     if (drawn == null)
                         return CommandResult.Reject("券不足或卡池为空");
                     _logger.Info($"[Session] 抽卡: {drawn.name} (星级 {drawn.starLevel})");
+                    return CommandResult.Accept();
+
+                case CommandType.Buy10DrawBundle:
+                    if (_shop == null)
+                        return CommandResult.Reject("商城未初始化");
+                    var shopCountry1 = _world.countries.TryGetValue(_playerCountryId, out var sc1) ? sc1 : null;
+                    if (shopCountry1 == null)
+                        return CommandResult.Reject("找不到玩家国家");
+                    var ecoShop1 = _config.Get<EconomyConfig>("global");
+                    if (ecoShop1 == null)
+                        return CommandResult.Reject("经济配置未加载");
+                    if (!_shop.BuyBundle(shopCountry1, ecoShop1))
+                        return CommandResult.Reject("券不足");
+                    _logger.Info($"[Session] 购买10连券包，净增{ecoShop1.shopBundle10DrawsGrants - ecoShop1.shopBundle10DrawsCost}券");
+                    return CommandResult.Accept();
+
+                case CommandType.BuySsrTicket:
+                    if (_shop == null)
+                        return CommandResult.Reject("商城未初始化");
+                    var shopCountry2 = _world.countries.TryGetValue(_playerCountryId, out var sc2) ? sc2 : null;
+                    if (shopCountry2 == null)
+                        return CommandResult.Reject("找不到玩家国家");
+                    var ecoShop2 = _config.Get<EconomyConfig>("global");
+                    if (ecoShop2 == null)
+                        return CommandResult.Reject("经济配置未加载");
+                    var ssrCmdr = _shop.BuySsrTicket(shopCountry2, _world, _rng, _config, ecoShop2);
+                    if (ssrCmdr == null)
+                        return CommandResult.Reject("SSR券购买失败");
+                    _logger.Info($"[Session] 购买SSR保底券: {ssrCmdr.name}");
+                    return CommandResult.Accept();
+
+                case CommandType.BuySpecificCardTicket:
+                    if (_shop == null)
+                        return CommandResult.Reject("商城未初始化");
+                    if (string.IsNullOrEmpty(cmd.targetCardId))
+                        return CommandResult.Reject("缺少目标卡ID");
+                    var shopCountry3 = _world.countries.TryGetValue(_playerCountryId, out var sc3) ? sc3 : null;
+                    if (shopCountry3 == null)
+                        return CommandResult.Reject("找不到玩家国家");
+                    var ecoShop3 = _config.Get<EconomyConfig>("global");
+                    if (ecoShop3 == null)
+                        return CommandResult.Reject("经济配置未加载");
+                    var specificCmdr = _shop.BuySpecificCardTicket(shopCountry3, _world, _config, ecoShop3, cmd.targetCardId);
+                    if (specificCmdr == null)
+                        return CommandResult.Reject("特定卡券购买失败");
+                    _logger.Info($"[Session] 购买特定卡券: {specificCmdr.name}");
                     return CommandResult.Accept();
 
                 default:

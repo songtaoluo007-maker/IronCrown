@@ -86,7 +86,12 @@
             "gachaRarityWeightSSR": 3,
             "gachaSsrPityThreshold": 50,
             "starBonusPerStar": 5,
-            "maxStarLevel": 5
+            "maxStarLevel": 5,
+
+            "shopBundle10DrawsCost": 8,
+            "shopBundle10DrawsGrants": 10,
+            "shopSsrTicketCost": 200,
+            "shopSpecificCardTicketCost": 100
         }
     ]
 }

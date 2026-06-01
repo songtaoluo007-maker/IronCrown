@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:Style>
+        <StyleFile path="Assets/UI/GachaPanel.uss" />
+    </ui:Style>
+
+    <ui:VisualElement name="gacha-panel" class="panel-root" style="display: none;">
+        <ui:Label name="title" text="抽卡结果" class="panel-title" />
+        <ui:VisualElement name="card-display" class="card-frame">
+            <ui:Label name="rarity-label" text="SSR" class="rarity-badge" />
+            <ui:Label name="card-name" text="???" class="card-name" />
+            <ui:Label name="card-skills" text="" class="card-skills" />
+            <ui:Label name="star-label" text="★0" class="star-display" />
+        </ui:VisualElement>
+        <ui:Label name="msg-label" text="" class="msg-label" />
+        <ui:Button name="btn-draw-again" text="再抽 1 次" class="btn-action" />
+        <ui:Button name="btn-close" text="返回" class="btn-secondary" />
+    </ui:VisualElement>
+</ui:UXML>
