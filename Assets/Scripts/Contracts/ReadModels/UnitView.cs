@@ -26,5 +26,11 @@ namespace IronCrown.Contracts
         public int tacticalLevel;         // C13: 战役等级 0-4
         public int recoveryTurnsLeft;     // C13: 溃退恢复剩余回合
         public bool isRecovering;         // C13: 是否溃退恢复中
+
+        // === C14: 补给系统 ===
+        public bool isCutoff;             // 是否被切断补给
+        public int cutoffTurns;           // 被切断累计回合数
+        public bool isDisorganized;       // 是否混乱状态
+        public int morale;                // 士气 0-100
     }
 }

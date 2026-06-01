@@ -162,6 +162,16 @@ namespace IronCrown.Presentation
                 Render();
             });
 
+            // C14: 补给耗尽消灭事件
+            _events.Subscribe<UnitDestroyedEvent>(e =>
+            {
+                if (e.cause == "supply_starved")
+                {
+                    ShowStatus($"💀 {e.unitId} 补给耗尽，全军覆没");
+                    Render();
+                }
+            });
+
             Render();
         }
 
@@ -543,6 +553,32 @@ namespace IronCrown.Presentation
                     var garrisonBadge = new Label($"⚔{p.garrisonCount}");
                     garrisonBadge.AddToClassList("province-garrison-badge");
                     tile.Add(garrisonBadge);
+
+                    // C14: 补给状态标记（检查该省是否有己方被切断/混乱部队）
+                    if (vm.units != null)
+                    {
+                        bool hasCutoff = false, hasDisorganized = false;
+                        foreach (var u in vm.units)
+                        {
+                            if (u.currentProvinceId == p.id && u.ownerCountry == vm.playerCountryId)
+                            {
+                                if (u.isCutoff) hasCutoff = true;
+                                else if (u.isDisorganized) hasDisorganized = true;
+                            }
+                        }
+                        if (hasCutoff)
+                        {
+                            var cutoffBadge = new Label("⛔");
+                            cutoffBadge.AddToClassList("province-supply-badge");
+                            tile.Add(cutoffBadge);
+                        }
+                        else if (hasDisorganized)
+                        {
+                            var disorgBadge = new Label("🟡");
+                            disorgBadge.AddToClassList("province-supply-badge");
+                            tile.Add(disorgBadge);
+                        }
+                    }
                 }
 
                 var provinceId = p.id;
@@ -576,6 +612,7 @@ namespace IronCrown.Presentation
             sb.Append($"  |  基建: {pv.infrastructure}");
             sb.Append($"  |  人口: {FormatPopulation(pv.population)}");
             sb.Append($"  |  胜利点: {pv.victoryPoint}");
+            sb.Append($"  |  补给: {pv.supplyCapacity}");
             if (pv.resourceOutput != null && pv.resourceOutput.Length > 0)
                 sb.Append($"  |  产出: {string.Join(", ", pv.resourceOutput)}");
             if (pv.neighbors != null && pv.neighbors.Length > 0)
@@ -622,8 +659,15 @@ namespace IronCrown.Presentation
                     sb.Append($"  组织: {selUnit.organization}/{selUnit.maxOrganization} ({orgPct}%)");
                     if (selUnit.tacticalLevel > 0)
                         sb.Append($"\n    战役等级: {selUnit.tacticalLevel}/4 (经验 {selUnit.tacticalExp}/100)");
+                    sb.Append($"  士气: {selUnit.morale}/100");
                     if (selUnit.isRecovering)
                         sb.Append($"  🔴 溃退恢复中: 剩余 {selUnit.recoveryTurnsLeft} 回合");
+                    if (selUnit.isCutoff)
+                        sb.Append($"  ⛔ 补给切断: {selUnit.cutoffTurns}/4 回合");
+                    else if (selUnit.isDisorganized)
+                        sb.Append("  🟡 补给不足（混乱）");
+                    else
+                        sb.Append("  🟢 补给正常");
                     if (selUnit.isInBattle)
                         sb.Append("  ⚔ 战斗中");
                 }

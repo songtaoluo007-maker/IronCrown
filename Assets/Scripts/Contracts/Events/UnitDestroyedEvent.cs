@@ -9,6 +9,6 @@ namespace IronCrown.Contracts
         public string unitId;
         public string ownerCountry;
         public string provinceId;
-        public string cause;            // "battle" | "occupation"
+        public string cause;            // "battle" | "occupation" | "supply_starved" (C14)
     }
 }

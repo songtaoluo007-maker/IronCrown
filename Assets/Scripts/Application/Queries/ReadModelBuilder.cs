@@ -157,7 +157,8 @@ namespace IronCrown.Application
                 controllerCountry = p.controllerCountry,
                 isOccupied = p.controllerCountry != null && p.controllerCountry != p.ownerCountry,
                 hasActiveBattle = battleProvinceIds != null && battleProvinceIds.Contains(p.id),
-                  resistance = p.resistance
+                  resistance = p.resistance,
+                  supplyCapacity = p.CalculateSupplyCapacity()
             };
         }
 
@@ -205,7 +206,11 @@ namespace IronCrown.Application
                 tacticalLevel = u.tacticalExp / 25,  // 0-4
                 recoveryTurnsLeft = u.recoveryTurnsLeft,
                 isRecovering = u.recoveryTurnsLeft > 0,
-                isInBattle = battleUnitIds != null && battleUnitIds.Contains(u.id)
+                isInBattle = battleUnitIds != null && battleUnitIds.Contains(u.id),
+                isCutoff = u.isCutoff,
+                cutoffTurns = u.cutoffTurns,
+                isDisorganized = u.isDisorganized,
+                morale = u.morale
             };
         }
 
