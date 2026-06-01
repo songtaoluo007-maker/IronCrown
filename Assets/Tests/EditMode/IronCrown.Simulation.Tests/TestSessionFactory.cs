@@ -67,7 +67,9 @@ namespace IronCrown.Simulation.Tests
     internal class MemSaveRepo : ISaveRepository
     {
         private readonly System.Collections.Generic.Dictionary<string, GameState> _saves = new();
-        public void Save(string slot, GameState state) => _saves[slot] = state;
+        public bool Save(string slot, GameState state) { _saves[slot] = state; return true; }
         public GameState Load(string slot) => _saves.TryGetValue(slot, out var s) ? s : null;
+        public bool Delete(string slot) => _saves.Remove(slot);
+        public string[] ListSaves() => System.Linq.Enumerable.ToArray(_saves.Keys);
     }
 }
