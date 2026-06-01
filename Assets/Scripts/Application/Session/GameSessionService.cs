@@ -45,12 +45,12 @@ namespace IronCrown.Application
             MovementResolver movement,
             BattleResolver battle,
             PeaceResolver peace,
-            CommanderResolver commander = null,
             IEventPublisher events,
             ISaveRepository save,
             IRandom rng,
             ReadModelBuilder builder,
-            IAppLogger logger)
+            IAppLogger logger,
+            CommanderResolver commander = null)
         {
             _clock = clock;
             _config = config;

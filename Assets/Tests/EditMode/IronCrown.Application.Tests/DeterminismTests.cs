@@ -139,7 +139,7 @@ namespace IronCrown.Application.Tests
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
 
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, peace, new CommanderResolver(config), new EventBus(), saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, peace, new EventBus(), saveRepo, rng, builder, logger);
             return (session, saveRepo);
         }
 

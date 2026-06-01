@@ -50,8 +50,8 @@ namespace IronCrown.Simulation.Tests
 
             return new GameSessionService(
                 cl, cfg, initializer, turnResolver, construction,
-                unitProduction, movement, battle, peace, commander,
-                ev, sv, rn, readModel, lg);
+                unitProduction, movement, battle, peace,
+                ev, sv, rn, readModel, lg, commander);
         }
     }
 

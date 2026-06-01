@@ -1,6 +1,6 @@
 // ============================================================================
 // Tests/EditMode/IronCrown.Simulation.Tests/BattleResolverC4Tests.cs
-// C4: AI 军事 AI + 战争状态 + 胜负终局
+// C4: AI 军事 AI + 战争状�?+ 胜负终局
 // ============================================================================
 
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ using IronCrown.Simulation;
 
 namespace IronCrown.Tests
 {
-    // === 事件记录器 ===
+    // === 事件记录�?===
     class EventRecorder
     {
         public List<WarDeclaredEvent> wars = new();
@@ -138,7 +138,7 @@ namespace IronCrown.Tests
             Assert.IsTrue(declared);
             Assert.AreEqual(1, world.warRelations.Count);
 
-            // 第二次幂等
+            // 第二次幂�?
             bool again = WarRegistry.TryDeclareWar(world, "player", "enemy", 1, out _);
             Assert.IsFalse(again);
             Assert.AreEqual(1, world.warRelations.Count);
@@ -174,7 +174,7 @@ namespace IronCrown.Tests
 
             var result = battle.InitiateAttack(world, atk.id, provC.id, "player");
             Assert.IsTrue(result.accepted);
-            Assert.AreEqual(1, rec.wars.Count, "应自动宣战");
+            Assert.AreEqual(1, rec.wars.Count, "应自动宣�?);
             Assert.IsTrue(WarRegistry.AreAtWar(world, "player", "enemy"));
         }
 
@@ -199,7 +199,7 @@ namespace IronCrown.Tests
             battle.InitiateAttack(world, atk.id, provB.id, "player");
             Assert.AreEqual(1, rec.wars.Count);
 
-            // 第二支进攻同一国 → 不再触发事件
+            // 第二支进攻同一�?�?不再触发事件
             var atk2 = new UnitState { id = "atk2_aw3", ownerCountry = "player", currentProvinceId = provC.neighbors[0],
                 baseAttack = 10, baseDefense = 5, manpower = 100, maxManpower = 100,
                 organization = 60, maxOrganization = 60, speed = 3, movesLeft = 3 };
@@ -208,7 +208,7 @@ namespace IronCrown.Tests
 
             var result2 = battle.InitiateAttack(world, atk2.id, provC.id, "player");
             Assert.IsTrue(result2.accepted);
-            Assert.AreEqual(1, rec.wars.Count, "同一战争关系不重复触发");
+            Assert.AreEqual(1, rec.wars.Count, "同一战争关系不重复触�?);
         }
 
         // === VictoryConditionResolver ===
@@ -307,7 +307,7 @@ namespace IronCrown.Tests
             provB.controllerCountry = "player";
             provThird.controllerCountry = "player";
             var outcome = resolver.CheckVictory(world, clock);
-            Assert.AreEqual("Victory", outcome.result, "所有敌方首都已占，应胜利");
+            Assert.AreEqual("Victory", outcome.result, "所有敌方首都已占，应胜�?);
         }
 
         // === GameSessionService GameOver guard ===
@@ -339,18 +339,18 @@ namespace IronCrown.Tests
 
             var session = new GameSessionService(
                 clock, config, initializer, turnResolver, construction, unitProduction, movement, battle,
-                peace, new CommanderResolver(config), events, saveRepo, rng, readModel, logger);
+                peace, events, saveRepo, rng, readModel, logger);
 
             session.NewGame();
             var cmd = new GameCommand { commandType = CommandType.BuildCivilianFactory, countryId = "empire_north" };
             var result = session.IssueCommand(cmd);
-            // May or may not succeed depending on state — just verify no crash
+            // May or may not succeed depending on state �?just verify no crash
 
             // 模拟 GameOver
             clock.SetGameOver();
             var result2 = session.IssueCommand(cmd);
             Assert.IsFalse(result2.accepted);
-            Assert.IsTrue(result2.reason.Contains("游戏已结束"));
+            Assert.IsTrue(result2.reason.Contains("游戏已结�?));
         }
 
         // === AI 军事 AI 集成测试 ===
@@ -365,7 +365,7 @@ namespace IronCrown.Tests
             var battle = MakeBattle(rng, events);
             var ai = new AIResolver(config, construction, battle);
 
-            // 攻方足够强 — def 是 enemy 的部队，AI 用它进攻
+            // 攻方足够�?�?def �?enemy 的部队，AI 用它进攻
             def.baseAttack = 20;
             atk.baseDefense = 5;
             atk.organization = 30;
@@ -373,8 +373,8 @@ namespace IronCrown.Tests
 
             ai.MakeDecisions(enemy, world);
 
-            Assert.IsTrue(rec.wars.Count >= 1, "AI 应主动宣战");
-            Assert.IsTrue(world.activeBattles.Count >= 1, "AI 应发动进攻");
+            Assert.IsTrue(rec.wars.Count >= 1, "AI 应主动宣�?);
+            Assert.IsTrue(world.activeBattles.Count >= 1, "AI 应发动进�?);
         }
 
         [Test]
@@ -387,7 +387,7 @@ namespace IronCrown.Tests
             var battle = MakeBattle(rng, events);
             var ai = new AIResolver(config, construction, battle);
 
-            // 攻方太弱 — def 是 enemy 的部队，AI 用它进攻
+            // 攻方太弱 �?def �?enemy 的部队，AI 用它进攻
             def.baseAttack = 5;
             atk.baseDefense = 20;
 
@@ -411,7 +411,7 @@ namespace IronCrown.Tests
             world.units.Remove(atk.id);
             player.unitIds.Remove(atk.id);
 
-            // enemy def is very weak — should still attack empty city
+            // enemy def is very weak �?should still attack empty city
             def.baseAttack = 1;
             def.organization = 1;
             def.baseDefense = 1;
@@ -419,7 +419,7 @@ namespace IronCrown.Tests
             ai.MakeDecisions(enemy, world);
 
             // empty city = auto-occupy, should declare war
-            Assert.IsTrue(rec.wars.Count >= 1, "弱部队也应占领空城");
+            Assert.IsTrue(rec.wars.Count >= 1, "弱部队也应占领空�?);
         }
 
         [Test]
@@ -427,7 +427,7 @@ namespace IronCrown.Tests
         {
             var (world, player, enemy, provA, provB, provC, atk, def, rng, events, rec) = Setup("ai4");
             var eco = MakeEco();
-            eco.aiMaxAttacksPerTurn = 1; // 限制 1 次
+            eco.aiMaxAttacksPerTurn = 1; // 限制 1 �?
             var config = MakeConfig(eco);
             var construction = new ConstructionResolver();
             var battle = MakeBattle(rng, events);
@@ -440,7 +440,7 @@ namespace IronCrown.Tests
             world.units[def2.id] = def2;
             enemy.unitIds.Add(def2.id);
 
-            // provA 和 provC 都与 provB 相邻
+            // provA �?provC 都与 provB 相邻
             provB.neighbors = new[] { provA.id, provC.id };
 
             atk.baseAttack = 1; atk.organization = 1; // player 部队很弱
@@ -448,7 +448,7 @@ namespace IronCrown.Tests
 
             ai.MakeDecisions(enemy, world);
 
-            Assert.LessOrEqual(rec.wars.Count, 2, "受 aiMaxAttacksPerTurn 限制");
+            Assert.LessOrEqual(rec.wars.Count, 2, "�?aiMaxAttacksPerTurn 限制");
         }
 
         [Test]
@@ -476,7 +476,7 @@ namespace IronCrown.Tests
             var battle = MakeBattle(rng, events);
             var ai = new AIResolver(config, construction, battle);
 
-            // 把 def 放入战斗
+            // �?def 放入战斗
             var active = new ActiveBattle
             {
                 id = "battle_ai6",
@@ -488,10 +488,10 @@ namespace IronCrown.Tests
             world.activeBattles.Add(active);
 
             ai.MakeDecisions(enemy, world);
-            Assert.AreEqual(0, rec.wars.Count, "战斗中的部队不应被 AI 用于进攻");
+            Assert.AreEqual(0, rec.wars.Count, "战斗中的部队不应�?AI 用于进攻");
         }
 
-        // === 多国场景端到端 ===
+        // === 多国场景端到�?===
 
         [Test]
         public void MultiCountry_PlayerCapturesAll_Victory()
@@ -522,13 +522,13 @@ namespace IronCrown.Tests
             var resolver = new VictoryConditionResolver(events);
             var clock = new GameClock(events);
 
-            // 占领前两个
+            // 占领前两�?
             world.provinces["cap_0"].controllerCountry = "player";
             world.provinces["cap_1"].controllerCountry = "player";
             var o1 = resolver.CheckVictory(world, clock);
             Assert.AreEqual(default(VictoryOutcome), o1);
 
-            // 占领第三个 → Victory
+            // 占领第三�?�?Victory
             world.provinces["cap_2"].controllerCountry = "player";
             var o2 = resolver.CheckVictory(world, clock);
             Assert.AreEqual("Victory", o2.result);
