@@ -60,6 +60,10 @@ namespace IronCrown.Domain
         public List<string> unitIds = new();  // 拥有的部队 ID 列表
         public List<string> commanderIds = new(); // C15a: 拥有的将领 ID 列表
 
+        // === 抽卡系统 (C16) ===
+        public int gachaTickets;          // 抽卡券
+        public int gachaPityCounter;      // SSR 保底计数器
+
         // === 建造队列 ===
         public List<ConstructionOrder> constructionQueue = new();
 

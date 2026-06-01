@@ -23,5 +23,6 @@ namespace IronCrown.Contracts
         public bool isActive;
         public bool canPromote;
         public string buffDescription;   // 完整 buff 描述
+        public int starLevel;            // C16: 星级 0-5
     }
 }

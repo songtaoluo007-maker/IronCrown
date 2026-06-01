@@ -26,6 +26,9 @@ namespace IronCrown.Domain
         // === 指挥容量 ===
         public int maxDivisions;        // 麾下师上限（rank 5 → +5）
 
+        // === C16: 星级（每星 +5% 战斗 buff） ===
+        public int starLevel;           // 0-5
+
         // === 状态 ===
         public bool isActive;           // 是否在役
 

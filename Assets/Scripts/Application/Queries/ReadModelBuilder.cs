@@ -110,7 +110,9 @@ namespace IronCrown.Application
                 warExhaustion = c.warExhaustion,
                 peaceOfferCooldown = c.peaceOfferCooldown,
                 pendingPeaceOfferFrom = c.pendingPeaceOfferFrom,
-                    pendingPeaceOfferExpiry = c.pendingPeaceOfferExpiry
+                    pendingPeaceOfferExpiry = c.pendingPeaceOfferExpiry,
+                    gachaTickets = c.gachaTickets,
+                    gachaPityCounter = c.gachaPityCounter
             };
         }
 
@@ -288,7 +290,8 @@ namespace IronCrown.Application
                 commandedDivisions = 0, // 由 HUD 层计算
                 isActive = c.isActive,
                 canPromote = c.CanPromote,
-                buffDescription = c.GetBuffDescription()
+                buffDescription = c.GetBuffDescription(),
+                starLevel = c.starLevel
             };
         }
     }

@@ -22,6 +22,7 @@ namespace IronCrown.Application
         private readonly BattleResolver _battle;
         private readonly PeaceResolver _peace;
         private readonly CommanderResolver _commander; // C15a
+        private readonly GachaResolver _gacha;         // C16
         private readonly IEventPublisher _events;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
@@ -50,7 +51,8 @@ namespace IronCrown.Application
             IRandom rng,
             ReadModelBuilder builder,
             IAppLogger logger,
-            CommanderResolver commander = null)
+            CommanderResolver commander = null,
+            GachaResolver gacha = null)
         {
             _clock = clock;
             _config = config;
@@ -62,6 +64,7 @@ namespace IronCrown.Application
             _battle = battle;
             _peace = peace;
             _commander = commander;
+            _gacha = gacha;
             _events = events;
             _save = save;
             _rng = rng;
@@ -237,6 +240,21 @@ namespace IronCrown.Application
                         return CommandResult.Reject("缺少师ID");
                     _commander.UnassignDivision(_world, cmd.unitId);
                     _logger.Info($"[Session] 师 {cmd.unitId} 解除将领指挥");
+                    return CommandResult.Accept();
+
+                case CommandType.DrawCard:
+                    if (_gacha == null)
+                        return CommandResult.Reject("抽卡系统未初始化");
+                    var playerCountry = _world.countries.TryGetValue(_playerCountryId, out var pc) ? pc : null;
+                    if (playerCountry == null)
+                        return CommandResult.Reject("找不到玩家国家");
+                    var ecoDraw = _config.Get<EconomyConfig>("global");
+                    if (ecoDraw == null)
+                        return CommandResult.Reject("经济配置未加载");
+                    var drawn = _gacha.DrawCard(playerCountry, _world, _rng, _config, ecoDraw);
+                    if (drawn == null)
+                        return CommandResult.Reject("券不足或卡池为空");
+                    _logger.Info($"[Session] 抽卡: {drawn.name} (星级 {drawn.starLevel})");
                     return CommandResult.Accept();
 
                 default:

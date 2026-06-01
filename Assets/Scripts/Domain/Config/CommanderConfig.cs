@@ -12,6 +12,7 @@ namespace IronCrown.Domain
         public string id;
         public string name;
         public string title;            // 头衔（如 "铁壁将军"）
+        public string rarity;           // C16: 稀有度（N/R/SR/SSR）
         public int baseAttack;          // 基础攻击加成
         public int baseDefense;         // 基础防御加成
         public string[] traits;         // 特性标签

@@ -55,6 +55,9 @@ namespace IronCrown.Application
                     totalManpower = cfg.totalManpower,
                     resources = new Dictionary<string, int>(cfg.resources)
                 };
+                // C16: 玩家国初始 10 张抽卡券
+                if (cfg.id == "empire_north")
+                    state.gachaTickets = 10;
                 world.countries[cfg.id] = state;
             }
 

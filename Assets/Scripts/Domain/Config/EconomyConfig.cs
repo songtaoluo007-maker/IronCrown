@@ -87,5 +87,18 @@ namespace IronCrown.Domain
         public int retreatBonusEquipment;             // 溃退时补充装备
         public int retreatMoraleReset;                // 溃退后 morale 重置值
         public int retreatRecoveryTurns;              // 溃退恢复回合数
+
+        // === C16: 抽卡系统 ===
+        public int gachaTicketCostPerDraw;            // 每次抽卡消耗券数
+        public int gachaTicketsPerVictory;            // 战胜获得券数
+        public int gachaTicketsPerEncirclement;       // 包围歼敌获得券数
+        public int gachaTicketsPerCapitalCapture;     // 占领首都获得券数
+        public int gachaRarityWeightN;                // N 稀有度权重
+        public int gachaRarityWeightR;                // R 稀有度权重
+        public int gachaRarityWeightSR;               // SR 稀有度权重
+        public int gachaRarityWeightSSR;              // SSR 稀有度权重
+        public int gachaSsrPityThreshold;             // SSR 保底抽数
+        public int starBonusPerStar;                  // 每星战斗 buff %
+        public int maxStarLevel;                      // 最大星级
     }
 }

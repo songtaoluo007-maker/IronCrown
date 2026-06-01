@@ -61,6 +61,14 @@ namespace IronCrown.Simulation
                 {
                     int cardAtkPct = CommanderSkillEvaluator.EvalAttack(_config, cmdr, unit, null, world);
                     basePower = basePower * cardAtkPct / 100;
+
+                    // C16: 星级加成（每星 +5%）
+                    var eco = _config.Get<EconomyConfig>("global");
+                    if (eco != null && cmdr.starLevel > 0)
+                    {
+                        int starPct = 100 + cmdr.starLevel * eco.starBonusPerStar;
+                        basePower = basePower * starPct / 100;
+                    }
                 }
             }
 
@@ -97,6 +105,14 @@ namespace IronCrown.Simulation
                 {
                     int cardDefPct = CommanderSkillEvaluator.EvalDefense(_config, cmdr, unit, null, world);
                     basePower = basePower * cardDefPct / 100;
+
+                    // C16: 星级加成（每星 +5%）
+                    var eco = _config.Get<EconomyConfig>("global");
+                    if (eco != null && cmdr.starLevel > 0)
+                    {
+                        int starPct = 100 + cmdr.starLevel * eco.starBonusPerStar;
+                        basePower = basePower * starPct / 100;
+                    }
                 }
             }
 
@@ -677,6 +693,20 @@ namespace IronCrown.Simulation
                     if (world.units.TryGetValue(uid, out var u) && !string.IsNullOrEmpty(u.commanderId))
                         _commander.RecordBattleVictory(world, u.commanderId);
                 }
+            }
+
+            // C16: gachaTickets 累积
+            if (ecoWin != null && world.countries.TryGetValue(battle.attackerOwnerCountry, out var atkCountry))
+            {
+                atkCountry.gachaTickets += ecoWin.gachaTicketsPerVictory;
+                // 包围歼敌额外 +3
+                bool wasEncirclement = battle.defenderUnitIds.Any(uid =>
+                    world.units.TryGetValue(uid, out var du) && du.isCutoff);
+                if (wasEncirclement)
+                    atkCountry.gachaTickets += ecoWin.gachaTicketsPerEncirclement;
+                // 占领首都额外 +10
+                if (province != null && province.isCapital)
+                    atkCountry.gachaTickets += ecoWin.gachaTicketsPerCapitalCapture;
             }
 
             _events.Publish(new BattleConcludedEvent

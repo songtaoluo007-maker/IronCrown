@@ -33,7 +33,11 @@ namespace IronCrown.Contracts
         public int peaceOfferCooldown;
         public string pendingPeaceOfferFrom;
         public int pendingPeaceOfferExpiry;
-    public string color;
-    public string capitalProvinceId;
+        public string color;
+        public string capitalProvinceId;
+
+        // C16: 抽卡系统
+        public int gachaTickets;
+        public int gachaPityCounter;
     }
 }

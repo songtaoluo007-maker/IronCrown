@@ -74,7 +74,19 @@
             "retreatBonusManpower": 20,
             "retreatBonusEquipment": 20,
             "retreatMoraleReset": 30,
-            "retreatRecoveryTurns": 1
+            "retreatRecoveryTurns": 1,
+
+            "gachaTicketCostPerDraw": 1,
+            "gachaTicketsPerVictory": 1,
+            "gachaTicketsPerEncirclement": 3,
+            "gachaTicketsPerCapitalCapture": 10,
+            "gachaRarityWeightN": 50,
+            "gachaRarityWeightR": 35,
+            "gachaRarityWeightSR": 12,
+            "gachaRarityWeightSSR": 3,
+            "gachaSsrPityThreshold": 50,
+            "starBonusPerStar": 5,
+            "maxStarLevel": 5
         }
     ]
 }
