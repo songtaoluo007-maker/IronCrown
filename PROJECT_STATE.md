@@ -8,7 +8,9 @@
 
 ## 0. 新会话从这里开始(读取顺序)
 1. **本文件** — 项目是什么、进度、决策、下一步、协作要点。
-2. [`PROJECT_RULES.md`](PROJECT_RULES.md) — 14 条宪法(最高约束,不可违反)。
+2. [`PROJECT_RULES.md`](PROJECT_RULES.md) — 14 条**工程**宪法(最高约束,不可违反)。
+   - ⭐ [`Design/PRODUCT_DIRECTION.md`](Design/PRODUCT_DIRECTION.md) — **产品**宪法(2026-06-02 锁定:硬核策略为主 / F2P 服务型 / 不卖战力 / 抽卡退役 / 地图多格)。
+   - [`Design/PHASE2_ROADMAP.md`](Design/PHASE2_ROADMAP.md) + [`Design/MAP_ARCHITECTURE.md`](Design/MAP_ARCHITECTURE.md) — Phase 2 路线 + 地图三层重构设计。
 3. [`ARCHITECTURE.md`](ARCHITECTURE.md) — 架构(分层/数据流/配置/测试/MVP 任务表 + 附录 A 现状→目标 / 附录 B 审查门禁 / 附录 C 技术债)。
 4. [`CHANGELOG.md`](CHANGELOG.md) — 完整时间线(查"某步到底做了什么/为什么"的最权威来源)。
 5. [`WorkOrders/`](WorkOrders/) — 各阶段工作单(要看某阶段详细规格时读对应单)。
@@ -20,7 +22,7 @@
 ## 2. 当前状态(最新)
 - **已达成**:MVP ✅ + B(可玩性)✅ + C1~C3 ✅ + **C4 战争胜负+军事AI · C5 外交停战 · C6 占领抵抗 · C7 AI求和 · C8 AI调防 · C9 经济/UI/多兵种修复 · C10 货币清理 · C11 师-旅 · C12 团战整数化 · C13 补员/经验/溃退 · C14 补给BFS/切断包围 · C15a 将领军衔 · C15b 12原创卡 · C16 抽卡 · C17 商城/UI** 全部实现 = **Phase 1 实现完成**。完整循环:选国→建厂/调税→造兵编师→移动→战斗(整数师级+补给链+将领buff+星级)→占领抵抗→战争胜负→胜场抽卡养成。分支 `feature/c5-diplomacy-peace`(领先 main 57 commit)。
 - **进行中**:**Phase 1 整体收口待审**。Claude 闭合审查(C4→C17,57 commit / 196 文件 / +14709/-542)**打回**,签发 `WorkOrders/Phase1-closeout.md`(执行方 OpenClaw):🔴 **F1** SaveMapper 存档红线(现读档将领/券/星级/任命清零) + **F2** 续跑等价测试 + **F3** GachaResolver 去 Guid 确定性 id(并修 RecruitCommander 未入 world.commanders 潜伏 bug) + **F4** C15a-fix 落地(军衔少→帅·maxDivisions=rank+1,此前只签发未执行);🟡 **F5** ShopResolver atTurn + **F6** 还原 ProjectSettings/Packages·删 log + **F7** 最终 EditMode/PlayMode XML + 5 张 Play 截图。GitHub:本地=origin=PR #1 `98c712a`,mergeable CLEAN。
-- **下一步**:OpenClaw 完成 Phase1-closeout → Claude 复审(重点验读档不清零 + 确定性 id + 军衔名) → 全绿合入 main → Claude 终态化 PROJECT_STATE/CHANGELOG(Phase 1 闭合 Milestone) → **Phase 2 战略层**(国策/决议/外交/贸易)。
+- **下一步**:OpenClaw 完成 Phase1-closeout → Claude 复审(重点验读档不清零 + 确定性 id + 军衔名) → 全绿合入 main → Claude 终态化 PROJECT_STATE/CHANGELOG(Phase 1 闭合 Milestone) → **Phase 2**(方向已锁 2026-06-02:**硬核 F2P 服务型 + 地图三层重构**,见 `Design/PHASE2_ROADMAP.md`;P2.0=收口合入+CI门禁+存档迁移框架,P2.1=抽卡退役转养成)。
 
 ## 3. 进度时间线(浓缩,细节见 CHANGELOG)
 | 阶段 | 内容 | 状态 |
@@ -58,13 +60,16 @@
 | C15b | 12原创将军卡+CommanderSkillEvaluator | ✅ |
 | C16 | 单机抽卡(gachaTickets/保底/升星) | ✅ |
 | C17 | 商城+抽卡面板+收藏页+HUD按钮 | ✅ 待收口 |
-| **Phase1-closeout** | 存档红线F1+等价F2+确定性idF3+C15a-fixF4+卫生证据F5-7 | 🚀 已签发 OpenClaw |
+| **Phase1-closeout(+fix)** | 存档红线F1+等价F2+确定性idF3+C15a-fixF4+卫生证据F5-7;二轮 G1-G6 | 🔧 复审中(F1/F3/F4/F5达标,G1证据/G2测试盲区待补) |
+| **Phase 2** | 硬核 F2P + 地图三层重构(Country→Province→Tile)+地形美化(见 PHASE2_ROADMAP) | 🗺️ 方向已锁,待 P2.0 启动 |
 
 ## 4. 锁定的关键决策(人类批准,勿无故重提)
 - **确定性**:Simulation 整数优先 + **SplitMix64** 自定义种子 PRNG;`float` 仅表现层;遍历按 id 升序;随机走注入的 `IRandom`。
 - **依赖注入**:VContainer。 **UI**:UI Toolkit(UXML/USS)。 **序列化**:Newtonsoft.Json。
 - **数值来源**:一切平衡数值在 `Assets/StreamingAssets/Configs/Json/*.json`(规则 5),经 `IConfigRegistry` 读取。经济/地图/AI 数值均 **Claude 代拟初版,人类可随时调**(规则 14)。
 - **分层(编译期强制)**:`Contracts ← Domain ← Simulation ← Application ← {Infrastructure, Presentation} ← Bootstrap`。`Presentation` 不引用 `Domain/Simulation`(规则 4);核心层 `noEngineReferences`(无 Unity 依赖)。
+- **产品定位(2026-06-02 锁定,规则 14;详见 `Design/PRODUCT_DIRECTION.md`)**:目标用户=**硬核策略玩家为主**;商业=**免费+内购·服务型**(F2P/LiveOps);变现红线=**绝不卖战力**(只卖时间/外观/内容/便利);**抽卡(gacha)退役**→将军转战功解锁+横向特化养成;地图=**省由 3-4 格(tile)聚合+地形+美化**(三层重构,见 `Design/MAP_ARCHITECTURE.md`)。
+- **确定性升级为核心资产**:整数+SplitMix64 是未来**异步 PvP/回放/反作弊**的地基(见 ARCHITECTURE 附录 D),非仅"存读档一致"。
 
 ## 5. 协作模式 + 审查要点(实战复盘,重要)
 - **流程**:Claude 出工作单(写死架构+代拟数值,零留白)→ OpenClaw 在独立分支实现 → Claude 逐项审查 → 人类 Play 验收。
