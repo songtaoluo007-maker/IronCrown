@@ -20,6 +20,10 @@ namespace IronCrown.Application
         private readonly UnitProductionResolver _unitProduction;
         private readonly MovementResolver _movement;
         private readonly BattleResolver _battle;
+        private readonly PeaceResolver _peace;
+        private readonly CommanderResolver _commander; // C15a
+        private readonly GachaResolver _gacha;         // C16
+        private readonly ShopResolver _shop;           // C17
         private readonly IEventPublisher _events;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
@@ -42,11 +46,15 @@ namespace IronCrown.Application
             UnitProductionResolver unitProduction,
             MovementResolver movement,
             BattleResolver battle,
+            PeaceResolver peace,
             IEventPublisher events,
             ISaveRepository save,
             IRandom rng,
             ReadModelBuilder builder,
-            IAppLogger logger)
+            IAppLogger logger,
+            CommanderResolver commander = null,
+            GachaResolver gacha = null,
+            ShopResolver shop = null)
         {
             _clock = clock;
             _config = config;
@@ -56,11 +64,18 @@ namespace IronCrown.Application
             _unitProduction = unitProduction;
             _movement = movement;
             _battle = battle;
+            _peace = peace;
+            _commander = commander;
+            _gacha = gacha;
+            _shop = shop;
             _events = events;
             _save = save;
             _rng = rng;
             _builder = builder;
             _logger = logger;
+
+            // 订阅 GameOver 事件 → 切时钟
+            _events.Subscribe<GameOverEvent>(_ => _clock.SetGameOver());
         }
 
         public void NewGame(int? seed = null, string playerCountryId = null)
@@ -102,6 +117,7 @@ namespace IronCrown.Application
         public CommandResult IssueCommand(GameCommand cmd)
         {
             if (_world == null) return CommandResult.Reject("no world");
+            if (_clock.CurrentPhase == GamePhase.GameOver) return CommandResult.Reject("游戏已结束");
             if (string.IsNullOrEmpty(_playerCountryId)) return CommandResult.Reject("no player country");
             if (cmd.countryId != _playerCountryId) return CommandResult.Reject("非玩家国");
 
@@ -149,7 +165,7 @@ namespace IronCrown.Application
                     // 统一战斗锁定检查
                     foreach (var b in _world.activeBattles)
                     {
-                        if (b.attackerUnitId == cmd.unitId || b.defenderUnitId == cmd.unitId)
+                        if (b.attackerUnitIds.Contains(cmd.unitId) || b.defenderUnitIds.Contains(cmd.unitId))
                             return CommandResult.Reject("部队正在战斗中");
                     }
 
@@ -157,6 +173,10 @@ namespace IronCrown.Application
                         return CommandResult.Reject("部队不存在");
                     if (!_world.provinces.TryGetValue(cmd.targetProvinceId, out var mvTarget))
                         return CommandResult.Reject("目标省份不存在");
+
+                    // C13: 溃退中禁止进攻敌方省
+                    if (mvUnit.recoveryTurnsLeft > 0 && mvTarget.controllerCountry != mvUnit.ownerCountry)
+                        return CommandResult.Reject("溃退中无法进攻（仅可移动到己方省）");
 
                     if (mvTarget.controllerCountry == mvUnit.ownerCountry)
                     {
@@ -189,6 +209,101 @@ namespace IronCrown.Application
                         }
                         return battleResult;
                     }
+
+                case CommandType.OfferPeace:
+                    return _peace.OfferPeace(_world, cmd.countryId, cmd.targetCountryId, eco);
+
+                case CommandType.AcceptPeace:
+                    return _peace.AcceptPeace(_world, cmd.countryId, cmd.targetCountryId, eco);
+
+                case CommandType.RejectPeace:
+                    return _peace.RejectPeace(_world, cmd.countryId, cmd.targetCountryId, eco);
+
+                // === C15a: 将领系统 ===
+                case CommandType.RecruitCommander:
+                    if (string.IsNullOrEmpty(cmd.configId))
+                        return CommandResult.Reject("缺少将领配置ID");
+                    var newCmdr = _commander.RecruitCommander(country, cmd.configId, _world);
+                    if (newCmdr == null)
+                        return CommandResult.Reject("资源不足或配置不存在");
+                    _logger.Info($"[Session] {cmd.countryId} 招募将领 {newCmdr.name} ({newCmdr.RankName})");
+                    return CommandResult.Accept();
+
+                case CommandType.AssignCommander:
+                    if (string.IsNullOrEmpty(cmd.commanderId) || string.IsNullOrEmpty(cmd.unitId))
+                        return CommandResult.Reject("缺少将领ID或师ID");
+                    if (!_commander.AssignDivision(_world, cmd.unitId, cmd.commanderId))
+                        return CommandResult.Reject("分配失败（容量满/将领不存在/师不存在）");
+                    _logger.Info($"[Session] 将领 {cmd.commanderId} 指挥师 {cmd.unitId}");
+                    return CommandResult.Accept();
+
+                case CommandType.UnassignCommander:
+                    if (string.IsNullOrEmpty(cmd.unitId))
+                        return CommandResult.Reject("缺少师ID");
+                    _commander.UnassignDivision(_world, cmd.unitId);
+                    _logger.Info($"[Session] 师 {cmd.unitId} 解除将领指挥");
+                    return CommandResult.Accept();
+
+                case CommandType.DrawCard:
+                    if (_gacha == null)
+                        return CommandResult.Reject("抽卡系统未初始化");
+                    var playerCountry = _world.countries.TryGetValue(_playerCountryId, out var pc) ? pc : null;
+                    if (playerCountry == null)
+                        return CommandResult.Reject("找不到玩家国家");
+                    var ecoDraw = _config.Get<EconomyConfig>("global");
+                    if (ecoDraw == null)
+                        return CommandResult.Reject("经济配置未加载");
+                    var drawn = _gacha.DrawCard(playerCountry, _world, _rng, _config, ecoDraw);
+                    if (drawn == null)
+                        return CommandResult.Reject("券不足或卡池为空");
+                    _logger.Info($"[Session] 抽卡: {drawn.name} (星级 {drawn.starLevel})");
+                    return CommandResult.Accept();
+
+                case CommandType.Buy10DrawBundle:
+                    if (_shop == null)
+                        return CommandResult.Reject("商城未初始化");
+                    var shopCountry1 = _world.countries.TryGetValue(_playerCountryId, out var sc1) ? sc1 : null;
+                    if (shopCountry1 == null)
+                        return CommandResult.Reject("找不到玩家国家");
+                    var ecoShop1 = _config.Get<EconomyConfig>("global");
+                    if (ecoShop1 == null)
+                        return CommandResult.Reject("经济配置未加载");
+                    if (!_shop.BuyBundle(shopCountry1, ecoShop1, _world.turnNumber))
+                        return CommandResult.Reject("券不足");
+                    _logger.Info($"[Session] 购买10连券包，净增{ecoShop1.shopBundle10DrawsGrants - ecoShop1.shopBundle10DrawsCost}券");
+                    return CommandResult.Accept();
+
+                case CommandType.BuySsrTicket:
+                    if (_shop == null)
+                        return CommandResult.Reject("商城未初始化");
+                    var shopCountry2 = _world.countries.TryGetValue(_playerCountryId, out var sc2) ? sc2 : null;
+                    if (shopCountry2 == null)
+                        return CommandResult.Reject("找不到玩家国家");
+                    var ecoShop2 = _config.Get<EconomyConfig>("global");
+                    if (ecoShop2 == null)
+                        return CommandResult.Reject("经济配置未加载");
+                    var ssrCmdr = _shop.BuySsrTicket(shopCountry2, _world, _rng, _config, ecoShop2, _world.turnNumber);
+                    if (ssrCmdr == null)
+                        return CommandResult.Reject("SSR券购买失败");
+                    _logger.Info($"[Session] 购买SSR保底券: {ssrCmdr.name}");
+                    return CommandResult.Accept();
+
+                case CommandType.BuySpecificCardTicket:
+                    if (_shop == null)
+                        return CommandResult.Reject("商城未初始化");
+                    if (string.IsNullOrEmpty(cmd.targetCardId))
+                        return CommandResult.Reject("缺少目标卡ID");
+                    var shopCountry3 = _world.countries.TryGetValue(_playerCountryId, out var sc3) ? sc3 : null;
+                    if (shopCountry3 == null)
+                        return CommandResult.Reject("找不到玩家国家");
+                    var ecoShop3 = _config.Get<EconomyConfig>("global");
+                    if (ecoShop3 == null)
+                        return CommandResult.Reject("经济配置未加载");
+                    var specificCmdr = _shop.BuySpecificCardTicket(shopCountry3, _world, _config, ecoShop3, cmd.targetCardId, _world.turnNumber);
+                    if (specificCmdr == null)
+                        return CommandResult.Reject("特定卡券购买失败");
+                    _logger.Info($"[Session] 购买特定卡券: {specificCmdr.name}");
+                    return CommandResult.Accept();
 
                 default:
                     return CommandResult.Reject("未知命令");
@@ -232,6 +347,10 @@ namespace IronCrown.Application
             _initialSeed = gameState.seed;
             _playerCountryId = gameState.playerCountryId;
             _world.playerCountryId = _playerCountryId;
+
+            // C11: 读档后重算师属性（brigrades → baseAttack/...）
+            foreach (var unit in _world.units.Values)
+                unit.RecalculateFromBrigades(_config);
             _rng.Reset(gameState.seed);
             _rng.RestoreState(gameState.rngState);
             var phase = Enum.Parse<GamePhase>(gameState.phase);

@@ -24,7 +24,20 @@ namespace IronCrown.Contracts
         public Dictionary<string, int> resources;
         public int constructionQueueCount;
         public int unitProductionQueueCount;
+        public int unitCount;
         public int taxLevel;
         public int civilLevel;
+        public int warExhaustion;
+
+        // C7: AI 求和
+        public int peaceOfferCooldown;
+        public string pendingPeaceOfferFrom;
+        public int pendingPeaceOfferExpiry;
+        public string color;
+        public string capitalProvinceId;
+
+        // C16: 抽卡系统
+        public int gachaTickets;
+        public int gachaPityCounter;
     }
 }

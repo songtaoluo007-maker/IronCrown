@@ -31,7 +31,7 @@ namespace IronCrown.Simulation
 
             // (1) 省份原料产出 → 国库存（按省份 id 升序，确定性）
             var ownedProvinces = world.provinces.Values
-                .Where(p => p.ownerCountry == country.id)
+                .Where(p => p.controllerCountry == country.id)
                 .OrderBy(p => p.id, StringComparer.Ordinal);
 
             foreach (var province in ownedProvinces)
@@ -51,6 +51,57 @@ namespace IronCrown.Simulation
                         NewValue = oldV + amt
                     });
                 }
+            }
+
+            // (1.5) 每省基础粮食产出（避免单产出国饿死）
+            foreach (var province in ownedProvinces)
+            {
+                int foodAmt = eco.provinceBaseFoodOutput;
+                if (foodAmt > 0)
+                {
+                    int oldFood = country.GetResource("food");
+                    country.ModifyResource("food", foodAmt);
+                    _events.Publish(new ResourceChangedEvent
+                    {
+                        CountryId = country.id,
+                        ResourceId = "food",
+                        OldValue = oldFood,
+                        NewValue = oldFood + foodAmt
+                    });
+                }
+            }
+
+            // (1.6) 每省基础钢铁产出（避免单产出国饿死）
+            foreach (var province in ownedProvinces)
+            {
+                int steelAmt = eco.provinceBaseSteelOutput;
+                if (steelAmt > 0)
+                {
+                    int oldSteel = country.GetResource("steel");
+                    country.ModifyResource("steel", steelAmt);
+                    _events.Publish(new ResourceChangedEvent
+                    {
+                        CountryId = country.id,
+                        ResourceId = "steel",
+                        OldValue = oldSteel,
+                        NewValue = oldSteel + steelAmt
+                    });
+                }
+            }
+
+            // (1.7) 民用工厂产出 capital（T5 遗漏，C9a 修复）
+            int capitalOutput = country.civilianFactories * eco.civilianFactoryCapitalOutput;
+            if (capitalOutput > 0)
+            {
+                int oldCap = country.GetResource("capital");
+                country.ModifyResource("capital", capitalOutput);
+                _events.Publish(new ResourceChangedEvent
+                {
+                    CountryId = country.id,
+                    ResourceId = "capital",
+                    OldValue = oldCap,
+                    NewValue = oldCap + capitalOutput
+                });
             }
 
             // (2) 军工产出：steel(+capital) -> equipment（受输入门限）
@@ -96,6 +147,17 @@ namespace IronCrown.Simulation
 
             if (country.inflation > 0)
                 country.inflation = Math.Max(0, country.inflation - 1);
+
+            // C10: treasury → capital 自动转化
+            if (country.treasury > 0 && eco != null && eco.treasuryToCapitalRatePct > 0)
+            {
+                int conversion = country.treasury * eco.treasuryToCapitalRatePct / 100;
+                if (conversion > 0)
+                {
+                    country.treasury -= conversion;
+                    country.ModifyResource("capital", conversion);
+                }
+            }
 
             return result;
         }

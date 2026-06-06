@@ -67,6 +67,11 @@ namespace IronCrown.Domain
             CurrentPhase = phase;
             IsPaused = false;
         }
+
+        public void SetGameOver()
+        {
+            CurrentPhase = GamePhase.GameOver;
+        }
     }
 
     /// <summary>游戏阶段枚举（随 GameClock 迁入 Domain）</summary>

@@ -58,6 +58,11 @@ namespace IronCrown.Domain
 
         // === 军事 ===
         public List<string> unitIds = new();  // 拥有的部队 ID 列表
+        public List<string> commanderIds = new(); // C15a: 拥有的将领 ID 列表
+
+        // === 抽卡系统 (C16) ===
+        public int gachaTickets;          // 抽卡券
+        public int gachaPityCounter;      // SSR 保底计数器
 
         // === 建造队列 ===
         public List<ConstructionOrder> constructionQueue = new();
@@ -68,6 +73,14 @@ namespace IronCrown.Domain
         // === 内政档位 ===
         public int taxLevel = 1;    // 税率档: 0=低 1=中 2=高
         public int civilLevel = 1;  // 民生档: 0=紧缩 1=正常 2=宽裕
+
+        // === 战争 ===
+        public int warExhaustion;   // 战争疲惫 0-100
+
+        // === AI 求和 (C7) ===
+        public int peaceOfferCooldown;          // 被拒后冷却回合（0=可提议）
+        public string pendingPeaceOfferFrom;    // 待处理提议来源（null=无）
+        public int pendingPeaceOfferExpiry;       // 提议过期回合号（<0=无）
 
         // === 方法 ===
 

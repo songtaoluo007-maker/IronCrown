@@ -3,6 +3,7 @@
 // ============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using IronCrown.Domain;
 
@@ -29,6 +30,10 @@ namespace IronCrown.Application
                     equipmentStockpile = c.equipmentStockpile,
                     taxLevel = c.taxLevel,
                     civilLevel = c.civilLevel,
+                    warExhaustion = c.warExhaustion,
+                    peaceOfferCooldown = c.peaceOfferCooldown,
+                    pendingPeaceOfferFrom = c.pendingPeaceOfferFrom,
+                    pendingPeaceOfferExpiry = c.pendingPeaceOfferExpiry,
                     civilianFactories = c.civilianFactories,
                     militaryFactories = c.militaryFactories,
                     dockyards = c.dockyards,
@@ -46,7 +51,9 @@ namespace IronCrown.Application
                         turnsRemaining = q.turnsRemaining
                     }).ToArray(),
                     activePolicies = c.activePolicies.ToArray(),
-                    completedTechs = c.completedTechs.ToArray()
+                    completedTechs = c.completedTechs.ToArray(),
+                    gachaTickets = c.gachaTickets,
+                    gachaPityCounter = c.gachaPityCounter
                 }).ToArray(),
                 provinces = world.provinces.Values.Select(p => new ProvinceSaveData
                 {
@@ -77,6 +84,7 @@ namespace IronCrown.Application
                 {
                     id = u.id,
                     unitType = u.unitType,
+                    divisionTemplateId = u.divisionTemplateId,
                     ownerCountry = u.ownerCountry,
                     currentProvince = u.currentProvinceId,
                     manpower = u.manpower,
@@ -94,21 +102,72 @@ namespace IronCrown.Application
                     piercing = u.piercing,
                     speed = u.speed,
                     movesLeft = u.movesLeft,
-                    supplyConsumption = u.supplyConsumption
+                    supplyConsumption = u.supplyConsumption,
+                    brigades = u.brigades?.Select(b => new BrigadeSaveData
+                    {
+                        brigadeType = b.brigadeType,
+                        count = b.count,
+                        manpower = b.manpower,
+                        equipment = b.equipment
+                    }).ToArray(),
+                    tacticalExp = u.tacticalExp,
+                    recoveryTurnsLeft = u.recoveryTurnsLeft,
+                    commanderId = u.commanderId,
+                    isCutoff = u.isCutoff,
+                    cutoffTurns = u.cutoffTurns,
+                    isDisorganized = u.isDisorganized,
+                    isEntrenched = u.isEntrenched,
+                    entrenchmentBonus = u.entrenchmentBonus
                 }).ToArray()
             };
+
+            // 将领（C15a/C15b/C16）
+            state.commanders = world.commanders.Values
+                .OrderBy(c => c.id, System.StringComparer.Ordinal)
+                .Select(c => new CommanderSaveData
+                {
+                    id = c.id,
+                    name = c.name,
+                    ownerCountry = c.ownerCountry,
+                    generalCardId = c.generalCardId,
+                    rank = c.rank,
+                    victories = c.victories,
+                    encirclements = c.encirclements,
+                    baseAttack = c.baseAttack,
+                    baseDefense = c.baseDefense,
+                    maxDivisions = c.maxDivisions,
+                    starLevel = c.starLevel,
+                    isActive = c.isActive
+                }).ToArray();
             state.playerCountryId = world.playerCountryId;
             state.selectedUnitId = world.selectedUnitId;
 
-            // 活动战斗
+            // 活动战斗 (C9c)
             state.activeBattles = world.activeBattles.Select(b => new ActiveBattleSaveData
             {
                 id = b.id,
-                attackerUnitId = b.attackerUnitId,
-                defenderUnitId = b.defenderUnitId,
+                attackerUnitIds = b.attackerUnitIds,
+                defenderUnitIds = b.defenderUnitIds,
                 provinceId = b.provinceId,
+                attackerOwnerCountry = b.attackerOwnerCountry,
+                defenderOwnerCountry = b.defenderOwnerCountry,
                 turnsElapsed = b.turnsElapsed
             }).ToArray();
+
+            // 战争关系
+            state.warRelations = world.warRelations.Select(w => new WarRelationSaveData
+            {
+                countryA = w.countryA,
+                countryB = w.countryB,
+                startTurn = w.startTurn
+            }).ToArray();
+
+            // 停战和平期 (C9d)
+            state.truces = world.truceUntilTurn.Select(t => new TruceEntry { key = t.Key, untilTurn = t.Value }).ToArray();
+
+            // 游戏终局
+            state.gameOverResult = world.gameOverResult;
+            state.gameOverWinnerCountryId = world.gameOverWinnerCountryId;
 
             return state;
         }
@@ -141,7 +200,11 @@ namespace IronCrown.Application
                         manpower = cd.manpower,
                         totalManpower = cd.totalManpower,
                         taxLevel = cd.taxLevel,
-                        civilLevel = cd.civilLevel
+                        civilLevel = cd.civilLevel,
+                        warExhaustion = cd.warExhaustion,
+                        peaceOfferCooldown = cd.peaceOfferCooldown,
+                        pendingPeaceOfferFrom = cd.pendingPeaceOfferFrom,
+                        pendingPeaceOfferExpiry = cd.pendingPeaceOfferExpiry
                     };
                     if (cd.resources != null)
                         foreach (var r in cd.resources)
@@ -156,6 +219,11 @@ namespace IronCrown.Application
                         foreach (var p in cd.activePolicies) c.activePolicies.Add(p);
                     if (cd.completedTechs != null)
                         foreach (var t in cd.completedTechs) c.completedTechs.Add(t);
+
+                    // C16: 抽卡状态
+                    c.gachaTickets = cd.gachaTickets;
+                    c.gachaPityCounter = cd.gachaPityCounter;
+
                     world.countries[c.id] = c;
                 }
             }
@@ -201,6 +269,7 @@ namespace IronCrown.Application
                     {
                         id = ud.id,
                         unitType = ud.unitType,
+                        divisionTemplateId = ud.divisionTemplateId,
                         ownerCountry = ud.ownerCountry,
                         currentProvinceId = ud.currentProvince,
                         manpower = ud.manpower,
@@ -218,8 +287,45 @@ namespace IronCrown.Application
                         piercing = ud.piercing,
                         speed = ud.speed,
                         movesLeft = ud.movesLeft,
-                        supplyConsumption = ud.supplyConsumption
+                        supplyConsumption = ud.supplyConsumption,
+                        tacticalExp = ud.tacticalExp,
+                        recoveryTurnsLeft = ud.recoveryTurnsLeft,
+                        commanderId = ud.commanderId,
+                        isCutoff = ud.isCutoff,
+                        cutoffTurns = ud.cutoffTurns,
+                        isDisorganized = ud.isDisorganized,
+                        isEntrenched = ud.isEntrenched,
+                        entrenchmentBonus = ud.entrenchmentBonus
                     };
+
+                    // C11: 恢复旅组成（旧存档 fallback）
+                    if (ud.brigades != null && ud.brigades.Length > 0)
+                    {
+                        foreach (var bd in ud.brigades)
+                        {
+                            u.brigades.Add(new BrigadeState
+                            {
+                                brigadeType = bd.brigadeType,
+                                count = bd.count,
+                                manpower = bd.manpower,
+                                equipment = bd.equipment
+                            });
+                        }
+                    }
+                    else
+                    {
+                        // 旧存档 fallback: 单旅退化
+                        string fallbackType = string.IsNullOrEmpty(ud.unitType) ? "infantry" : ud.unitType;
+                        u.brigades.Add(new BrigadeState
+                        {
+                            brigadeType = fallbackType,
+                            count = 1,
+                            manpower = ud.maxManpower,
+                            equipment = ud.maxEquipment
+                        });
+                        u.divisionTemplateId = "infantry_division_legacy";
+                    }
+
                     world.units[u.id] = u;
                 }
             }
@@ -233,6 +339,36 @@ namespace IronCrown.Application
                     owner.unitIds.Add(u.id);
             }
 
+            // 将领（C15a/C15b/C16）
+            if (save.commanders != null)
+            {
+                foreach (var cd in save.commanders)
+                {
+                    world.commanders[cd.id] = new CommanderState
+                    {
+                        id = cd.id,
+                        name = cd.name,
+                        ownerCountry = cd.ownerCountry,
+                        generalCardId = cd.generalCardId,
+                        rank = cd.rank,
+                        victories = cd.victories,
+                        encirclements = cd.encirclements,
+                        baseAttack = cd.baseAttack,
+                        baseDefense = cd.baseDefense,
+                        maxDivisions = cd.maxDivisions,
+                        starLevel = cd.starLevel,
+                        isActive = cd.isActive
+                    };
+                }
+            }
+
+            // 重建 commanderIds（不读存档，从 commanders 按 owner 升序重建）
+            foreach (var c in world.countries.Values)
+                c.commanderIds.Clear();
+            foreach (var cmdr in world.commanders.Values.OrderBy(c => c.id, System.StringComparer.Ordinal))
+                if (world.countries.TryGetValue(cmdr.ownerCountry, out var owner))
+                    owner.commanderIds.Add(cmdr.id);
+
             // 活动战斗
             if (save.activeBattles != null)
             {
@@ -241,13 +377,40 @@ namespace IronCrown.Application
                     world.activeBattles.Add(new ActiveBattle
                     {
                         id = bd.id,
-                        attackerUnitId = bd.attackerUnitId,
-                        defenderUnitId = bd.defenderUnitId,
+                        attackerUnitIds = bd.attackerUnitIds ?? new List<string>(),
+                        defenderUnitIds = bd.defenderUnitIds ?? new List<string>(),
                         provinceId = bd.provinceId,
+                        attackerOwnerCountry = bd.attackerOwnerCountry,
+                        defenderOwnerCountry = bd.defenderOwnerCountry,
                         turnsElapsed = bd.turnsElapsed
                     });
                 }
             }
+
+            // 战争关系
+            if (save.warRelations != null)
+            {
+                foreach (var wd in save.warRelations)
+                {
+                    world.warRelations.Add(new WarRelation
+                    {
+                        countryA = wd.countryA,
+                        countryB = wd.countryB,
+                        startTurn = wd.startTurn
+                    });
+                }
+            }
+
+            // 停战和平期 (C9d)
+            if (save.truces != null)
+            {
+                foreach (var t in save.truces)
+                    world.truceUntilTurn[t.key] = t.untilTurn;
+            }
+
+            // 游戏终局
+            world.gameOverResult = save.gameOverResult;
+            world.gameOverWinnerCountryId = save.gameOverWinnerCountryId;
 
             return world;
         }

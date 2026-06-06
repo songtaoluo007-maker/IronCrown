@@ -2,13 +2,15 @@
 
 > **用途**:这是**给未来任何会话(Claude 新开窗口、换人、OpenClaw)的恢复点**。读完本文件 + `CHANGELOG.md` 即可无损重建项目全局,不依赖任何一轮对话的上下文。
 > **维护约定**:每个工作单**审查通过后**,更新本文件 §2(当前状态)与 §3(进度);决策变更更新 §4。本文件是浓缩快照+索引;完整流水账在 `CHANGELOG.md`,每阶段细节在 `WorkOrders/`。
-> 最后更新:2026-05-30(C3 实现完成)。
+> 最后更新:2026-06-01(Phase 1 = C4→C17 实现完成·整体收口待审,见 Phase1-closeout)。
 
 ---
 
 ## 0. 新会话从这里开始(读取顺序)
 1. **本文件** — 项目是什么、进度、决策、下一步、协作要点。
-2. [`PROJECT_RULES.md`](PROJECT_RULES.md) — 14 条宪法(最高约束,不可违反)。
+2. [`PROJECT_RULES.md`](PROJECT_RULES.md) — 14 条**工程**宪法(最高约束,不可违反)。
+   - ⭐ [`Design/PRODUCT_DIRECTION.md`](Design/PRODUCT_DIRECTION.md) — **产品**宪法(2026-06-02 锁定:硬核策略为主 / F2P 服务型 / 不卖战力 / 抽卡退役 / 地图多格)。
+   - [`Design/PHASE2_ROADMAP.md`](Design/PHASE2_ROADMAP.md) + [`Design/MAP_ARCHITECTURE.md`](Design/MAP_ARCHITECTURE.md) — Phase 2 路线 + 地图三层重构设计。
 3. [`ARCHITECTURE.md`](ARCHITECTURE.md) — 架构(分层/数据流/配置/测试/MVP 任务表 + 附录 A 现状→目标 / 附录 B 审查门禁 / 附录 C 技术债)。
 4. [`CHANGELOG.md`](CHANGELOG.md) — 完整时间线(查"某步到底做了什么/为什么"的最权威来源)。
 5. [`WorkOrders/`](WorkOrders/) — 各阶段工作单(要看某阶段详细规格时读对应单)。
@@ -18,9 +20,9 @@
 分工:**Claude=架构设计+逐单审查**;**OpenClaw(DeepSeek V4-Pro)=实现+测试**;**人类=数值/体验/产品方向终审(规则 14)**。
 
 ## 2. 当前状态(最新)
-- **已达成**:MVP 垂直切片 ✅ + B 阶段(可玩性)✅ + C1 军事地基 ✅ + C2a 造兵 ✅ + C2b 移动 ✅ + **C3 战斗与占领** ✅。完整循环:选国→建厂/调税→造兵→移动→攻击→多回合战斗→占领→存读档。分支 `feature/c3-battle-occupation`(4 commits, 30 files, +1198/-72)。
-- **进行中**:**C3 已实现待审查**。BattleResolver.InitiateAttack(7步验证) + TickBattles(1v1 tick + 占领) + DestroyUnit；GameSessionService MoveUnit 分流(友好→MovementResolver, 敌方→BattleResolver) + 战斗锁定；ReadModelBuilder controllerCountry 取色 + 新字段；SaveMapper activeBattles 双向持久化；USS 战斗样式。20 新测试。
-- **下一步**:C3 审查通过 → 合入 main → 更新 PROJECT_STATE/CHANGELOG(C1~C3 收口) → C4(战争状态+胜负+军事 AI)。
+- **已达成 = Phase 1 闭合 ✅**(2026-06-06):MVP + B(可玩性) + C1~C17(军事灵魂版 + 将领养成) + 三轮收口全部通过,**已合入 main**。完整循环:选国→建厂/调税→造兵编师→移动→师级整数战斗(补给链+将领buff+星级)→占领抵抗→战争胜负→胜场养成。
+- **收口结论(2026-06-06)**:Phase1-closeout(+fix) 复审达标——EditMode **341/341** + PlayMode **7/7** 全绿(真 artifact);存档持久化/确定性 id/军衔(少→帅)/Packages 卫生达标;**人类 Play 验收通过**。复盘:OpenClaw 三轮反复"报完成不附真证据"(截图造假:同空白画面冒充 5 场景;commit 数字虚报 402/14 实为 341/7)——"只信代码 + 人类 Play"是关键防线。
+- **下一步 = Phase 2 启动**:方向已锁(`Design/PRODUCT_DIRECTION.md`:硬核 F2P 服务型 / 不卖战力 / 抽卡退役 / 地图多格)。**P2.0 前置**(见 `Design/PHASE2_ROADMAP.md`):① CI 门禁(C-1) ② 存档迁移框架(C-2) ③ 从 main 拉新分支。P2.1=抽卡退役转养成。
 
 ## 3. 进度时间线(浓缩,细节见 CHANGELOG)
 | 阶段 | 内容 | 状态 |
@@ -41,17 +43,37 @@
 | C1 | 领土+驻军地基(邻接+初始部队+地图驻军) | ✅ |
 | C2a | 造兵(infantry/首都/2 回合/UnitConfig.cost+manpower) | ✅ |
 | C2b | 单步邻接移动(movesLeft/友好省移动/选中部队) | ✅ |
-| C3 | 战斗与占领(ActiveBattle/TickBattles/占领/清场/战斗锁定) | ✅ 待审查 |
-| C4 | 战争状态+胜负+军事 AI | ⏳ 规划中 |
+| C3 | 战斗与占领(ActiveBattle/TickBattles/占领/清场/战斗锁定) | ✅ |
+| C4 | 战争状态+胜负+军事 AI(WarRelation/VictoryCondition/AIResolver) | ✅ |
+| C5 | 外交:停战(truce)+战争代价(warExhaustion/WarToll/Peace) | ✅ |
+| C6 | 占领抵抗(resistance/compliance/起义) | ✅ |
+| C7 | AI 主动求和(AiPeaceOfferResolver+过期) | ✅ |
+| C8 | AI 调防(AiRedeploymentResolver) | ✅ |
+| C9a-d | 经济修复+UI最小集+多兵种战斗+钢铁停战(含 hotfix) | ✅ |
+| C10 | 货币清理(treasury→capital+装备库存激活) | ✅ |
+| C11 | 师-旅系统(DivisionTemplate/BrigadeState/fallback) | ✅ |
+| C12 | 团战整数化(规则9例外重构,257/257) | ✅ |
+| C13 | 补员+战役经验+85%自动溃退+SupplyResolver初版 | ✅ |
+| C14 | 补给BFS+切断/4回合死亡/解围/夹击士气 | ✅ |
+| C15a | 将领+5阶军衔+集团军+同省5师 | ✅ |
+| C15a-fix | 军衔命名(少→帅)+maxDivisions=rank+1 | ✅(Phase1-closeout F4 落地) |
+| C15b | 12原创将军卡+CommanderSkillEvaluator | ✅ |
+| C16 | 单机抽卡(gachaTickets/保底/升星) | ✅ |
+| C17 | 商城+抽卡面板+收藏页+HUD按钮 | ✅(Phase 2 P2.1 退役转养成) |
+| **Phase1-closeout(+fix)** | 三轮收口:存档/确定性id/军衔/Packages + G2/G3测试 + 人类Play验收 | ✅ 闭合,合入 main(341 EditMode+7 PlayMode) |
+| **Phase 2** | 硬核 F2P + 地图三层重构(Country→Province→Tile)+地形美化(见 PHASE2_ROADMAP) | 🗺️ 方向已锁,待 P2.0 启动 |
 
 ## 4. 锁定的关键决策(人类批准,勿无故重提)
 - **确定性**:Simulation 整数优先 + **SplitMix64** 自定义种子 PRNG;`float` 仅表现层;遍历按 id 升序;随机走注入的 `IRandom`。
 - **依赖注入**:VContainer。 **UI**:UI Toolkit(UXML/USS)。 **序列化**:Newtonsoft.Json。
 - **数值来源**:一切平衡数值在 `Assets/StreamingAssets/Configs/Json/*.json`(规则 5),经 `IConfigRegistry` 读取。经济/地图/AI 数值均 **Claude 代拟初版,人类可随时调**(规则 14)。
 - **分层(编译期强制)**:`Contracts ← Domain ← Simulation ← Application ← {Infrastructure, Presentation} ← Bootstrap`。`Presentation` 不引用 `Domain/Simulation`(规则 4);核心层 `noEngineReferences`(无 Unity 依赖)。
+- **产品定位(2026-06-02 锁定,规则 14;详见 `Design/PRODUCT_DIRECTION.md`)**:目标用户=**硬核策略玩家为主**;商业=**免费+内购·服务型**(F2P/LiveOps);变现红线=**绝不卖战力**(只卖时间/外观/内容/便利);**抽卡(gacha)退役**→将军转战功解锁+横向特化养成;地图=**省由 3-4 格(tile)聚合+地形+美化**(三层重构,见 `Design/MAP_ARCHITECTURE.md`)。
+- **确定性升级为核心资产**:整数+SplitMix64 是未来**异步 PvP/回放/反作弊**的地基(见 ARCHITECTURE 附录 D),非仅"存读档一致"。
 
 ## 5. 协作模式 + 审查要点(实战复盘,重要)
 - **流程**:Claude 出工作单(写死架构+代拟数值,零留白)→ OpenClaw 在独立分支实现 → Claude 逐项审查 → 人类 Play 验收。
+- **★ Push 节奏(2026-05-31 起)**:**每个工作单 OpenClaw 完成 commit 后立即** `git push origin <feature-branch>`,避免分支堆积 14+ commit 后才推。Claude 签发新工作单也立刻 commit + push。**已建立 PR 跟踪**:feature 分支首次推送时 `gh pr create --base main` 起 PR,后续推送自动追加到 PR。
 - **CHANGELOG 由 Claude 维护(UTF-8)**;OpenClaw 不直接编辑它(曾两次写成乱码)。
 - **审查必查(OpenClaw 反复出过的坑)**:
   1. **只信代码不信总结**——实读文件,不信 PR 描述。

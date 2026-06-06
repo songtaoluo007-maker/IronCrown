@@ -8,8 +8,7 @@
         "IronCrown.Simulation",
         "IronCrown.Presentation",
         "IronCrown.Bootstrap",
-        "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEngine.TestRunner"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

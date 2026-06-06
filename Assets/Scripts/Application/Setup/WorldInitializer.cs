@@ -1,5 +1,6 @@
 // ============================================================================
 // Application/Setup/WorldInitializer.cs — 从配置创建新游戏世界
+// C11: 初始部队改用师模板
 // ============================================================================
 
 using System;
@@ -54,6 +55,9 @@ namespace IronCrown.Application
                     totalManpower = cfg.totalManpower,
                     resources = new Dictionary<string, int>(cfg.resources)
                 };
+                // C16: 玩家国初始 10 张抽卡券
+                if (cfg.id == "empire_north")
+                    state.gachaTickets = 10;
                 world.countries[cfg.id] = state;
             }
 
@@ -85,17 +89,63 @@ namespace IronCrown.Application
                 world.provinces[cfg.id] = state;
             }
 
-            // 初始部队：每国 1 支步兵驻首都
-            var infantryTemplate = config.Get<UnitConfig>("infantry");
-            if (infantryTemplate != null)
+            // C11: 初始部队 — 每国 1 个基础步兵师驻首都
+            var basicDivTemplate = config.Get<DivisionTemplate>("infantry_division_basic");
+            if (basicDivTemplate != null)
             {
                 foreach (var country in world.countries.Values)
                 {
-                    string unitId = $"{country.id}_inf_1";
-                    var unit = UnitFactory.CreateFromTemplate(unitId, "infantry", country.id, country.capitalProvinceId, infantryTemplate);
+                    string unitId = $"{country.id}_div_1";
+                    var unit = UnitFactory.CreateFromDivisionTemplate(unitId, basicDivTemplate, country.id, country.capitalProvinceId, config);
                     world.units[unitId] = unit;
                     country.unitIds.Add(unitId);
                 }
+            }
+            else
+            {
+                // Fallback: 无 DivisionTemplate 时（旧配置/测试），用 UnitConfig 创建单旅师
+                var infConfig = config.Get<UnitConfig>("infantry");
+                foreach (var country in world.countries.Values)
+                {
+                    string unitId = $"{country.id}_inf_1";
+                    var unit = new UnitState
+                    {
+                        id = unitId,
+                        unitType = "infantry",
+                        ownerCountry = country.id,
+                        currentProvinceId = country.capitalProvinceId,
+                        manpower = infConfig?.hp ?? 100,
+                        equipment = infConfig?.hp ?? 100,
+                        organization = infConfig?.organization ?? 60,
+                        maxManpower = infConfig?.hp ?? 100,
+                        maxEquipment = infConfig?.hp ?? 100,
+                        maxOrganization = infConfig?.organization ?? 60,
+                        baseAttack = infConfig?.attack ?? 10,
+                        baseDefense = infConfig?.defense ?? 15,
+                        baseBreakthrough = infConfig?.breakthrough ?? 5,
+                        armor = infConfig?.armor ?? 0,
+                        piercing = infConfig?.piercing ?? 5,
+                        speed = infConfig?.speed ?? 3,
+                        movesLeft = infConfig?.speed ?? 3,
+                        supplyConsumption = infConfig?.supplyConsumption ?? 10
+                    };
+                    // 旧模式：单旅退化
+                    unit.brigades.Add(new BrigadeState
+                    {
+                        brigadeType = "infantry",
+                        count = 1,
+                        manpower = infConfig?.hp ?? 100,
+                        equipment = infConfig?.hp ?? 100
+                    });
+                    world.units[unitId] = unit;
+                    country.unitIds.Add(unitId);
+                }
+            }
+
+            // C11: 每国初始装备库存 500（师级消耗更大）
+            foreach (var country in world.countries.Values)
+            {
+                country.equipmentStockpile = 500;
             }
 
             _logger.Info($"[WorldInitializer] 初始化完成: {world.countries.Count} 个国家, {world.provinces.Count} 个省份, {world.units.Count} 支部队");

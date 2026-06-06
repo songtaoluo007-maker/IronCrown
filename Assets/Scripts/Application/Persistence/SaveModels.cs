@@ -4,10 +4,14 @@
 // ============================================================================
 
 using System;
+using System.Collections.Generic;
 
 namespace IronCrown.Application
 {
     /// <summary>游戏存档数据结构（DTO，非运行时状态）</summary>
+    [Serializable]
+    public class TruceEntry { public string key; public int untilTurn; }
+
     [Serializable]
     public class GameState
     {
@@ -21,7 +25,12 @@ namespace IronCrown.Application
         public CountrySaveData[] countries;
         public ProvinceSaveData[] provinces;
         public UnitSaveData[] units;
+        public CommanderSaveData[] commanders; // C15a: 将领
         public ActiveBattleSaveData[] activeBattles;
+        public WarRelationSaveData[] warRelations;
+        public TruceEntry[] truces;
+        public string gameOverResult;
+        public string gameOverWinnerCountryId;
     }
 
     [Serializable]
@@ -35,6 +44,14 @@ namespace IronCrown.Application
         public int equipmentStockpile;
         public int taxLevel;
         public int civilLevel;
+
+        // C5: 战争疲惫
+        public int warExhaustion;
+
+        // C7: AI 求和
+        public int peaceOfferCooldown;
+        public string pendingPeaceOfferFrom;
+        public int pendingPeaceOfferExpiry;
 
         // 工厂
         public int civilianFactories;
@@ -52,6 +69,10 @@ namespace IronCrown.Application
 
         public string[] activePolicies;
         public string[] completedTechs;
+
+        // C16: 抽卡系统
+        public int gachaTickets;
+        public int gachaPityCounter;
     }
 
     [Serializable]
@@ -119,7 +140,9 @@ namespace IronCrown.Application
     {
         public string id;
         public string unitType;
+        public string divisionTemplateId;  // C11
         public string ownerCountry;
+        public string commanderId;          // C15a: 指挥将领
         public string currentProvince;
         public int manpower;
         public int equipment;
@@ -137,15 +160,59 @@ namespace IronCrown.Application
         public int speed;
         public int movesLeft;
         public int supplyConsumption;
+        public BrigadeSaveData[] brigades;  // C11
+        public int tacticalExp;            // C13
+        public int recoveryTurnsLeft;      // C13
+        public bool isCutoff;              // C13 (C14 激活)
+        public int cutoffTurns;              // C14
+        public bool isDisorganized;          // C14
+        public bool isEntrenched;            // C9c
+        public int entrenchmentBonus;        // C9c
+    }
+
+    [Serializable]
+    public class BrigadeSaveData
+    {
+        public string brigadeType;
+        public int count;
+        public int manpower;
+        public int equipment;
     }
 
     [Serializable]
     public class ActiveBattleSaveData
     {
         public string id;
-        public string attackerUnitId;
-        public string defenderUnitId;
+        public List<string> attackerUnitIds;
+        public List<string> defenderUnitIds;
         public string provinceId;
+        public string attackerOwnerCountry;
+        public string defenderOwnerCountry;
         public int turnsElapsed;
+    }
+
+    [Serializable]
+    public class WarRelationSaveData
+    {
+        public string countryA;
+        public string countryB;
+        public int startTurn;
+    }
+
+    [Serializable]
+    public class CommanderSaveData
+    {
+        public string id;
+        public string name;
+        public string ownerCountry;
+        public string generalCardId;
+        public int rank;
+        public int victories;
+        public int encirclements;
+        public int baseAttack;
+        public int baseDefense;
+        public int maxDivisions;
+        public int starLevel;
+        public bool isActive;
     }
 }

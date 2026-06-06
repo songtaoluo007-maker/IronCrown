@@ -1,0 +1,9 @@
+<!-- NationSelection.uxml — 选国覆盖面板 -->
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/UI/NationSelection.uss" />
+
+    <ui:VisualElement name="nation-selection-root" class="nation-selection-root">
+        <ui:Label text="选择你的国家" class="nation-selection-title" />
+        <ui:VisualElement name="nation-card-container" class="nation-card-container" />
+    </ui:VisualElement>
+</ui:UXML>

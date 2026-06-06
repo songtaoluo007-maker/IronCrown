@@ -42,6 +42,16 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(c.civilianFactories));
                 bytes.AddRange(System.BitConverter.GetBytes(c.militaryFactories));
                 bytes.AddRange(System.BitConverter.GetBytes(c.equipmentStockpile));
+                bytes.AddRange(System.BitConverter.GetBytes(c.warExhaustion));
+            }
+
+            foreach (var u in world.units.Values.OrderBy(x => x.id))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.id));
+                bytes.AddRange(System.BitConverter.GetBytes(u.organization));
+                bytes.AddRange(System.BitConverter.GetBytes(u.manpower));
+                bytes.AddRange(System.BitConverter.GetBytes(u.tacticalExp));
+                bytes.AddRange(System.BitConverter.GetBytes(u.recoveryTurnsLeft));
             }
 
             foreach (var p in world.provinces.Values.OrderBy(x => x.id))
@@ -118,17 +128,18 @@ namespace IronCrown.Application.Tests
             var economy = new EconomyResolver(config, new EventBus());
             var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
+            var peace = new PeaceResolver(new EventBus());
             var supply = new SupplyResolver();
             var construction = new ConstructionResolver();
             var unitProduction = new UnitProductionResolver();
             var movement = new MovementResolver();
-            var ai = new AIResolver(config, construction);
+            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
             var diplomacy = new DiplomacyResolver();
             var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction, unitProduction, movement, config);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
 
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, new EventBus(), saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, peace, new EventBus(), saveRepo, rng, builder, logger, new CommanderResolver(config));
             return (session, saveRepo);
         }
 

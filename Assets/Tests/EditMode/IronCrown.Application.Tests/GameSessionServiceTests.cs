@@ -51,17 +51,18 @@ namespace IronCrown.Application.Tests
             var economy = new EconomyResolver(config, new EventBus());
             var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
+            var peace = new PeaceResolver(new EventBus());
             var supply = new SupplyResolver();
             var construction = new ConstructionResolver();
             var unitProduction = new UnitProductionResolver();
             var movement = new MovementResolver();
-            var ai = new AIResolver(config, construction);
+            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
             var diplomacy = new DiplomacyResolver();
             var turnResolver = new TurnResolver(_clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction, unitProduction, movement, config);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
 
-            _session = new GameSessionService(_clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, new EventBus(), saveRepo, rng, builder, logger);
+            _session = new GameSessionService(_clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, peace, new EventBus(), saveRepo, rng, builder, logger, new CommanderResolver(config));
         }
 
         [Test]
@@ -147,16 +148,17 @@ namespace IronCrown.Application.Tests
             var economy = new EconomyResolver(config, new EventBus());
             var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
+            var peace = new PeaceResolver(new EventBus());
             var supply = new SupplyResolver();
             var construction = new ConstructionResolver();
             var unitProduction = new UnitProductionResolver();
             var movement = new MovementResolver();
-            var ai = new AIResolver(config, construction);
+            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
             var diplomacy = new DiplomacyResolver();
             var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction, unitProduction, movement, config);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, new EventBus(), saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, peace, new EventBus(), saveRepo, rng, builder, logger, new CommanderResolver(config));
 
             session.NewGame(playerCountryId: "empire_north");
             Assert.AreEqual("empire_north", session.PlayerCountryId);
@@ -363,16 +365,17 @@ namespace IronCrown.Application.Tests
             var economy = new EconomyResolver(config, new EventBus());
             var politics = new PoliticsResolver(config);
             var battle = new BattleResolver(rng, new EventBus());
+            var peace = new PeaceResolver(new EventBus());
             var supply = new SupplyResolver();
             var construction = new ConstructionResolver();
             var unitProduction = new UnitProductionResolver();
             var movement = new MovementResolver();
-            var ai = new AIResolver(config, construction);
+            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
             var diplomacy = new DiplomacyResolver();
             var turnResolver = new TurnResolver(clock, new EventBus(), economy, politics, battle, supply, ai, diplomacy, construction, unitProduction, movement, config);
             var saveRepo = new InMemorySaveRepository();
             var builder = new ReadModelBuilder();
-            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, new EventBus(), saveRepo, rng, builder, logger);
+            var session = new GameSessionService(clock, config, initializer, turnResolver, construction, unitProduction, movement, battle, peace, new EventBus(), saveRepo, rng, builder, logger, new CommanderResolver(config));
             return (session, clock);
         }
 
@@ -533,11 +536,9 @@ namespace IronCrown.Application.Tests
                 unitId = unit.id,
                 targetProvinceId = "wind_plain"
             });
-            Assert.IsFalse(result.accepted, "移动到非己方控制省应被拒");
-            // wind_plain controllerCountry=steppe_junta != empire_north
-            // GameSessionService 分流：敌方省→BattleResolver.InitiateAttack
-            // InitiateAttack 检查：邻接+非己方→进入战斗流程
-            // 但 wind_plain 有 steppe_junta 的驻军，所以会创建 ActiveBattle
+            // C3 变更：敌方省 → InitiateAttack，可能创建 ActiveBattle
+            // 如果 wind_plain 有守军则创建战斗，无守军则占领
+            Assert.IsTrue(result.accepted, "移动到敌方省应触发进攻");
         }
 
         [Test]

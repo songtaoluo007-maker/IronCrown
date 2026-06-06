@@ -77,6 +77,7 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(c.treasury));
                 bytes.AddRange(System.BitConverter.GetBytes(c.stability));
                 bytes.AddRange(System.BitConverter.GetBytes(c.warSupport));
+                bytes.AddRange(System.BitConverter.GetBytes(c.warExhaustion));
                 bytes.AddRange(System.BitConverter.GetBytes(c.manpower));
                 bytes.AddRange(System.BitConverter.GetBytes(c.civilianFactories));
                 bytes.AddRange(System.BitConverter.GetBytes(c.militaryFactories));
@@ -86,6 +87,8 @@ namespace IronCrown.Application.Tests
                     bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(r.Key));
                     bytes.AddRange(System.BitConverter.GetBytes(r.Value));
                 }
+                bytes.AddRange(System.BitConverter.GetBytes(c.gachaTickets));
+                bytes.AddRange(System.BitConverter.GetBytes(c.gachaPityCounter));
             }
             foreach (var p in world.provinces.Values)
             {
@@ -101,6 +104,8 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(p.gridX));
                 bytes.AddRange(System.BitConverter.GetBytes(p.gridY));
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.terrain.ToString()));
+                bytes.AddRange(System.BitConverter.GetBytes(p.resistance));
+                bytes.AddRange(System.BitConverter.GetBytes(p.compliance));
             }
             // units
             foreach (var u in world.units.Values.OrderBy(u => u.id, System.StringComparer.Ordinal))
@@ -118,13 +123,41 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(u.morale));
                 bytes.AddRange(System.BitConverter.GetBytes(u.experience));
                 bytes.AddRange(System.BitConverter.GetBytes(u.movesLeft));
+                bytes.AddRange(System.BitConverter.GetBytes(u.tacticalExp));
+                bytes.AddRange(System.BitConverter.GetBytes(u.recoveryTurnsLeft));
+                bytes.AddRange(System.BitConverter.GetBytes(u.isCutoff));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.commanderId ?? ""));
+            }
+            // commanders
+            foreach (var cmdr in world.commanders.Values.OrderBy(c => c.id, System.StringComparer.Ordinal))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(cmdr.id));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(cmdr.ownerCountry));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(cmdr.generalCardId ?? ""));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.rank));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.victories));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.starLevel));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.isActive));
+            }
+            // warRelations
+            foreach (var w in world.warRelations)
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(w.countryA));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(w.countryB));
+                bytes.AddRange(System.BitConverter.GetBytes(w.startTurn));
+            }
+            // truceUntilTurn
+            foreach (var t in world.truceUntilTurn.OrderBy(kv => kv.Key))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(t.Key));
+                bytes.AddRange(System.BitConverter.GetBytes(t.Value));
             }
             // activeBattles
             foreach (var b in world.activeBattles)
             {
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.id));
-                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.attackerUnitId));
-                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.defenderUnitId));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.attackerUnitIds[0]));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.defenderUnitIds[0]));
                 bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.provinceId));
                 bytes.AddRange(System.BitConverter.GetBytes(b.turnsElapsed));
             }
@@ -281,7 +314,7 @@ namespace IronCrown.Application.Tests
             var battleA = new BattleResolver(rngA, events);
             var supplyA = new SupplyResolver();
             var constructionA = new ConstructionResolver();
-            var aiA = new AIResolver(config, constructionA);
+            var aiA = new AIResolver(config, constructionA, new BattleResolver(rngA, events));
             var diplomacyA = new DiplomacyResolver();
             var turnA = new TurnResolver(clockA, events, economyA, politicsA, battleA, supplyA, aiA, diplomacyA, constructionA);
 
@@ -306,7 +339,7 @@ namespace IronCrown.Application.Tests
             var battleB = new BattleResolver(rngB, eventsB);
             var supplyB = new SupplyResolver();
             var constructionB = new ConstructionResolver();
-            var aiB = new AIResolver(config, constructionB);
+            var aiB = new AIResolver(config, constructionB, new BattleResolver(rngB, eventsB));
             var diplomacyB = new DiplomacyResolver();
             var turnB = new TurnResolver(clockB, eventsB, economyB, politicsB, battleB, supplyB, aiB, diplomacyB, constructionB);
 
@@ -322,7 +355,7 @@ namespace IronCrown.Application.Tests
             var battleC = new BattleResolver(rngC, eventsC);
             var supplyC = new SupplyResolver();
             var constructionC = new ConstructionResolver();
-            var aiC = new AIResolver(config, constructionC);
+            var aiC = new AIResolver(config, constructionC, new BattleResolver(rngC, eventsC));
             var diplomacyC = new DiplomacyResolver();
             var turnC = new TurnResolver(clockC, eventsC, economyC, politicsC, battleC, supplyC, aiC, diplomacyC, constructionC);
 
@@ -362,7 +395,7 @@ namespace IronCrown.Application.Tests
             var battleA = new BattleResolver(rngA, eventsA);
             var supplyA = new SupplyResolver();
             var constructionA = new ConstructionResolver();
-            var aiA = new AIResolver(config, constructionA);
+            var aiA = new AIResolver(config, constructionA, new BattleResolver(rngA, eventsA));
             var diploA = new DiplomacyResolver();
             var clockA = new GameClock(eventsA);
             var turnA = new TurnResolver(clockA, eventsA, economyA, politicsA, battleA, supplyA, aiA, diploA, constructionA);
@@ -375,7 +408,7 @@ namespace IronCrown.Application.Tests
             var battleB = new BattleResolver(rngB, eventsB);
             var supplyB = new SupplyResolver();
             var constructionB = new ConstructionResolver();
-            var aiB = new AIResolver(config, constructionB);
+            var aiB = new AIResolver(config, constructionB, new BattleResolver(rngB, eventsB));
             var diploB = new DiplomacyResolver();
             var clockB = new GameClock(eventsB);
             var turnB = new TurnResolver(clockB, eventsB, economyB, politicsB, battleB, supplyB, aiB, diploB, constructionB);
@@ -405,7 +438,7 @@ namespace IronCrown.Application.Tests
             var battle = new BattleResolver(rng, events);
             var supply = new SupplyResolver();
             var construction = new ConstructionResolver();
-            var ai = new AIResolver(config, construction);
+            var ai = new AIResolver(config, construction, new BattleResolver(rng, new EventBus()));
             var diplo = new DiplomacyResolver();
             var turn = new TurnResolver(clock, events, economy, politics, battle, supply, ai, diplo, construction);
 
@@ -437,7 +470,7 @@ namespace IronCrown.Application.Tests
             var battleL = new BattleResolver(rngL, events);
             var supplyL = new SupplyResolver();
             var constructionL = new ConstructionResolver();
-            var aiL = new AIResolver(config, constructionL);
+            var aiL = new AIResolver(config, constructionL, new BattleResolver(rngL, events));
             var diploL = new DiplomacyResolver();
             var turnL = new TurnResolver(clockL, events, economyL, politicsL, battleL, supplyL, aiL, diploL, constructionL);
 
@@ -518,8 +551,8 @@ namespace IronCrown.Application.Tests
             unitProd.ResolveProduction(loaded, config);
 
             Assert.AreEqual(0, loaded.countries["empire_north"].unitProductionQueue.Count);
-            Assert.IsTrue(loaded.units.ContainsKey("empire_north_inf_2"), "新部队应生成");
-            Assert.AreEqual(100, loaded.units["empire_north_inf_2"].manpower, "新部队应满编");
+            Assert.IsTrue(loaded.units.ContainsKey("empire_north_inf_1"), "新部队应生成");
+            Assert.AreEqual(100, loaded.units["empire_north_inf_1"].manpower, "新部队应满编");
         }
 
         [Test]
@@ -572,8 +605,8 @@ namespace IronCrown.Application.Tests
             world.activeBattles.Add(new ActiveBattle
             {
                 id = "empire_north_inf_1_vs_republic_west_inf_1",
-                attackerUnitId = "empire_north_inf_1",
-                defenderUnitId = "republic_west_inf_1",
+                attackerUnitIds = new List<string> { "empire_north_inf_1" },
+                defenderUnitIds = new List<string> { "republic_west_inf_1" },
                 provinceId = "liberty_port",
                 turnsElapsed = 1
             });
@@ -586,8 +619,8 @@ namespace IronCrown.Application.Tests
             Assert.AreEqual(1, loaded.activeBattles.Count, "战斗应保留");
             var b = loaded.activeBattles[0];
             Assert.AreEqual("empire_north_inf_1_vs_republic_west_inf_1", b.id);
-            Assert.AreEqual("empire_north_inf_1", b.attackerUnitId);
-            Assert.AreEqual("republic_west_inf_1", b.defenderUnitId);
+            Assert.AreEqual("empire_north_inf_1", b.attackerUnitIds[0]);
+            Assert.AreEqual("republic_west_inf_1", b.defenderUnitIds[0]);
             Assert.AreEqual("liberty_port", b.provinceId);
             Assert.AreEqual(1, b.turnsElapsed);
 
@@ -595,5 +628,284 @@ namespace IronCrown.Application.Tests
             Assert.AreEqual(HashWorld(world), HashWorld(loaded),
                 "含战斗世界存→读 应 hash 等价");
         }
+
+        [Test]
+        public void SaveLoad_WarExhaustion_Preserved()
+        {
+            // 构造有 warExhaustion 的世界，验证存读一致
+            var world = BuildWorldWithProvinces();
+            world.countries["empire_north"].warExhaustion = 42;
+            world.countries["republic_west"].warExhaustion = 18;
+
+            // 存 → 读
+            var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            Assert.AreEqual(42, loaded.countries["empire_north"].warExhaustion,
+                "warExhaustion 存读应一致 (empire_north)");
+            Assert.AreEqual(18, loaded.countries["republic_west"].warExhaustion,
+                "warExhaustion 存读应一致 (republic_west)");
+
+            // hash 等价
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "含 warExhaustion 世界存读应 hash 等价");
+        }
+
+        [Test]
+        public void SaveLoad_PeaceConcluded_Preserved()
+        {
+            // 构造战争+停战后 warExhaustion 减半场景，验证存读一致
+            var world = BuildWorldWithProvinces();
+            // 模拟停战后：warExhaustion 已减半
+            world.countries["empire_north"].warExhaustion = 21; // 42/2
+            world.countries["republic_west"].warExhaustion = 9;  // 18/2
+
+            // 添加一条 warRelation 再移除（模拟曾处于战争）
+            WarRegistry.TryDeclareWar(world, "empire_north", "republic_west", 1, out _);
+            WarRegistry.TryEndWar(world, "empire_north", "republic_west", out _);
+
+            // 存 → 读
+            var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            Assert.AreEqual(21, loaded.countries["empire_north"].warExhaustion,
+                "停战后 warExhaustion 存读应一致 (empire_north)");
+            Assert.AreEqual(9, loaded.countries["republic_west"].warExhaustion,
+                "停战后 warExhaustion 存读应一致 (republic_west)");
+
+            // hash 等价
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "停战世界存读应 hash 等价");
+        }
+
+        [Test]
+        public void SaveLoad_TruceUntilTurn_Preserved()
+        {
+            var world = BuildWorldWithProvinces();
+            world.truceUntilTurn["empire_north_vs_republic_west"] = 25;
+            world.truceUntilTurn["alliance_east_vs_empire_north"] = 30;
+
+            var saveData = SaveMapper.ToSave(world, 99, 0, GamePhase.TurnStart);
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            Assert.AreEqual(25, loaded.truceUntilTurn["empire_north_vs_republic_west"],
+                "truceUntilTurn 存读应一致 (empire_north_vs_republic_west)");
+            Assert.AreEqual(30, loaded.truceUntilTurn["alliance_east_vs_empire_north"],
+                "truceUntilTurn 存读应一致 (alliance_east_vs_empire_north)");
+
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "含 truce 世界存读应 hash 等价");
+        }
+
+        // =================================================================
+        // G2: 将领/抽卡存档等价测试（Phase1-closeout-fix）
+        // =================================================================
+
+        /// <summary>创建含将领配置的 TestConfigRegistry</summary>
+        private TestConfigRegistry CreateConfigWithCommanders()
+        {
+            var config = CreateRealConfig();
+            // 注册 EconomyConfig gacha 字段
+            var eco = config.Get<EconomyConfig>("global");
+            eco.gachaTicketCostPerDraw = 1;
+            eco.gachaTicketsPerVictory = 1;
+            eco.gachaRarityWeightN = 50;
+            eco.gachaRarityWeightR = 35;
+            eco.gachaRarityWeightSR = 12;
+            eco.gachaRarityWeightSSR = 3;
+            eco.gachaSsrPityThreshold = 50;
+            eco.starBonusPerStar = 5;
+            eco.maxStarLevel = 5;
+
+            // 注册 4 张将军卡（N/R/SR/SSR 各一）
+            config.Register("general_basic_officer", new CommanderConfig
+            {
+                id = "general_basic_officer", name = "普通军官", rarity = "N",
+                baseAttack = 5, baseDefense = 5, baseMaxDivisions = 1,
+                skills = new GeneralSkillEntry[0]
+            });
+            config.Register("general_engineer", new CommanderConfig
+            {
+                id = "general_engineer", name = "防御工兵", rarity = "R",
+                baseAttack = 3, baseDefense = 10, baseMaxDivisions = 1,
+                skills = new GeneralSkillEntry[0]
+            });
+            config.Register("general_blitz", new CommanderConfig
+            {
+                id = "general_blitz", name = "突击先锋", rarity = "SR",
+                baseAttack = 20, baseDefense = -5, baseMaxDivisions = 1,
+                skills = new GeneralSkillEntry[0]
+            });
+            config.Register("general_ironwall", new CommanderConfig
+            {
+                id = "general_ironwall", name = "铁壁元帅", rarity = "SSR",
+                baseAttack = 5, baseDefense = 15, baseMaxDivisions = 1,
+                skills = new GeneralSkillEntry[0]
+            });
+
+            return config;
+        }
+
+        [Test]
+        public void SaveLoad_CommanderAndGacha_SurvivesRoundTrip()
+        {
+            var config = CreateConfigWithCommanders();
+            var eco = config.Get<EconomyConfig>("global");
+            var events = new EventBus();
+            var world = BuildWorldWithProvinces();
+
+            // 给 empire_north 50 张抽卡券
+            world.countries["empire_north"].gachaTickets = 50;
+
+            var rng = new RandomService(42);
+            var commanderResolver = new CommanderResolver(config);
+            var gachaResolver = new GachaResolver(events, commanderResolver);
+
+            // 抽 3 次卡（造 3 个将领）
+            var drawn = new List<CommanderState>();
+            for (int i = 0; i < 3; i++)
+            {
+                var cmdr = gachaResolver.DrawCard(world.countries["empire_north"], world, rng, config, eco);
+                Assert.IsNotNull(cmdr, $"第 {i + 1} 次抽卡应成功");
+                drawn.Add(cmdr);
+            }
+
+            // 对第一张卡再抽一次同卡 → 升星（强制指定 generalCardId）
+            var target = drawn[0];
+            target.generalCardId = "general_engineer"; // 强制为 R 卡
+            var existing = world.commanders.Values
+                .FirstOrDefault(c => c.ownerCountry == "empire_north" && c.generalCardId == "general_engineer");
+            if (existing != null && existing.starLevel < eco.maxStarLevel)
+                existing.starLevel = 2; // 模拟已升 2 星
+
+            // 给第一个将领分配 1 个师
+            var unit = world.units["empire_north_inf_1"];
+            unit.commanderId = target.id;
+
+            // 记录存档前状态
+            int commanderCount = world.commanders.Values.Count(c => c.ownerCountry == "empire_north");
+            int gachaTicketsBefore = world.countries["empire_north"].gachaTickets;
+            int starLevelBefore = target.starLevel;
+
+            // 存档
+            var saveData = SaveMapper.ToSave(world, 42, rng.State, GamePhase.TurnStart);
+
+            // 读档
+            var loaded = SaveMapper.ToRuntime(saveData);
+
+            // === 验证将领存活 ===
+            var loadedCommanders = loaded.commanders.Values
+                .Where(c => c.ownerCountry == "empire_north")
+                .ToList();
+            Assert.AreEqual(commanderCount, loadedCommanders.Count,
+                "读档后将领数量应保留");
+
+            // === 验证星级 ===
+            var loadedTarget = loaded.commanders.Values
+                .FirstOrDefault(c => c.id == target.id);
+            Assert.IsNotNull(loadedTarget, "读档后目标将领应存在");
+            Assert.AreEqual(starLevelBefore, loadedTarget.starLevel,
+                "读档后星级应保留");
+
+            // === 验证抽卡券 ===
+            Assert.AreEqual(gachaTicketsBefore, loaded.countries["empire_north"].gachaTickets,
+                "读档后抽卡券应保留");
+
+            // === 验证部队将领任命 ===
+            Assert.AreEqual(target.id, loaded.units["empire_north_inf_1"].commanderId,
+                "读档后部队将领任命应保留");
+
+            // === 验证 country.commanderIds ===
+            Assert.AreEqual(commanderCount, loaded.countries["empire_north"].commanderIds.Count,
+                "读档后 country.commanderIds 数量应保留");
+            foreach (var cmdr in loadedCommanders)
+            {
+                Assert.IsTrue(loaded.countries["empire_north"].commanderIds.Contains(cmdr.id),
+                    $"读档后 country.commanderIds 应包含 {cmdr.id}");
+            }
+
+            // === HashWorld 等价 ===
+            Assert.AreEqual(HashWorld(world), HashWorld(loaded),
+                "含将领/抽卡世界存→读 应 hash 等价");
+        }
+
+        [Test]
+        public void SaveLoad_RunForward_WithCommanders_Equivalent()
+        {
+            var config = CreateConfigWithCommanders();
+            var eco = config.Get<EconomyConfig>("global");
+            var seed = 77777;
+
+            // === Path A: 含将领世界 → 跑 2 回合 → 存 → 读 → 再跑 2 回合 ===
+            var worldA = BuildWorldWithProvinces();
+            worldA.countries["empire_north"].gachaTickets = 20;
+            var eventsA = new EventBus();
+            var rngA = new RandomService(seed);
+            var cmdrResA = new CommanderResolver(config);
+            var gachaA = new GachaResolver(eventsA, cmdrResA);
+
+            // 先抽 2 张卡造将领
+            gachaA.DrawCard(worldA.countries["empire_north"], worldA, rngA, config, eco);
+            gachaA.DrawCard(worldA.countries["empire_north"], worldA, rngA, config, eco);
+
+            var clockA = new GameClock(eventsA);
+            var economyA = new EconomyResolver(config, eventsA);
+            var politicsA = new PoliticsResolver(config);
+            var battleA = new BattleResolver(rngA, eventsA);
+            var supplyA = new SupplyResolver();
+            var constructionA = new ConstructionResolver();
+            var aiA = new AIResolver(config, constructionA, new BattleResolver(rngA, eventsA));
+            var diplomacyA = new DiplomacyResolver();
+            var turnA = new TurnResolver(clockA, eventsA, economyA, politicsA, battleA, supplyA, aiA, diplomacyA, constructionA);
+
+            RunTurns(turnA, clockA, worldA, 2);
+
+            // 存档
+            var saveData = SaveMapper.ToSave(worldA, seed, rngA.State, clockA.CurrentPhase);
+            var loaded = SaveMapper.ToRuntime(saveData);
+            var rngA2 = new RandomService(seed);
+            rngA2.RestoreState(saveData.rngState);
+            var clockA2 = new GameClock(new EventBus());
+            clockA2.Restore(saveData.turnNumber, System.Enum.Parse<GamePhase>(saveData.phase));
+            var eventsA2 = new EventBus();
+            var economyA2 = new EconomyResolver(config, eventsA2);
+            var politicsA2 = new PoliticsResolver(config);
+            var battleA2 = new BattleResolver(rngA2, eventsA2);
+            var supplyA2 = new SupplyResolver();
+            var constructionA2 = new ConstructionResolver();
+            var aiA2 = new AIResolver(config, constructionA2, new BattleResolver(rngA2, eventsA2));
+            var diplomacyA2 = new DiplomacyResolver();
+            var turnA2 = new TurnResolver(clockA2, eventsA2, economyA2, politicsA2, battleA2, supplyA2, aiA2, diplomacyA2, constructionA2);
+
+            RunTurns(turnA2, clockA2, loaded, 2);
+
+            // === Path B: 直接跑 4 回合 ===
+            var worldB = BuildWorldWithProvinces();
+            worldB.countries["empire_north"].gachaTickets = 20;
+            var eventsB = new EventBus();
+            var rngB = new RandomService(seed);
+            var cmdrResB = new CommanderResolver(config);
+            var gachaB = new GachaResolver(eventsB, cmdrResB);
+
+            gachaB.DrawCard(worldB.countries["empire_north"], worldB, rngB, config, eco);
+            gachaB.DrawCard(worldB.countries["empire_north"], worldB, rngB, config, eco);
+
+            var clockB = new GameClock(eventsB);
+            var economyB = new EconomyResolver(config, eventsB);
+            var politicsB = new PoliticsResolver(config);
+            var battleB = new BattleResolver(rngB, eventsB);
+            var supplyB = new SupplyResolver();
+            var constructionB = new ConstructionResolver();
+            var aiB = new AIResolver(config, constructionB, new BattleResolver(rngB, eventsB));
+            var diplomacyB = new DiplomacyResolver();
+            var turnB = new TurnResolver(clockB, eventsB, economyB, politicsB, battleB, supplyB, aiB, diplomacyB, constructionB);
+
+            RunTurns(turnB, clockB, worldB, 4);
+
+            // 哈希等价
+            Assert.AreEqual(HashWorld(worldB), HashWorld(loaded),
+                "含将领: 跑2→存→读→再跑2 应等于 直接跑4");
+        }
     }
+
 }

@@ -1,0 +1,229 @@
+{
+    "schemaVersion": 1,
+    "items": [
+        {
+            "id": "general_test_basic",
+            "name": "测试将军",
+            "title": "铁壁将军",
+            "rarity": "N",
+            "baseAttack": 5,
+            "baseDefense": 5,
+            "traits": ["defensive"],
+            "recruitCapitalCost": 100,
+            "recruitManpowerCost": 500,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": []
+        },
+        {
+            "id": "general_ironwall",
+            "name": "铁壁元帅",
+            "title": "铁壁",
+            "rarity": "SSR",
+            "baseAttack": 5,
+            "baseDefense": 15,
+            "traits": ["defensive", "ironwall"],
+            "recruitCapitalCost": 150,
+            "recruitManpowerCost": 600,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 15,
+            "skills": [
+                { "type": "defenseBonus", "value": 20 },
+                { "type": "moraleBonus", "value": 15 }
+            ]
+        },
+        {
+            "id": "general_blitz",
+            "name": "突击先锋",
+            "title": "闪电",
+            "rarity": "SSR",
+            "baseAttack": 20,
+            "baseDefense": -5,
+            "traits": ["aggressive", "blitz"],
+            "recruitCapitalCost": 150,
+            "recruitManpowerCost": 600,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": [
+                { "type": "attackBonus", "value": 20 },
+                { "type": "breakthroughBonus", "value": 15 },
+                { "type": "defenseBonus", "value": -5 }
+            ]
+        },
+        {
+            "id": "general_armor_pioneer",
+            "name": "装甲先驱",
+            "title": "铁甲",
+            "rarity": "SSR",
+            "baseAttack": 10,
+            "baseDefense": 5,
+            "traits": ["armor", "pioneer"],
+            "recruitCapitalCost": 150,
+            "recruitManpowerCost": 600,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": [
+                { "type": "brigadeBonus", "brigadeType": "light_tank", "stat": "attack", "value": 25 }
+            ]
+        },
+        {
+            "id": "general_lightning",
+            "name": "闪电将军",
+            "title": "闪电",
+            "rarity": "SSR",
+            "baseAttack": 15,
+            "baseDefense": 5,
+            "traits": ["fast", "lightning"],
+            "recruitCapitalCost": 150,
+            "recruitManpowerCost": 600,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": [
+                { "type": "speedBonus", "value": 1 },
+                { "type": "breakthroughBonus", "value": 20 }
+            ]
+        },
+        {
+            "id": "general_mountain_hunter",
+            "name": "山地猎手",
+            "title": "山地",
+            "rarity": "SR",
+            "baseAttack": 8,
+            "baseDefense": 10,
+            "traits": ["mountain", "hunter"],
+            "recruitCapitalCost": 120,
+            "recruitManpowerCost": 500,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": [
+                { "type": "terrainBonus", "terrain": "Mountain", "value": 30 },
+                { "type": "terrainBonus", "terrain": "Hills", "value": 30 }
+            ]
+        },
+        {
+            "id": "general_fireman",
+            "name": "救火队员",
+            "title": "救火",
+            "rarity": "SR",
+            "baseAttack": 8,
+            "baseDefense": 8,
+            "traits": ["rescue", "fireman"],
+            "recruitCapitalCost": 120,
+            "recruitManpowerCost": 500,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": [
+                { "type": "cutoffDecayMultiplier", "value": 50 }
+            ]
+        },
+        {
+            "id": "general_logistics",
+            "name": "后勤大师",
+            "title": "后勤",
+            "rarity": "SR",
+            "baseAttack": 3,
+            "baseDefense": 8,
+            "traits": ["logistics", "supply"],
+            "recruitCapitalCost": 120,
+            "recruitManpowerCost": 500,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 25,
+            "moraleBonus": 0,
+            "skills": [
+                { "type": "supplyConsumptionReduction", "value": 25 },
+                { "type": "reinforceRateBonus", "value": 20 }
+            ]
+        },
+        {
+            "id": "general_plains_hound",
+            "name": "平原猎犬",
+            "title": "平原",
+            "rarity": "SR",
+            "baseAttack": 10,
+            "baseDefense": 8,
+            "traits": ["plains", "mobile"],
+            "recruitCapitalCost": 120,
+            "recruitManpowerCost": 500,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": [
+                { "type": "terrainBonus", "terrain": "Plain", "value": 15 },
+                { "type": "terrainBonus", "terrain": "Coastline", "value": 15 }
+            ]
+        },
+        {
+            "id": "general_veteran",
+            "name": "老将",
+            "title": "老兵",
+            "rarity": "R",
+            "baseAttack": 5,
+            "baseDefense": 5,
+            "traits": ["veteran", "experienced"],
+            "recruitCapitalCost": 80,
+            "recruitManpowerCost": 400,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": [
+                { "type": "tacticalExpRateBonus", "value": 50 }
+            ]
+        },
+        {
+            "id": "general_engineer",
+            "name": "防御工兵",
+            "title": "工兵",
+            "rarity": "R",
+            "baseAttack": 3,
+            "baseDefense": 10,
+            "traits": ["engineer", "defensive"],
+            "recruitCapitalCost": 80,
+            "recruitManpowerCost": 400,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": [
+                { "type": "defenseBonus", "value": 10 }
+            ]
+        },
+        {
+            "id": "general_infantry_drill",
+            "name": "步兵教官",
+            "title": "教官",
+            "rarity": "R",
+            "baseAttack": 5,
+            "baseDefense": 5,
+            "traits": ["infantry", "trainer"],
+            "recruitCapitalCost": 80,
+            "recruitManpowerCost": 400,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": [
+                { "type": "brigadeBonus", "brigadeType": "infantry", "stat": "attackDefense", "value": 10 }
+            ]
+        },
+        {
+            "id": "general_basic_officer",
+            "name": "普通军官",
+            "title": "军官",
+            "rarity": "N",
+            "baseAttack": 5,
+            "baseDefense": 5,
+            "traits": ["basic"],
+            "recruitCapitalCost": 60,
+            "recruitManpowerCost": 300,
+            "baseMaxDivisions": 1,
+            "logisticsBonus": 0,
+            "moraleBonus": 0,
+            "skills": []
+        }
+    ]
+}

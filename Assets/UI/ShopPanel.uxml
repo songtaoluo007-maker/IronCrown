@@ -1,0 +1,28 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <Style src="project://database/Assets/UI/ShopPanel.uss" />
+
+    <ui:VisualElement name="shop-panel" class="panel-root" style="display: none;">
+        <ui:Label name="title" text="商城" class="panel-title" />
+        <ui:Label name="tickets-label" text="券: 0" class="tickets-display" />
+
+        <ui:VisualElement name="item-1" class="shop-item">
+            <ui:Label text="10 连券包" class="item-name" />
+            <ui:Label text="8 券 → 10 抽" class="item-desc" />
+            <ui:Button name="btn-bundle" text="购买" class="btn-action" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="item-2" class="shop-item">
+            <ui:Label text="SSR 保底兑换券" class="item-name" />
+            <ui:Label text="200 券 → 必出 SSR" class="item-desc" />
+            <ui:Button name="btn-ssr" text="购买" class="btn-action" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="item-3" class="shop-item">
+            <ui:Label text="特定卡兑换券" class="item-name" />
+            <ui:Label text="100 券 → 指定卡" class="item-desc" />
+            <ui:Button name="btn-specific" text="购买" class="btn-action" />
+        </ui:VisualElement>
+
+        <ui:Button name="btn-close" text="返回" class="btn-secondary" />
+    </ui:VisualElement>
+</ui:UXML>

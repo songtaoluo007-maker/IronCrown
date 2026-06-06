@@ -363,8 +363,8 @@ namespace IronCrown.Application.Tests
             world.activeBattles.Add(new ActiveBattle
             {
                 id = "battle_1",
-                attackerUnitId = "atk",
-                defenderUnitId = "def",
+                attackerUnitIds = new List<string> { "atk" },
+                defenderUnitIds = new List<string> { "def" },
                 provinceId = "p1",
                 turnsElapsed = 1
             });
@@ -392,8 +392,8 @@ namespace IronCrown.Application.Tests
             world.activeBattles.Add(new ActiveBattle
             {
                 id = "battle_1",
-                attackerUnitId = "atk",
-                defenderUnitId = "def",
+                attackerUnitIds = new List<string> { "atk" },
+                defenderUnitIds = new List<string> { "def" },
                 provinceId = "p1",
                 turnsElapsed = 0
             });
@@ -433,8 +433,8 @@ namespace IronCrown.Application.Tests
             world.activeBattles.Add(new ActiveBattle
             {
                 id = "battle_1",
-                attackerUnitId = "atk",
-                defenderUnitId = "def",
+                attackerUnitIds = new List<string> { "atk" },
+                defenderUnitIds = new List<string> { "def" },
                 provinceId = "p1",
                 turnsElapsed = 2
             });
@@ -450,6 +450,25 @@ namespace IronCrown.Application.Tests
             Assert.AreEqual(60, b.attackerMaxOrg);
             Assert.AreEqual(40, b.defenderOrg);
             Assert.AreEqual(60, b.defenderMaxOrg);
+        }
+
+        [Test]
+        public void BuildCountryView_WarExhaustion_PassedThrough()
+        {
+            var country = new CountryState
+            {
+                id = "test_country",
+                name = "Test",
+                ideology = Ideology.FreeRepublic,
+                stability = 70,
+                warSupport = 50,
+                warExhaustion = 42
+            };
+            country.resources["steel"] = 100;
+
+            var view = _builder.BuildCountryView(country);
+
+            Assert.AreEqual(42, view.warExhaustion, "warExhaustion 应透传到 CountryView");
         }
     }
 }

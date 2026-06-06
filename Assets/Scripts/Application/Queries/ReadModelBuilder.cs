@@ -38,8 +38,8 @@ namespace IronCrown.Application
             var battleProvinceIds = new HashSet<string>();
             foreach (var b in world.activeBattles)
             {
-                battleUnitIds.Add(b.attackerUnitId);
-                battleUnitIds.Add(b.defenderUnitId);
+                foreach (var uid in b.attackerUnitIds) battleUnitIds.Add(uid);
+                foreach (var uid in b.defenderUnitIds) battleUnitIds.Add(uid);
                 battleProvinceIds.Add(b.provinceId);
             }
 
@@ -50,7 +50,7 @@ namespace IronCrown.Application
 
             var units = world.units.Values
                 .OrderBy(u => u.id, System.StringComparer.Ordinal)
-                .Select(u => BuildUnitView(u, battleUnitIds))
+                .Select(u => BuildUnitView(u, battleUnitIds, config, world.commanders))
                 .ToList();
 
             var activeBattles = world.activeBattles
@@ -69,7 +69,19 @@ namespace IronCrown.Application
                 countries = countries,
                 provinces = provinces,
                 units = units,
-                activeBattles = activeBattles
+                activeBattles = activeBattles,
+                warRelations = world.warRelations
+                    .OrderBy(w => w.countryA, System.StringComparer.Ordinal)
+                    .ThenBy(w => w.countryB, System.StringComparer.Ordinal)
+                    .Select(BuildWarRelationView)
+                    .ToList(),
+                // C15a: 将领列表
+                commanders = world.commanders.Values
+                    .OrderBy(c => c.id, System.StringComparer.Ordinal)
+                    .Select(BuildCommanderView)
+                    .ToList(),
+                gameOverResult = world.gameOverResult,
+                gameOverWinnerCountryId = world.gameOverWinnerCountryId
             };
         }
 
@@ -92,8 +104,15 @@ namespace IronCrown.Application
                 resources = new Dictionary<string, int>(c.resources),
                 constructionQueueCount = c.constructionQueue.Count,
                 unitProductionQueueCount = c.unitProductionQueue.Count,
+                unitCount = c.unitIds.Count,
                 taxLevel = c.taxLevel,
-                civilLevel = c.civilLevel
+                civilLevel = c.civilLevel,
+                warExhaustion = c.warExhaustion,
+                peaceOfferCooldown = c.peaceOfferCooldown,
+                pendingPeaceOfferFrom = c.pendingPeaceOfferFrom,
+                    pendingPeaceOfferExpiry = c.pendingPeaceOfferExpiry,
+                    gachaTickets = c.gachaTickets,
+                    gachaPityCounter = c.gachaPityCounter
             };
         }
 
@@ -144,53 +163,135 @@ namespace IronCrown.Application
                 garrisonUnitIds = garrisonUnitIds,
                 controllerCountry = p.controllerCountry,
                 isOccupied = p.controllerCountry != null && p.controllerCountry != p.ownerCountry,
-                hasActiveBattle = battleProvinceIds != null && battleProvinceIds.Contains(p.id)
+                hasActiveBattle = battleProvinceIds != null && battleProvinceIds.Contains(p.id),
+                  resistance = p.resistance,
+                  supplyCapacity = p.CalculateSupplyCapacity()
             };
         }
 
-        public UnitView BuildUnitView(UnitState u, HashSet<string> battleUnitIds = null)
+        public UnitView BuildUnitView(UnitState u, HashSet<string> battleUnitIds = null, IConfigRegistry config = null, Dictionary<string, CommanderState> commanders = null)
         {
+            // C11: 生成旅摘要
+            string brigadeSummary = "";
+            if (u.brigades != null && u.brigades.Count > 0)
+            {
+                var parts = new System.Collections.Generic.List<string>();
+                foreach (var b in u.brigades)
+                {
+                    var cfg = config?.Get<UnitConfig>(b.brigadeType);
+                    string name = cfg?.name ?? b.brigadeType;
+                    parts.Add($"{b.count} {name}");
+                }
+                brigadeSummary = string.Join(" + ", parts);
+            }
+
+            // C11: 师模板名
+            string divTemplateName = "";
+            if (!string.IsNullOrEmpty(u.divisionTemplateId) && config != null)
+            {
+                var divT = config.Get<DivisionTemplate>(u.divisionTemplateId);
+                divTemplateName = divT?.name ?? u.divisionTemplateId;
+            }
+
             return new UnitView
             {
                 id = u.id,
                 unitType = u.unitType,
+                divisionTemplateName = divTemplateName,
+                brigadeSummary = brigadeSummary,
                 ownerCountry = u.ownerCountry,
                 currentProvinceId = u.currentProvinceId,
                 manpower = u.manpower,
                 maxManpower = u.maxManpower,
+                equipment = u.equipment,
+                maxEquipment = u.maxEquipment,
                 organization = u.organization,
                 maxOrganization = u.maxOrganization,
                 movesLeft = u.movesLeft,
                 speed = u.speed,
-                isInBattle = battleUnitIds != null && battleUnitIds.Contains(u.id)
+                tacticalExp = u.tacticalExp,
+                tacticalLevel = u.tacticalExp / 25,  // 0-4
+                recoveryTurnsLeft = u.recoveryTurnsLeft,
+                isRecovering = u.recoveryTurnsLeft > 0,
+                isInBattle = battleUnitIds != null && battleUnitIds.Contains(u.id),
+                isCutoff = u.isCutoff,
+                cutoffTurns = u.cutoffTurns,
+                isDisorganized = u.isDisorganized,
+                morale = u.morale,
+                // C15a: 将领信息
+                commanderId = u.commanderId,
+                commanderName = (commanders != null && !string.IsNullOrEmpty(u.commanderId) && commanders.TryGetValue(u.commanderId, out var cmdr)) ? cmdr.name : null,
+                commanderRank = (commanders != null && !string.IsNullOrEmpty(u.commanderId) && commanders.TryGetValue(u.commanderId, out var cmdr2)) ? cmdr2.RankName : null
             };
         }
 
         public ActiveBattleView BuildActiveBattleView(ActiveBattle b, Dictionary<string, UnitState> units)
         {
             int atkOrg = 0, atkMaxOrg = 0, defOrg = 0, defMaxOrg = 0;
-            if (units.TryGetValue(b.attackerUnitId, out var atk))
+            foreach (var uid in b.attackerUnitIds)
             {
-                atkOrg = atk.organization;
-                atkMaxOrg = atk.maxOrganization;
+                if (units.TryGetValue(uid, out var atk))
+                {
+                    atkOrg += atk.organization;
+                    atkMaxOrg += atk.maxOrganization;
+                }
             }
-            if (units.TryGetValue(b.defenderUnitId, out var def))
+            foreach (var uid in b.defenderUnitIds)
             {
-                defOrg = def.organization;
-                defMaxOrg = def.maxOrganization;
+                if (units.TryGetValue(uid, out var def))
+                {
+                    defOrg += def.organization;
+                    defMaxOrg += def.maxOrganization;
+                }
             }
 
             return new ActiveBattleView
             {
                 id = b.id,
-                attackerUnitId = b.attackerUnitId,
-                defenderUnitId = b.defenderUnitId,
+                attackerUnitIds = b.attackerUnitIds,
+                defenderUnitIds = b.defenderUnitIds,
                 provinceId = b.provinceId,
+                attackerOwnerCountry = b.attackerOwnerCountry,
                 turnsElapsed = b.turnsElapsed,
                 attackerOrg = atkOrg,
                 attackerMaxOrg = atkMaxOrg,
                 defenderOrg = defOrg,
                 defenderMaxOrg = defMaxOrg
+            };
+        }
+
+        public WarRelationView BuildWarRelationView(WarRelation w)
+        {
+            return new WarRelationView
+            {
+                countryA = w.countryA,
+                countryB = w.countryB,
+                startTurn = w.startTurn
+            };
+        }
+
+        // === C15a: 将领视图 ===
+        public CommanderView BuildCommanderView(CommanderState c)
+        {
+            return new CommanderView
+            {
+                id = c.id,
+                name = c.name,
+                ownerCountry = c.ownerCountry,
+                rank = c.rank,
+                rankName = c.RankName,
+                victories = c.victories,
+                encirclements = c.encirclements,
+                baseAttack = c.baseAttack,
+                baseDefense = c.baseDefense,
+                rankAttackBonusPct = c.RankAttackBonusPct,
+                rankDefenseBonusPct = c.RankDefenseBonusPct,
+                maxDivisions = c.maxDivisions,
+                commandedDivisions = 0, // 由 HUD 层计算
+                isActive = c.isActive,
+                canPromote = c.CanPromote,
+                buffDescription = c.GetBuffDescription(),
+                starLevel = c.starLevel
             };
         }
     }

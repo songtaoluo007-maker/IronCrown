@@ -1,7 +1,7 @@
 // ============================================================================
-// Simulation/BattleResolver.cs — 战斗结算器
-// Phase 5: RandomService → IRandom, EventBus.Instance → IEventPublisher
-// float 公式保持不变
+// Simulation/BattleResolver.cs — 战斗结算器（C12 整数化 + 旅级战损）
+// C9c: 多兵种联合战斗
+// C12: float→int 整数化 + 旅级战损分摊
 // ============================================================================
 
 using System;
@@ -16,40 +16,251 @@ namespace IronCrown.Simulation
     {
         private readonly IRandom _rng;
         private readonly IEventPublisher _events;
+        private readonly IConfigRegistry _config;
+        private readonly CommanderResolver _commander; // C15a
 
-        public BattleResolver(IRandom rng, IEventPublisher events)
+        public BattleResolver(IRandom rng, IEventPublisher events, IConfigRegistry config = null, CommanderResolver commander = null)
         {
             _rng = rng;
             _events = events;
+            _config = config;
+            _commander = commander;
         }
 
-        public BattleResult ResolveBattle(UnitState attacker, UnitState defender, ProvinceState province)
+        // =====================================================================
+        // C12: 整数化战斗核心
+        // =====================================================================
+
+        /// <summary>单师攻方战力（int × 100 量级，含战役等级 + 将军 buff）</summary>
+        private int SingleUnitAttackPower(UnitState unit, EconomyConfig eco = null, WorldState world = null)
+        {
+            int orgPct = unit.organization * 100 / Math.Max(1, unit.maxOrganization);
+            int expBonus = 100 + unit.experience * 10;
+            int basePower = unit.baseAttack * orgPct * expBonus / 10000;
+
+            // C13: 战役等级加成
+            if (eco != null)
+            {
+                int level = Math.Min(4, unit.tacticalExp / Math.Max(1, eco.tacticalExpLevelStep));
+                int levelBonus = 100 + level * eco.tacticalExpAttackBonusPerLevel;
+                basePower = basePower * levelBonus / 100;
+            }
+
+            // C15a: 将军军衔攻击 buff（与战役等级相乘）
+            if (_commander != null && world != null && !string.IsNullOrEmpty(unit.commanderId))
+            {
+                int cmdrBuffPct = _commander.GetCommanderAttackBuffPct(world, unit.commanderId);
+                basePower = basePower * cmdrBuffPct / 100;
+            }
+
+            // C15b: 将军卡技能攻击 buff（在军衔之后、最终缩放前）
+            if (_commander != null && world != null && !string.IsNullOrEmpty(unit.commanderId) && _config != null)
+            {
+                var cmdr = world.commanders.TryGetValue(unit.commanderId, out var c) ? c : null;
+                if (cmdr != null)
+                {
+                    int cardAtkPct = CommanderSkillEvaluator.EvalAttack(_config, cmdr, unit, null, world);
+                    basePower = basePower * cardAtkPct / 100;
+
+                    // C16: 星级加成（每星 +5%）
+                    var gachaEco = _config.Get<EconomyConfig>("global");
+                    if (gachaEco != null && cmdr.starLevel > 0)
+                    {
+                        int starPct = 100 + cmdr.starLevel * gachaEco.starBonusPerStar;
+                        basePower = basePower * starPct / 100;
+                    }
+                }
+            }
+
+            return basePower;
+        }
+
+        /// <summary>单师守方战力（int × 100 量级，含战役等级 + 将军 buff）</summary>
+        private int SingleUnitDefensePower(UnitState unit, EconomyConfig eco = null, WorldState world = null)
+        {
+            int orgPct = unit.organization * 100 / Math.Max(1, unit.maxOrganization);
+            int expBonus = 100 + unit.experience * 10;
+            int basePower = unit.baseDefense * orgPct * expBonus / 10000;
+
+            // C13: 战役等级加成
+            if (eco != null)
+            {
+                int level = Math.Min(4, unit.tacticalExp / Math.Max(1, eco.tacticalExpLevelStep));
+                int levelBonus = 100 + level * eco.tacticalExpDefenseBonusPerLevel;
+                basePower = basePower * levelBonus / 100;
+            }
+
+            // C15a: 将军军衔防御 buff（与战役等级相乘）
+            if (_commander != null && world != null && !string.IsNullOrEmpty(unit.commanderId))
+            {
+                int cmdrBuffPct = _commander.GetCommanderDefenseBuffPct(world, unit.commanderId);
+                basePower = basePower * cmdrBuffPct / 100;
+            }
+
+            // C15b: 将军卡技能防御 buff
+            if (_commander != null && world != null && !string.IsNullOrEmpty(unit.commanderId) && _config != null)
+            {
+                var cmdr = world.commanders.TryGetValue(unit.commanderId, out var c) ? c : null;
+                if (cmdr != null)
+                {
+                    int cardDefPct = CommanderSkillEvaluator.EvalDefense(_config, cmdr, unit, null, world);
+                    basePower = basePower * cardDefPct / 100;
+
+                    // C16: 星级加成（每星 +5%）
+                    var gachaEco = _config.Get<EconomyConfig>("global");
+                    if (gachaEco != null && cmdr.starLevel > 0)
+                    {
+                        int starPct = 100 + cmdr.starLevel * gachaEco.starBonusPerStar;
+                        basePower = basePower * starPct / 100;
+                    }
+                }
+            }
+
+            return basePower;
+        }
+
+        /// <summary>地形防御倍率（int，100 = ×1.0）</summary>
+        private int GetTerrainDefenseMultiplierInt(TerrainType terrain) => terrain switch
+        {
+            TerrainType.Plain     => 100,
+            TerrainType.Forest    => 110,
+            TerrainType.Mountain  => 125,
+            TerrainType.Hills     => 115,
+            TerrainType.Urban     => 130,
+            TerrainType.Swamp     => 120,
+            TerrainType.River     => 120,
+            _ => 100
+        };
+
+        /// <summary>装甲修正（int: 50/100/120）</summary>
+        private int CalculateArmorModifierInt(List<UnitState> attackers, List<UnitState> defenders)
+        {
+            int atkPiercing = attackers.Max(u => u.piercing);
+            int defArmor    = defenders.Max(u => u.armor);
+            if (defArmor > atkPiercing) return 50;    // 防穿透不足 ×0.5
+            if (atkPiercing > defArmor) return 120;   // 防穿透优势 ×1.2
+            return 100;                               // 平衡 ×1.0
+        }
+
+        /// <summary>随机抖动（int ±variancePct%）</summary>
+        private int ApplyRandomInt(int baseValue, int variancePct)
+        {
+            int range = baseValue * variancePct / 100;
+            if (range <= 0) return Math.Max(1, baseValue);
+            int roll = _rng.Range(-range, range + 1);
+            return Math.Max(1, baseValue + roll);
+        }
+
+        // =====================================================================
+        // C12: ResolveMultiBattle — 师级团战核心
+        // =====================================================================
+
+        /// <summary>多师团战结算（C12 核心 + C15a 将军 buff）</summary>
+        public void ResolveMultiBattle(List<UnitState> attackers, List<UnitState> defenders, ProvinceState province, WorldState world = null)
+        {
+            if (attackers.Count == 0 || defenders.Count == 0) return;
+
+            // --- 攻方总战力 ---
+            var eco = _config?.Get<EconomyConfig>("global");
+            int atkTotal = 0;
+            foreach (var u in attackers) atkTotal += SingleUnitAttackPower(u, eco, world);
+
+            // --- 守方总战力（含地形） ---
+            int defTotal = 0;
+            foreach (var u in defenders) defTotal += SingleUnitDefensePower(u, eco, world);
+            int terrainMult = GetTerrainDefenseMultiplierInt(province.terrain);
+            defTotal = defTotal * terrainMult / 100;
+
+            // --- 装甲修正 ---
+            int armorMod = CalculateArmorModifierInt(attackers, defenders);
+            atkTotal = atkTotal * armorMod / 100;
+
+            // --- 战斗比（int × 100） ---
+            int combatRatioPct = atkTotal * 100 / Math.Max(1, defTotal);
+            combatRatioPct = Math.Clamp(combatRatioPct, 10, 1000);
+
+            // --- 总伤害 ---
+            int totalAtkOrgDmg = ApplyRandomInt(10 * 100 / Math.Max(1, combatRatioPct), 20);
+            int totalAtkStrDmg = ApplyRandomInt(5 * 100 / Math.Max(1, combatRatioPct), 20);
+            int totalDefOrgDmg = ApplyRandomInt(10 * combatRatioPct / 100, 20);
+            int totalDefStrDmg = ApplyRandomInt(5 * combatRatioPct / 100, 20);
+
+            // --- 按师权重分摊伤害（brigade count 粗略反映规模） ---
+            int atkBrigades = attackers.Sum(u => u.brigades != null && u.brigades.Count > 0 ? u.brigades.Sum(b => b.count) : 1);
+            int defBrigades = defenders.Sum(u => u.brigades != null && u.brigades.Count > 0 ? u.brigades.Sum(b => b.count) : 1);
+
+            foreach (var u in attackers)
+            {
+                int unitBrigades = (u.brigades != null && u.brigades.Count > 0) ? u.brigades.Sum(b => b.count) : 1;
+                int orgShare = totalAtkOrgDmg * unitBrigades / Math.Max(1, atkBrigades);
+                int strShare = totalAtkStrDmg * unitBrigades / Math.Max(1, atkBrigades);
+                DistributeDamageToBrigades(u, orgShare, strShare);
+            }
+
+            foreach (var u in defenders)
+            {
+                int unitBrigades = (u.brigades != null && u.brigades.Count > 0) ? u.brigades.Sum(b => b.count) : 1;
+                int orgShare = totalDefOrgDmg * unitBrigades / Math.Max(1, defBrigades);
+                int strShare = totalDefStrDmg * unitBrigades / Math.Max(1, defBrigades);
+                DistributeDamageToBrigades(u, orgShare, strShare);
+            }
+        }
+
+        /// <summary>单师内伤害分摊到旅（按 manpower 权重）</summary>
+        private void DistributeDamageToBrigades(UnitState unit, int orgDmg, int strDmg)
+        {
+            // 师级 organization 扣减
+            unit.organization = Math.Max(0, unit.organization - orgDmg);
+
+            // 无旅组成 → 走旧逻辑
+            if (unit.brigades == null || unit.brigades.Count == 0)
+            {
+                unit.manpower  = Math.Max(0, unit.manpower  - strDmg);
+                unit.equipment = Math.Max(0, unit.equipment - strDmg);
+                return;
+            }
+
+            // 按旅 manpower 权重分摊 strDmg
+            int totalMp = unit.brigades.Sum(b => b.manpower);
+            if (totalMp > 0)
+            {
+                int distributed = 0;
+                for (int i = 0; i < unit.brigades.Count; i++)
+                {
+                    var b = unit.brigades[i];
+                    int share = (i == unit.brigades.Count - 1)
+                        ? strDmg - distributed
+                        : strDmg * b.manpower / totalMp;
+                    b.TakeDamage(0, share);
+                    distributed += share;
+                }
+            }
+
+            // 移除被歼灭的旅
+            unit.brigades.RemoveAll(b => b.IsDestroyed);
+
+            // 旅全灭 → 师溃散
+            if (unit.brigades.Count == 0)
+                unit.organization = 0;
+
+            // 旅变化后重算师属性
+            if (_config != null)
+                unit.RecalculateFromBrigades(_config);
+        }
+
+        // =====================================================================
+        // 向后兼容：1v1 战斗（委托给 ResolveMultiBattle）
+        // =====================================================================
+
+        /// <summary>向后兼容：1v1 战斗结算（内部委托 ResolveMultiBattle）</summary>
+        public BattleResult ResolveBattle(UnitState attacker, UnitState defender, ProvinceState province, WorldState world = null)
         {
             var result = new BattleResult();
-
-            float attackValue = CalculateAttack(attacker, province);
-            float defenseValue = CalculateDefense(defender, province);
-            float armorModifier = CalculateArmorModifier(attacker, defender);
-            float attackerSupplyMod = GetSupplyModifier(attacker);
-            float defenderSupplyMod = GetSupplyModifier(defender);
-
-            float finalAttack = attackValue * armorModifier * attackerSupplyMod;
-            float finalDefense = defenseValue * defenderSupplyMod;
-
-            float combatRatio = finalAttack / System.Math.Max(1, finalDefense);
-
-            int attackerOrgDamage = (int)(10 * (1f / System.Math.Max(0.1f, combatRatio)));
-            int attackerStrDamage = (int)(5 * (1f / System.Math.Max(0.1f, combatRatio)));
-            int defenderOrgDamage = (int)(10 * combatRatio);
-            int defenderStrDamage = (int)(5 * combatRatio);
-
-            attackerOrgDamage = ApplyRandom(attackerOrgDamage, 0.2f);
-            attackerStrDamage = ApplyRandom(attackerStrDamage, 0.2f);
-            defenderOrgDamage = ApplyRandom(defenderOrgDamage, 0.2f);
-            defenderStrDamage = ApplyRandom(defenderStrDamage, 0.2f);
-
-            attacker.TakeDamage(attackerOrgDamage, attackerStrDamage);
-            defender.TakeDamage(defenderOrgDamage, defenderStrDamage);
+            ResolveMultiBattle(
+                new List<UnitState> { attacker },
+                new List<UnitState> { defender },
+                province,
+                world);
 
             result.attackerWon = defender.IsShattered && !attacker.IsShattered;
             result.defenderWon = attacker.IsShattered && !defender.IsShattered;
@@ -66,7 +277,9 @@ namespace IronCrown.Simulation
             return result;
         }
 
-        // === C3: 进攻发起 & 战斗 tick ===
+        // =====================================================================
+        // C9c: 多兵种联合战斗（InitiateAttack + TickBattles）
+        // =====================================================================
 
         public CommandResult InitiateAttack(WorldState world, string attackerUnitId, string targetProvinceId, string playerCountryId)
         {
@@ -88,24 +301,56 @@ namespace IronCrown.Simulation
             if (target.controllerCountry == attacker.ownerCountry)
                 return CommandResult.Reject("非敌方控制省份");
 
+            // C9d: 和平期内不能开战
+            if (WarRegistry.IsInTruce(world, attacker.ownerCountry, target.controllerCountry, world.turnNumber))
+                return CommandResult.Reject("和平期内不能开战");
+
+            // C15a: 同省 5 师容量限制（攻方）
+            int attackerCountInTarget = world.units.Values.Count(u =>
+                u.currentProvinceId == targetProvinceId && u.ownerCountry == attacker.ownerCountry);
+            // 加上正在向该省进攻的师
+            attackerCountInTarget += world.activeBattles.Count(b =>
+                b.provinceId == targetProvinceId && b.attackerOwnerCountry == attacker.ownerCountry);
+            if (attackerCountInTarget >= 5)
+                return CommandResult.Reject("该省攻方已达 5 师上限");
+
             if (attacker.movesLeft < 1)
                 return CommandResult.Reject("移动力不足");
 
             // 检查攻方是否已在战斗中
             foreach (var b in world.activeBattles)
             {
-                if (b.attackerUnitId == attackerUnitId || b.defenderUnitId == attackerUnitId)
+                if (b.attackerUnitIds.Contains(attackerUnitId) || b.defenderUnitIds.Contains(attackerUnitId))
                     return CommandResult.Reject("部队正在战斗中");
             }
 
-            // 检查目标省是否已有战斗（防止同省多攻方导致静默消失）
-            foreach (var b in world.activeBattles)
+            // C9c: 检查目标省是否已有战斗
+            var existingBattle = world.activeBattles.Find(b => b.provinceId == targetProvinceId);
+            if (existingBattle != null)
             {
-                if (b.provinceId == targetProvinceId)
-                    return CommandResult.Reject("该省已有战斗进行中");
+                if (existingBattle.attackerOwnerCountry == attacker.ownerCountry)
+                {
+                    attacker.movesLeft -= 1;
+                    existingBattle.attackerUnitIds.Add(attackerUnitId);
+                    return CommandResult.Accept();
+                }
+                else
+                {
+                    return CommandResult.Reject("敌方已对该省发起战斗");
+                }
             }
 
-            // 取守方：target 省内非攻方所属部队，按 id 升序 [0] 为主战
+            // 自动宣战
+            if (WarRegistry.TryDeclareWar(world, attacker.ownerCountry, target.ownerCountry, world.turnNumber, out var newWar))
+            {
+                _events.Publish(new WarDeclaredEvent
+                {
+                    countryA = newWar.countryA,
+                    countryB = newWar.countryB,
+                    startTurn = newWar.startTurn
+                });
+            }
+
             var defenders = world.units.Values
                 .Where(u => u.currentProvinceId == targetProvinceId && u.ownerCountry != attacker.ownerCountry)
                 .OrderBy(u => u.id, StringComparer.Ordinal)
@@ -119,6 +364,9 @@ namespace IronCrown.Simulation
                 attacker.currentProvinceId = targetProvinceId;
                 target.controllerCountry = attacker.ownerCountry;
 
+                var eco6 = _config?.Get<EconomyConfig>("global");
+                target.resistance = eco6?.resistanceOnCapture ?? 50;
+
                 _events.Publish(new ProvinceOccupiedEvent
                 {
                     provinceId = targetProvinceId,
@@ -127,19 +375,21 @@ namespace IronCrown.Simulation
                     attackerUnitId = attackerUnitId
                 });
 
+                ApplyCapitalLossPenalty(world, prevController, targetProvinceId);
                 return CommandResult.Accept();
             }
 
             // 有守方 → 创建 ActiveBattle
-            var defender = defenders[0];
             attacker.movesLeft -= 1;
 
             var battle = new ActiveBattle
             {
-                id = attackerUnitId + "_vs_" + defender.id,
-                attackerUnitId = attackerUnitId,
-                defenderUnitId = defender.id,
+                id = targetProvinceId,
+                attackerUnitIds = new List<string> { attackerUnitId },
+                defenderUnitIds = defenders.Select(u => u.id).ToList(),
                 provinceId = targetProvinceId,
+                attackerOwnerCountry = attacker.ownerCountry,
+                defenderOwnerCountry = defenders[0].ownerCountry,
                 turnsElapsed = 0
             };
             world.activeBattles.Add(battle);
@@ -149,7 +399,7 @@ namespace IronCrown.Simulation
             {
                 battleId = battle.id,
                 attackerUnitId = attackerUnitId,
-                defenderUnitId = defender.id,
+                defenderUnitId = defenders[0].id,
                 provinceId = targetProvinceId
             });
 
@@ -158,93 +408,358 @@ namespace IronCrown.Simulation
 
         public void TickBattles(WorldState world)
         {
-            // 拷贝以允许遍历中移除
             var snapshot = world.activeBattles
                 .OrderBy(b => b.id, StringComparer.Ordinal)
                 .ToList();
 
             foreach (var battle in snapshot)
             {
-                // 防御性：若 unit 已不存在则移除
-                if (!world.units.TryGetValue(battle.attackerUnitId, out var attacker) ||
-                    !world.units.TryGetValue(battle.defenderUnitId, out var defender) ||
-                    !world.provinces.TryGetValue(battle.provinceId, out var province))
+                battle.attackerUnitIds.RemoveAll(uid => !world.units.ContainsKey(uid));
+                battle.defenderUnitIds.RemoveAll(uid => !world.units.ContainsKey(uid));
+
+                if (!world.provinces.TryGetValue(battle.provinceId, out var province))
                 {
                     world.activeBattles.Remove(battle);
                     continue;
                 }
 
-                // 跑一帧战斗
-                var result = ResolveBattle(attacker, defender, province);
+                var attackers = battle.attackerUnitIds
+                    .Where(uid => world.units.TryGetValue(uid, out _))
+                    .Select(uid => world.units[uid])
+                    .ToList();
+                var defenders = battle.defenderUnitIds
+                    .Where(uid => world.units.TryGetValue(uid, out _))
+                    .Select(uid => world.units[uid])
+                    .ToList();
+
+                if (attackers.Count == 0 && defenders.Count == 0)
+                {
+                    world.activeBattles.Remove(battle);
+                    continue;
+                }
+
+                if (attackers.Count == 0)
+                {
+                    ResolveDefenderWin(world, battle, defenders, province);
+                    world.activeBattles.Remove(battle);
+                    continue;
+                }
+                if (defenders.Count == 0)
+                {
+                    ResolveAttackerWin(world, battle, attackers, province);
+                    world.activeBattles.Remove(battle);
+                    continue;
+                }
+
+                // 双方都有 → tick 战斗（C12: 整数化 + 旅级战损 + C15a 将军 buff）
                 battle.turnsElapsed++;
+                ResolveMultiBattle(attackers, defenders, province, world);
 
-                if (result.attackerWon)
+                // 移除 shattered
+                var shatteredAttackers = attackers.Where(u => u.IsShattered).Select(u => u.id).ToList();
+                var shatteredDefenders = defenders.Where(u => u.IsShattered).Select(u => u.id).ToList();
+                foreach (var uid in shatteredAttackers)
                 {
-                    // 守方主力消灭
-                    DestroyUnit(world, battle.defenderUnitId, "battle");
-                    // 清场该省其他非攻方部队
-                    var toClear = world.units.Values
-                        .Where(u => u.currentProvinceId == battle.provinceId && u.ownerCountry != attacker.ownerCountry)
-                        .Select(u => u.id)
+                    DestroyUnit(world, uid, "battle");
+                    battle.attackerUnitIds.Remove(uid);
+                }
+                foreach (var uid in shatteredDefenders)
+                {
+                    DestroyUnit(world, uid, "battle");
+                    battle.defenderUnitIds.Remove(uid);
+                }
+
+                // C13: 85% 自动溃退判定
+                var eco13 = _config?.Get<EconomyConfig>("global");
+                if (eco13 != null)
+                {
+                    CheckAutoRetreat(world, battle, battle.attackerUnitIds, eco13);
+                    CheckAutoRetreat(world, battle, battle.defenderUnitIds, eco13);
+                }
+
+                // 同 tick 内判胜负
+                if (battle.attackerUnitIds.Count == 0 && battle.defenderUnitIds.Count == 0)
+                {
+                    world.activeBattles.Remove(battle);
+                }
+                else if (battle.defenderUnitIds.Count == 0)
+                {
+                    var survivingAttackers = battle.attackerUnitIds
+                        .Where(uid => world.units.TryGetValue(uid, out _))
+                        .Select(uid => world.units[uid])
                         .ToList();
-                    foreach (var clearId in toClear)
-                        DestroyUnit(world, clearId, "occupation");
-                    // 攻方进省 + 占领
-                    string prevController = province.controllerCountry;
-                    attacker.currentProvinceId = battle.provinceId;
-                    province.controllerCountry = attacker.ownerCountry;
-
-                    _events.Publish(new ProvinceOccupiedEvent
-                    {
-                        provinceId = battle.provinceId,
-                        newControllerCountry = attacker.ownerCountry,
-                        previousControllerCountry = prevController,
-                        attackerUnitId = battle.attackerUnitId
-                    });
-                    _events.Publish(new BattleConcludedEvent
-                    {
-                        battleId = battle.id,
-                        provinceId = battle.provinceId,
-                        winnerKind = "Attacker",
-                        attackerUnitId = battle.attackerUnitId,
-                        defenderUnitId = battle.defenderUnitId,
-                        turnsElapsed = battle.turnsElapsed
-                    });
+                    ResolveAttackerWin(world, battle, survivingAttackers, province);
                     world.activeBattles.Remove(battle);
                 }
-                else if (result.defenderWon)
+                else if (battle.attackerUnitIds.Count == 0)
                 {
-                    // 攻方消灭
-                    DestroyUnit(world, battle.attackerUnitId, "battle");
-                    _events.Publish(new BattleConcludedEvent
-                    {
-                        battleId = battle.id,
-                        provinceId = battle.provinceId,
-                        winnerKind = "Defender",
-                        attackerUnitId = battle.attackerUnitId,
-                        defenderUnitId = battle.defenderUnitId,
-                        turnsElapsed = battle.turnsElapsed
-                    });
+                    var survivingDefenders = battle.defenderUnitIds
+                        .Where(uid => world.units.TryGetValue(uid, out _))
+                        .Select(uid => world.units[uid])
+                        .ToList();
+                    ResolveDefenderWin(world, battle, survivingDefenders, province);
                     world.activeBattles.Remove(battle);
                 }
-                else if (result.draw)
-                {
-                    // 双方主力消灭
-                    DestroyUnit(world, battle.attackerUnitId, "battle");
-                    DestroyUnit(world, battle.defenderUnitId, "battle");
-                    _events.Publish(new BattleConcludedEvent
-                    {
-                        battleId = battle.id,
-                        provinceId = battle.provinceId,
-                        winnerKind = "Draw",
-                        attackerUnitId = battle.attackerUnitId,
-                        defenderUnitId = battle.defenderUnitId,
-                        turnsElapsed = battle.turnsElapsed
-                    });
-                    world.activeBattles.Remove(battle);
-                }
-                // else: 双方都未崩，继续下回合
             }
+        }
+
+        // =====================================================================
+        // C13: 自动溃退
+        // =====================================================================
+
+        private void CheckAutoRetreat(WorldState world, ActiveBattle battle, List<string> unitIds, EconomyConfig eco)
+        {
+            var toRemove = new List<string>();
+            foreach (var uid in unitIds.ToList())
+            {
+                if (!world.units.TryGetValue(uid, out var unit)) continue;
+
+                // 检查 manpower ≤ max × threshold%（maxManpower=0 时不触发）
+                if (unit.maxManpower <= 0 || unit.manpower * 100 > unit.maxManpower * eco.autoRetreatThresholdPct)
+                    continue;
+
+                // 被切断不溃退（C13 默认 false）
+                if (unit.isCutoff) continue;
+
+                // 找后方己方控制省
+                string retreatProvinceId = FindRetreatProvince(unit, world);
+                if (retreatProvinceId == null)
+                {
+                    // 无可达后方 → 消灭
+                    DestroyUnit(world, uid, "no_retreat_path");
+                    toRemove.Add(uid);
+                    continue;
+                }
+
+                // 执行溃退
+                string fromProvince = unit.currentProvinceId;
+                unit.currentProvinceId = retreatProvinceId;
+                unit.manpower = Math.Min(unit.manpower + eco.retreatBonusManpower, unit.maxManpower);
+                unit.equipment = Math.Min(unit.equipment + eco.retreatBonusEquipment, unit.maxEquipment);
+                unit.morale = eco.retreatMoraleReset;
+                unit.recoveryTurnsLeft = eco.retreatRecoveryTurns;
+
+                // 旅级同步补充
+                if (_config != null && unit.brigades != null && unit.brigades.Count > 0)
+                {
+                    DistributeReinforcementToBrigades(unit, eco.retreatBonusManpower, eco.retreatBonusEquipment);
+                    unit.RecalculateFromBrigades(_config);
+                }
+
+                toRemove.Add(uid);
+                _events.Publish(new UnitRetreatedEvent
+                {
+                    unitId = uid,
+                    fromProvinceId = fromProvince,
+                    retreatProvinceId = retreatProvinceId,
+                    turnNumber = world.turnNumber
+                });
+            }
+            foreach (var uid in toRemove)
+                unitIds.Remove(uid);
+        }
+
+        /// <summary>找己方控制的邻接省（C13 简化：id 升序第一个）</summary>
+        private string FindRetreatProvince(UnitState unit, WorldState world)
+        {
+            if (!world.provinces.TryGetValue(unit.currentProvinceId, out var current))
+                return null;
+            if (current.neighbors == null) return null;
+
+            var candidates = new List<string>();
+            foreach (var nid in current.neighbors)
+            {
+                if (world.provinces.TryGetValue(nid, out var neighbor)
+                    && neighbor.controllerCountry == unit.ownerCountry)
+                {
+                    candidates.Add(nid);
+                }
+            }
+
+            if (candidates.Count == 0) return null;
+            candidates.Sort(StringComparer.Ordinal);
+            return candidates[0];
+        }
+
+        /// <summary>C13: 旅级补员分摊</summary>
+        private void DistributeReinforcementToBrigades(UnitState unit, int manpowerGained, int equipmentGained)
+        {
+            if (unit.brigades == null || unit.brigades.Count == 0) return;
+            int totalMp = unit.brigades.Sum(b => b.manpower);
+            if (totalMp <= 0 && manpowerGained > 0)
+            {
+                // 全灭旅平均分配
+                int perBrigade = manpowerGained / unit.brigades.Count;
+                foreach (var b in unit.brigades)
+                    b.manpower += perBrigade;
+                unit.brigades[0].manpower += manpowerGained - perBrigade * unit.brigades.Count;
+            }
+            else if (manpowerGained > 0)
+            {
+                int distributed = 0;
+                for (int i = 0; i < unit.brigades.Count; i++)
+                {
+                    var b = unit.brigades[i];
+                    int share = (i == unit.brigades.Count - 1)
+                        ? manpowerGained - distributed
+                        : manpowerGained * b.manpower / totalMp;
+                    b.manpower += share;
+                    distributed += share;
+                }
+            }
+
+            // 装备同理
+            int totalEq = unit.brigades.Sum(b => b.equipment);
+            if (totalEq <= 0 && equipmentGained > 0)
+            {
+                int perBrigade = equipmentGained / unit.brigades.Count;
+                foreach (var b in unit.brigades)
+                    b.equipment += perBrigade;
+                unit.brigades[0].equipment += equipmentGained - perBrigade * unit.brigades.Count;
+            }
+            else if (equipmentGained > 0)
+            {
+                int distributed = 0;
+                for (int i = 0; i < unit.brigades.Count; i++)
+                {
+                    var b = unit.brigades[i];
+                    int share = (i == unit.brigades.Count - 1)
+                        ? equipmentGained - distributed
+                        : equipmentGained * b.equipment / totalEq;
+                    b.equipment += share;
+                    distributed += share;
+                }
+            }
+        }
+
+        // =====================================================================
+        // 胜负处理（含 C13 战役经验累积）
+        // =====================================================================
+
+        private void ResolveAttackerWin(WorldState world, ActiveBattle battle, List<UnitState> attackers, ProvinceState province)
+        {
+            var toClear = world.units.Values
+                .Where(u => u.currentProvinceId == battle.provinceId && u.ownerCountry != battle.attackerOwnerCountry)
+                .Select(u => u.id)
+                .ToList();
+            foreach (var clearId in toClear)
+                DestroyUnit(world, clearId, "occupation");
+
+            string prevController = province.controllerCountry;
+            if (attackers.Count > 0)
+                attackers[0].currentProvinceId = battle.provinceId;
+            province.controllerCountry = battle.attackerOwnerCountry;
+
+            var eco6 = _config?.Get<EconomyConfig>("global");
+            province.resistance = eco6?.resistanceOnCapture ?? 50;
+
+            _events.Publish(new ProvinceOccupiedEvent
+            {
+                provinceId = battle.provinceId,
+                newControllerCountry = battle.attackerOwnerCountry,
+                previousControllerCountry = prevController,
+                attackerUnitId = attackers.Count > 0 ? attackers[0].id : ""
+            });
+
+            ApplyCapitalLossPenalty(world, prevController, battle.provinceId);
+
+            // C14: 解围 A 方案 — 占领后解除该省友方部队的切断状态
+            SupplyResolver.CheckRelief(world, battle.provinceId, battle.attackerOwnerCountry);
+
+            if (attackers.Count > 0 && !string.IsNullOrEmpty(battle.defenderOwnerCountry))
+                ApplyBattleTollByCountry(world, battle.attackerOwnerCountry, battle.defenderOwnerCountry, "Attacker");
+
+            // C13: 攻胜 → 攻方 +10, 守方 -5
+            var ecoWin = _config?.Get<EconomyConfig>("global");
+            if (ecoWin != null)
+            {
+                foreach (var uid in battle.attackerUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u))
+                        u.tacticalExp = Math.Clamp(u.tacticalExp + ecoWin.tacticalExpPerVictory, 0, 100);
+                }
+                foreach (var uid in battle.defenderUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u))
+                        u.tacticalExp = Math.Clamp(u.tacticalExp + ecoWin.tacticalExpPerDefeat, 0, 100);
+                }
+            }
+
+            // C15a: 攻胜 → 攻方将领记录胜场
+            if (_commander != null)
+            {
+                foreach (var uid in battle.attackerUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u) && !string.IsNullOrEmpty(u.commanderId))
+                        _commander.RecordBattleVictory(world, u.commanderId);
+                }
+            }
+
+            // C16: gachaTickets 累积
+            if (ecoWin != null && world.countries.TryGetValue(battle.attackerOwnerCountry, out var atkCountry))
+            {
+                atkCountry.gachaTickets += ecoWin.gachaTicketsPerVictory;
+                // 包围歼敌额外 +3
+                bool wasEncirclement = battle.defenderUnitIds.Any(uid =>
+                    world.units.TryGetValue(uid, out var du) && du.isCutoff);
+                if (wasEncirclement)
+                    atkCountry.gachaTickets += ecoWin.gachaTicketsPerEncirclement;
+                // 占领首都额外 +10
+                if (province != null && province.isCapital)
+                    atkCountry.gachaTickets += ecoWin.gachaTicketsPerCapitalCapture;
+            }
+
+            _events.Publish(new BattleConcludedEvent
+            {
+                battleId = battle.id,
+                provinceId = battle.provinceId,
+                winnerKind = "Attacker",
+                attackerUnitId = attackers.Count > 0 ? attackers[0].id : "",
+                defenderUnitId = battle.defenderUnitIds.Count > 0 ? battle.defenderUnitIds[0] : "",
+                turnsElapsed = battle.turnsElapsed
+            });
+        }
+
+        private void ResolveDefenderWin(WorldState world, ActiveBattle battle, List<UnitState> defenders, ProvinceState province)
+        {
+            if (defenders.Count > 0 && !string.IsNullOrEmpty(battle.attackerOwnerCountry))
+                ApplyBattleTollByCountry(world, battle.attackerOwnerCountry, battle.defenderOwnerCountry, "Defender");
+
+            // C13: 守胜 → 守方 +10, 攻方 -5
+            var ecoWin = _config?.Get<EconomyConfig>("global");
+            if (ecoWin != null)
+            {
+                foreach (var uid in battle.defenderUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u))
+                        u.tacticalExp = Math.Clamp(u.tacticalExp + ecoWin.tacticalExpPerVictory, 0, 100);
+                }
+                foreach (var uid in battle.attackerUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u))
+                        u.tacticalExp = Math.Clamp(u.tacticalExp + ecoWin.tacticalExpPerDefeat, 0, 100);
+                }
+            }
+
+            // C15a: 守胜 → 守方将领记录胜场
+            if (_commander != null)
+            {
+                foreach (var uid in battle.defenderUnitIds)
+                {
+                    if (world.units.TryGetValue(uid, out var u) && !string.IsNullOrEmpty(u.commanderId))
+                        _commander.RecordBattleVictory(world, u.commanderId);
+                }
+            }
+
+            _events.Publish(new BattleConcludedEvent
+            {
+                battleId = battle.id,
+                provinceId = battle.provinceId,
+                winnerKind = "Defender",
+                attackerUnitId = battle.attackerUnitIds.Count > 0 ? battle.attackerUnitIds[0] : "",
+                defenderUnitId = defenders.Count > 0 ? defenders[0].id : "",
+                turnsElapsed = battle.turnsElapsed
+            });
         }
 
         private void DestroyUnit(WorldState world, string unitId, string cause)
@@ -266,50 +781,66 @@ namespace IronCrown.Simulation
             });
         }
 
-        private float CalculateAttack(UnitState unit, ProvinceState province)
-        {
-            float attack = unit.baseAttack;
-            attack *= 1f + (unit.experience * 0.1f);
-            return attack;
-        }
+        // =====================================================================
+        // C5: 战争代价（未改动）
+        // =====================================================================
 
-        private float CalculateDefense(UnitState unit, ProvinceState province)
+        internal void ApplyBattleToll(WorldState world, UnitState attacker, UnitState defender, string winnerKind)
         {
-            float defense = unit.baseDefense;
-            defense *= GetTerrainDefenseMultiplier(province.terrain);
-            if (unit.isEntrenched)
-                defense *= 1f + (unit.entrenchmentBonus * 0.05f);
-            return defense;
-        }
+            var eco = _config?.Get<EconomyConfig>("global");
+            if (eco == null) return;
+            if (!world.countries.TryGetValue(attacker.ownerCountry, out var atkCountry)) return;
+            if (!world.countries.TryGetValue(defender.ownerCountry, out var defCountry)) return;
 
-        private float CalculateArmorModifier(UnitState attacker, UnitState defender)
-        {
-            if (defender.armor > attacker.piercing) return 0.5f;
-            if (attacker.piercing > defender.armor) return 1.2f;
-            return 1.0f;
-        }
-
-        private float GetTerrainDefenseMultiplier(TerrainType terrain)
-        {
-            return terrain switch
+            switch (winnerKind)
             {
-                TerrainType.Plain => 1.0f,
-                TerrainType.Forest => 1.10f,
-                TerrainType.Mountain => 1.25f,
-                TerrainType.Hills => 1.15f,
-                TerrainType.Urban => 1.30f,
-                TerrainType.Swamp => 1.20f,
-                TerrainType.River => 1.20f,
-                _ => 1.0f
-            };
+                case "Attacker":
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport + eco.warSupportBonusPerVictory, 0, 100);
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+                case "Defender":
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport + eco.warSupportBonusPerVictory, 0, 100);
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+                case "Draw":
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+            }
         }
 
-        private float GetSupplyModifier(UnitState unit) => 1.0f;
-
-        private int ApplyRandom(int baseValue, float variance)
+        internal void ApplyBattleTollByCountry(WorldState world, string attackerCountryId, string defenderCountryId, string winnerKind)
         {
-            float factor = 1f + (float)(_rng.NextDouble() * 2 - 1) * variance;
-            return System.Math.Max(1, (int)(baseValue * factor));
+            var eco = _config?.Get<EconomyConfig>("global");
+            if (eco == null) return;
+            if (!world.countries.TryGetValue(attackerCountryId, out var atkCountry)) return;
+            if (!world.countries.TryGetValue(defenderCountryId, out var defCountry)) return;
+
+            switch (winnerKind)
+            {
+                case "Attacker":
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport + eco.warSupportBonusPerVictory, 0, 100);
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+                case "Defender":
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport + eco.warSupportBonusPerVictory, 0, 100);
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+                case "Draw":
+                    atkCountry.warSupport = Math.Clamp(atkCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    defCountry.warSupport = Math.Clamp(defCountry.warSupport - eco.warSupportPenaltyPerLoss, 0, 100);
+                    break;
+            }
+        }
+
+        internal void ApplyCapitalLossPenalty(WorldState world, string previousControllerCountry, string provinceId)
+        {
+            var eco = _config?.Get<EconomyConfig>("global");
+            if (eco == null) return;
+            if (string.IsNullOrEmpty(previousControllerCountry)) return;
+            if (!world.countries.TryGetValue(previousControllerCountry, out var country)) return;
+            if (country.capitalProvinceId == provinceId)
+                country.warSupport = Math.Clamp(country.warSupport - eco.warSupportPenaltyPerCapitalLoss, 0, 100);
         }
     }
 

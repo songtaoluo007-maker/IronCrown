@@ -82,8 +82,8 @@ namespace IronCrown.Simulation.Tests
 
             Assert.IsTrue(result.accepted);
             Assert.AreEqual(1, world.activeBattles.Count);
-            Assert.AreEqual("atk_1", world.activeBattles[0].attackerUnitId);
-            Assert.AreEqual("def_1", world.activeBattles[0].defenderUnitId);
+            Assert.AreEqual("atk_1", world.activeBattles[0].attackerUnitIds[0]);
+            Assert.AreEqual("def_1", world.activeBattles[0].defenderUnitIds[0]);
             Assert.AreEqual("target", world.activeBattles[0].provinceId);
             Assert.AreEqual(0, world.activeBattles[0].turnsElapsed);
             Assert.AreEqual(0, atk.movesLeft, "发起攻击应消耗移动力");
@@ -152,7 +152,7 @@ namespace IronCrown.Simulation.Tests
         public void InitiateAttack_AlreadyInBattle_Rejects()
         {
             var resolver = new BattleResolver(_rng, _events);
-            var (world, atk, def, target) = BuildWorldWithUnits();
+            var (world, atk, def, target) = BuildWorldWithUnits(atkMovesLeft: 2);
 
             resolver.InitiateAttack(world, "atk_1", "target", "empire");
 
@@ -240,7 +240,9 @@ namespace IronCrown.Simulation.Tests
             world.countries["republic"].unitIds.Add("def_2");
 
             resolver.InitiateAttack(world, "atk_1", "target", "empire");
+            // C9c: def_2 也被加入战斗，需要一并击溃
             def.organization = 1;
+            def2.organization = 1;
 
             resolver.TickBattles(world);
 
@@ -292,11 +294,14 @@ namespace IronCrown.Simulation.Tests
             var u1 = CreateUnit("z_unit", "a", "p1");
             var u2 = CreateUnit("a_unit", "b", "p2");
             var u3 = CreateUnit("m_unit", "a", "p2");
+            var u4 = CreateUnit("c_unit", "c", "p3");
             world.units["z_unit"] = u1;
             world.units["a_unit"] = u2;
             world.units["m_unit"] = u3;
+            world.units["c_unit"] = u4;
             world.countries["a"].unitIds.AddRange(new[] { "z_unit", "m_unit" });
             world.countries["b"].unitIds.Add("a_unit");
+            world.countries["c"].unitIds.Add("c_unit");
 
             resolver.InitiateAttack(world, "z_unit", "p2", "a");
             resolver.InitiateAttack(world, "m_unit", "p3", "a");

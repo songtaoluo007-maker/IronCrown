@@ -182,6 +182,29 @@ namespace IronCrown.Config.Validation.Tests
         {
             public string id;
             public int unitProductionTurns;
+            // C5 战争代价
+            public int warStabilityPenaltyPerTurn;
+            public int warExhaustionPerTurn;
+            public int warSupportPenaltyPerLoss;
+            public int warSupportBonusPerVictory;
+            public int warSupportPenaltyPerCapitalLoss;
+            public int aiPeaceAcceptExhaustionThreshold;
+            public int aiPeaceAcceptPowerRatioPct;
+            // C6 占领抵抗
+            public int resistanceOnCapture;
+            public int resistanceDecayWithGarrison;
+            // C10 treasury→capital
+            public int treasuryToCapitalRatePct;
+            public int resistanceGrowWithoutGarrison;
+            public int resistanceUprisingThreshold;
+            public int resistanceUprisingChancePct;
+            public int resistanceGarrisonDamageManpower;
+            public int resistanceGarrisonDamageEquipment;
+            // C7 AI主动求和
+            public int aiPeaceOfferExhaustionThreshold;
+            public int aiPeaceOfferPowerRatioPct;
+            public int aiPeaceOfferCooldownTurns;
+            public int aiPeaceOfferExpiryTurns;
         }
 
         [System.Serializable]
@@ -191,6 +214,7 @@ namespace IronCrown.Config.Validation.Tests
         {
             public string id;
             public int speed;
+            public int equipmentTrainingCost;
         }
 
         [Test]
@@ -204,6 +228,44 @@ namespace IronCrown.Config.Validation.Tests
         }
 
         [Test]
+        public void Economy_HasWarFields()
+        {
+            var config = LoadConfig<EconomyList>("economy.json");
+            Assert.IsNotNull(config);
+            var eco = config.items.Find(e => e.id == "global");
+            Assert.IsNotNull(eco, "economy.json 应有 id='global'");
+
+            // C5 战争代价：7 字段都应 ≥ 0
+            Assert.GreaterOrEqual(eco.warStabilityPenaltyPerTurn, 0, "warStabilityPenaltyPerTurn >= 0");
+            Assert.GreaterOrEqual(eco.warExhaustionPerTurn, 0, "warExhaustionPerTurn >= 0");
+            Assert.GreaterOrEqual(eco.warSupportPenaltyPerLoss, 0, "warSupportPenaltyPerLoss >= 0");
+            Assert.GreaterOrEqual(eco.warSupportBonusPerVictory, 0, "warSupportBonusPerVictory >= 0");
+            Assert.GreaterOrEqual(eco.warSupportPenaltyPerCapitalLoss, 0, "warSupportPenaltyPerCapitalLoss >= 0");
+            Assert.GreaterOrEqual(eco.aiPeaceAcceptExhaustionThreshold, 0, "aiPeaceAcceptExhaustionThreshold >= 0");
+            Assert.LessOrEqual(eco.aiPeaceAcceptPowerRatioPct, 100, "aiPeaceAcceptPowerRatioPct <= 100");
+            Assert.GreaterOrEqual(eco.aiPeaceAcceptPowerRatioPct, 0, "aiPeaceAcceptPowerRatioPct >= 0");
+        }
+
+        [Test]
+        public void Economy_HasOccupationFields()
+        {
+            var config = LoadConfig<EconomyList>("economy.json");
+            Assert.IsNotNull(config);
+            var eco = config.items.Find(e => e.id == "global");
+            Assert.IsNotNull(eco, "economy.json 应有 id='global'");
+
+            Assert.GreaterOrEqual(eco.resistanceOnCapture, 0, "resistanceOnCapture >= 0");
+            Assert.LessOrEqual(eco.resistanceOnCapture, 100, "resistanceOnCapture <= 100");
+            Assert.Less(eco.resistanceDecayWithGarrison, 0, "resistanceDecayWithGarrison < 0");
+            Assert.Greater(eco.resistanceGrowWithoutGarrison, 0, "resistanceGrowWithoutGarrison > 0");
+            Assert.GreaterOrEqual(eco.resistanceUprisingThreshold, 0, "resistanceUprisingThreshold >= 0");
+            Assert.Greater(eco.resistanceUprisingChancePct, 0, "resistanceUprisingChancePct > 0");
+            Assert.LessOrEqual(eco.resistanceUprisingChancePct, 100, "resistanceUprisingChancePct <= 100");
+            Assert.Greater(eco.resistanceGarrisonDamageManpower, 0, "resistanceGarrisonDamageManpower > 0");
+            Assert.Greater(eco.resistanceGarrisonDamageEquipment, 0, "resistanceGarrisonDamageEquipment > 0");
+        }
+
+        [Test]
         public void UnitConfig_HasSpeed()
         {
             var config = LoadConfig<UnitConfigList>("units.json");
@@ -213,6 +275,27 @@ namespace IronCrown.Config.Validation.Tests
             {
                 Assert.Greater(u.speed, 0, $"unitType={u.id} 的 speed 应 > 0");
             }
+        }
+
+        [Test]
+        public void Economy_HasTreasuryToCapitalRate()
+        {
+            var config = LoadConfig<EconomyList>("economy.json");
+            Assert.IsNotNull(config);
+            var eco = config.items.Find(i => i.id == "global");
+            Assert.IsNotNull(eco);
+            Assert.GreaterOrEqual(eco.treasuryToCapitalRatePct, 0, "treasuryToCapitalRatePct >= 0");
+            Assert.LessOrEqual(eco.treasuryToCapitalRatePct, 100, "treasuryToCapitalRatePct <= 100");
+        }
+
+        [Test]
+        public void Units_InfantryHasEquipmentTrainingCost()
+        {
+            var config = LoadConfig<UnitConfigList>("units.json");
+            Assert.IsNotNull(config);
+            var inf = config.items.Find(i => i.id == "infantry");
+            Assert.IsNotNull(inf);
+            Assert.Greater(inf.equipmentTrainingCost, 0, "infantry.equipmentTrainingCost > 0");
         }
     }
 }

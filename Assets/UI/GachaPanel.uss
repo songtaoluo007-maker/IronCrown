@@ -1,0 +1,70 @@
+/* GachaPanel.uss — C17 抽卡面板样式 */
+
+.panel-root {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    align-items: center;
+    justify-content: center;
+}
+
+.panel-title {
+    font-size: 28px;
+    color: #FFD700;
+    margin-bottom: 20px;
+}
+
+.card-frame {
+    width: 300px;
+    padding: 20px;
+    background-color: #1a1a2e;
+    border-width: 2px;
+    border-color: #FFD700;
+    border-radius: 8px;
+    align-items: center;
+}
+
+.rarity-badge {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.card-name {
+    font-size: 20px;
+    color: #FFFFFF;
+    margin-top: 10px;
+}
+
+.card-skills {
+    font-size: 14px;
+    color: #AAAAAA;
+    margin-top: 5px;
+}
+
+.star-display {
+    font-size: 18px;
+    color: #FFD700;
+    margin-top: 10px;
+}
+
+.msg-label {
+    font-size: 16px;
+    color: #CCCCCC;
+    margin-top: 15px;
+}
+
+.btn-action {
+    width: 200px;
+    height: 40px;
+    margin-top: 15px;
+    background-color: #2d5a27;
+    color: #FFFFFF;
+}
+
+.btn-secondary {
+    width: 200px;
+    height: 40px;
+    margin-top: 10px;
+    background-color: #444444;
+    color: #FFFFFF;
+}
