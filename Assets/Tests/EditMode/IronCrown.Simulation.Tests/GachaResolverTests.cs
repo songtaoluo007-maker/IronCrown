@@ -221,5 +221,72 @@ namespace IronCrown.Simulation.Tests
             _gacha.AwardTicketsForVictory(country, _eco, capturedCapital: true);
             Assert.AreEqual(before + 1 + 10, country.gachaTickets); // 1 普通 + 10 首都
         }
+
+        // =============================================================
+        // G3: 确定性 ID 测试（Phase1-closeout-fix）
+        // =============================================================
+
+        [Test]
+        public void DrawCard_SameSeed_ProducesSameCommanderIds()
+        {
+            // 两个独立世界，同种子，各抽 20 次
+            // 验证每次生成的 commander.id 完全一致
+            var config = new TestConfigRegistry();
+            config.Register("global", _eco);
+
+            // 注册足够多不同稀有度的卡，确保 pool.Count > 0
+            config.Register("card_n1", new CommanderConfig { id = "card_n1", name = "N1", rarity = "N", baseAttack = 1, baseDefense = 1, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
+            config.Register("card_n2", new CommanderConfig { id = "card_n2", name = "N2", rarity = "N", baseAttack = 1, baseDefense = 1, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
+            config.Register("card_r1", new CommanderConfig { id = "card_r1", name = "R1", rarity = "R", baseAttack = 2, baseDefense = 2, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
+            config.Register("card_r2", new CommanderConfig { id = "card_r2", name = "R2", rarity = "R", baseAttack = 2, baseDefense = 2, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
+            config.Register("card_sr1", new CommanderConfig { id = "card_sr1", name = "SR1", rarity = "SR", baseAttack = 3, baseDefense = 3, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
+            config.Register("card_ssr1", new CommanderConfig { id = "card_ssr1", name = "SSR1", rarity = "SSR", baseAttack = 5, baseDefense = 5, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
+
+            int draws = 20;
+            var seed = 54321;
+
+            // World A
+            var worldA = new WorldState();
+            var countryA = new CountryState { id = "empire", name = "帝国", gachaTickets = draws + 5 };
+            worldA.countries["empire"] = countryA;
+            var eventsA = new EventBus();
+            var cmdrResA = new CommanderResolver(config);
+            var gachaA = new GachaResolver(eventsA, cmdrResA);
+            var rngA = new RandomService(seed);
+
+            var idsA = new List<string>();
+            for (int i = 0; i < draws; i++)
+            {
+                var cmdr = gachaA.DrawCard(countryA, worldA, rngA, config, _eco);
+                Assert.IsNotNull(cmdr, $"WorldA 第 {i + 1} 次抽卡应成功");
+                idsA.Add(cmdr.id);
+            }
+
+            // World B（独立实例，同种子）
+            var worldB = new WorldState();
+            var countryB = new CountryState { id = "empire", name = "帝国", gachaTickets = draws + 5 };
+            worldB.countries["empire"] = countryB;
+            var eventsB = new EventBus();
+            var cmdrResB = new CommanderResolver(config);
+            var gachaB = new GachaResolver(eventsB, cmdrResB);
+            var rngB = new RandomService(seed);
+
+            var idsB = new List<string>();
+            for (int i = 0; i < draws; i++)
+            {
+                var cmdr = gachaB.DrawCard(countryB, worldB, rngB, config, _eco);
+                Assert.IsNotNull(cmdr, $"WorldB 第 {i + 1} 次抽卡应成功");
+                idsB.Add(cmdr.id);
+            }
+
+            // 逐次比对 ID 序列
+            Assert.AreEqual(draws, idsA.Count, "WorldA 应抽到 20 张");
+            Assert.AreEqual(draws, idsB.Count, "WorldB 应抽到 20 张");
+            for (int i = 0; i < draws; i++)
+            {
+                Assert.AreEqual(idsA[i], idsB[i],
+                    $"第 {i + 1} 次抽卡 commander.id 应相同（确定性）");
+            }
+        }
     }
 }
