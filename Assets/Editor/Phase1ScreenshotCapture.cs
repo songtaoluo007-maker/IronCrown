@@ -20,13 +20,13 @@ namespace IronCrown.Editor
         public static void CaptureAll()
         {
             Directory.CreateDirectory(ScreenshotDir);
-            if (!Application.isPlaying)
+            if (!UnityEngine.Application.isPlaying)
             {
                 Debug.LogError("[Screenshot] 必须在 Play 模式下运行！");
                 return;
             }
 
-            var hud = Object.FindObjectOfType<IronCrown.Presentation.MainHudBehaviour>();
+            var hud = Object.FindFirstObjectByType<IronCrown.Presentation.MainHudBehaviour>();
             if (hud == null || hud.Controller == null)
             {
                 Debug.LogError("[Screenshot] MainHudBehaviour 未找到！");
