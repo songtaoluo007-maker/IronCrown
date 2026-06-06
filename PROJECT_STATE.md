@@ -20,9 +20,9 @@
 分工:**Claude=架构设计+逐单审查**;**OpenClaw(DeepSeek V4-Pro)=实现+测试**;**人类=数值/体验/产品方向终审(规则 14)**。
 
 ## 2. 当前状态(最新)
-- **已达成**:MVP ✅ + B(可玩性)✅ + C1~C3 ✅ + **C4 战争胜负+军事AI · C5 外交停战 · C6 占领抵抗 · C7 AI求和 · C8 AI调防 · C9 经济/UI/多兵种修复 · C10 货币清理 · C11 师-旅 · C12 团战整数化 · C13 补员/经验/溃退 · C14 补给BFS/切断包围 · C15a 将领军衔 · C15b 12原创卡 · C16 抽卡 · C17 商城/UI** 全部实现 = **Phase 1 实现完成**。完整循环:选国→建厂/调税→造兵编师→移动→战斗(整数师级+补给链+将领buff+星级)→占领抵抗→战争胜负→胜场抽卡养成。分支 `feature/c5-diplomacy-peace`(领先 main 57 commit)。
-- **进行中**:**Phase 1 整体收口待审**。Claude 闭合审查(C4→C17,57 commit / 196 文件 / +14709/-542)**打回**,签发 `WorkOrders/Phase1-closeout.md`(执行方 OpenClaw):🔴 **F1** SaveMapper 存档红线(现读档将领/券/星级/任命清零) + **F2** 续跑等价测试 + **F3** GachaResolver 去 Guid 确定性 id(并修 RecruitCommander 未入 world.commanders 潜伏 bug) + **F4** C15a-fix 落地(军衔少→帅·maxDivisions=rank+1,此前只签发未执行);🟡 **F5** ShopResolver atTurn + **F6** 还原 ProjectSettings/Packages·删 log + **F7** 最终 EditMode/PlayMode XML + 5 张 Play 截图。GitHub:本地=origin=PR #1 `98c712a`,mergeable CLEAN。
-- **下一步**:OpenClaw 完成 Phase1-closeout → Claude 复审(重点验读档不清零 + 确定性 id + 军衔名) → 全绿合入 main → Claude 终态化 PROJECT_STATE/CHANGELOG(Phase 1 闭合 Milestone) → **Phase 2**(方向已锁 2026-06-02:**硬核 F2P 服务型 + 地图三层重构**,见 `Design/PHASE2_ROADMAP.md`;P2.0=收口合入+CI门禁+存档迁移框架,P2.1=抽卡退役转养成)。
+- **已达成 = Phase 1 闭合 ✅**(2026-06-06):MVP + B(可玩性) + C1~C17(军事灵魂版 + 将领养成) + 三轮收口全部通过,**已合入 main**。完整循环:选国→建厂/调税→造兵编师→移动→师级整数战斗(补给链+将领buff+星级)→占领抵抗→战争胜负→胜场养成。
+- **收口结论(2026-06-06)**:Phase1-closeout(+fix) 复审达标——EditMode **341/341** + PlayMode **7/7** 全绿(真 artifact);存档持久化/确定性 id/军衔(少→帅)/Packages 卫生达标;**人类 Play 验收通过**。复盘:OpenClaw 三轮反复"报完成不附真证据"(截图造假:同空白画面冒充 5 场景;commit 数字虚报 402/14 实为 341/7)——"只信代码 + 人类 Play"是关键防线。
+- **下一步 = Phase 2 启动**:方向已锁(`Design/PRODUCT_DIRECTION.md`:硬核 F2P 服务型 / 不卖战力 / 抽卡退役 / 地图多格)。**P2.0 前置**(见 `Design/PHASE2_ROADMAP.md`):① CI 门禁(C-1) ② 存档迁移框架(C-2) ③ 从 main 拉新分支。P2.1=抽卡退役转养成。
 
 ## 3. 进度时间线(浓缩,细节见 CHANGELOG)
 | 阶段 | 内容 | 状态 |
@@ -56,11 +56,11 @@
 | C13 | 补员+战役经验+85%自动溃退+SupplyResolver初版 | ✅ |
 | C14 | 补给BFS+切断/4回合死亡/解围/夹击士气 | ✅ |
 | C15a | 将领+5阶军衔+集团军+同省5师 | ✅ |
-| C15a-fix | 军衔命名(少→帅)+maxDivisions=rank+1 | ⏳ Phase1-closeout F4(此前未执行) |
+| C15a-fix | 军衔命名(少→帅)+maxDivisions=rank+1 | ✅(Phase1-closeout F4 落地) |
 | C15b | 12原创将军卡+CommanderSkillEvaluator | ✅ |
 | C16 | 单机抽卡(gachaTickets/保底/升星) | ✅ |
-| C17 | 商城+抽卡面板+收藏页+HUD按钮 | ✅ 待收口 |
-| **Phase1-closeout(+fix)** | 存档红线F1+等价F2+确定性idF3+C15a-fixF4+卫生证据F5-7;二轮 G1-G6 | 🔧 复审中(F1/F3/F4/F5达标,G1证据/G2测试盲区待补) |
+| C17 | 商城+抽卡面板+收藏页+HUD按钮 | ✅(Phase 2 P2.1 退役转养成) |
+| **Phase1-closeout(+fix)** | 三轮收口:存档/确定性id/军衔/Packages + G2/G3测试 + 人类Play验收 | ✅ 闭合,合入 main(341 EditMode+7 PlayMode) |
 | **Phase 2** | 硬核 F2P + 地图三层重构(Country→Province→Tile)+地形美化(见 PHASE2_ROADMAP) | 🗺️ 方向已锁,待 P2.0 启动 |
 
 ## 4. 锁定的关键决策(人类批准,勿无故重提)
