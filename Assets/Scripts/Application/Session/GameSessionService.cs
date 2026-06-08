@@ -30,6 +30,7 @@ namespace IronCrown.Application
         private readonly IRandom _rng;
         private readonly ReadModelBuilder _builder;
         private readonly IAppLogger _logger;
+        private readonly ITelemetry _telemetry; // P2.6
 
         private WorldState _world;
         private int _initialSeed = 12345;
@@ -56,7 +57,8 @@ namespace IronCrown.Application
             CommanderResolver commander = null,
             CommanderUnlockResolver unlock = null,
             GachaResolver gacha = null,
-            ShopResolver shop = null)
+            ShopResolver shop = null,
+            ITelemetry telemetry = null)
         {
             _clock = clock;
             _config = config;
@@ -71,6 +73,7 @@ namespace IronCrown.Application
             _unlock = unlock;
             _gacha = gacha;
             _shop = shop;
+            _telemetry = telemetry;
             _events = events;
             _save = save;
             _rng = rng;
@@ -132,6 +135,9 @@ namespace IronCrown.Application
 
             var eco = _config.Get<EconomyConfig>("global");
             if (eco == null) return CommandResult.Reject("经济配置未加载");
+
+            // P2.6: 埋点 — 命令发出
+            TrackCommand(cmd.type.ToString());
 
             switch (cmd.commandType)
             {
@@ -284,12 +290,18 @@ namespace IronCrown.Application
             if (_clock.CurrentPhase == GamePhase.GameOver)
             {
                 _logger.Info("[Session] Game over");
+                // P2.6: 埋点 — 游戏结束
+                _telemetry?.TrackGameOver(_world?.winnerCountryId ?? "unknown", _clock.CurrentTurn, 0f, "conquest");
+                _telemetry?.FlushSessionSummary();
                 return;
             }
 
             if (_clock.CurrentPhase == GamePhase.TurnStart)
             {
                 _turnResolver.ExecuteTurn(_world);
+
+                // P2.6: 埋点 — 回合推进
+                _telemetry?.TrackTurnAdvanced(_clock.CurrentTurn, BuildCountrySnapshots());
             }
 
             _clock.AdvancePhase();
@@ -342,6 +354,33 @@ namespace IronCrown.Application
             if (provinceId != null && !_world.provinces.ContainsKey(provinceId))
                 return;
             _selectedProvinceId = provinceId;
+        }
+
+        /// <summary>P2.6: 构建国家快照</summary>
+        private Dictionary<string, CountrySnapshot> BuildCountrySnapshots()
+        {
+            var snapshots = new Dictionary<string, CountrySnapshot>();
+            if (_world == null) return snapshots;
+
+            foreach (var kv in _world.countries)
+            {
+                var c = kv.Value;
+                snapshots[kv.Key] = new CountrySnapshot
+                {
+                    countryId = c.id,
+                    capital = c.capital,
+                    manpower = c.manpower,
+                    provinces = _world.provinces.Values.Count(p => p.controllerCountry == c.id),
+                    units = c.unitIds.Count
+                };
+            }
+            return snapshots;
+        }
+
+        /// <summary>P2.6: 埋点 — 命令发出</summary>
+        private void TrackCommand(string commandType)
+        {
+            _telemetry?.TrackCommandIssued(commandType, _playerCountryId);
         }
 
         public void SelectUnit(string unitId)

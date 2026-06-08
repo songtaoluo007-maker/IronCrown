@@ -6,6 +6,7 @@ using IronCrown.Application;
 using IronCrown.Domain;
 using IronCrown.Contracts;
 using IronCrown.Infrastructure;
+using IronCrown.Infrastructure.Telemetry;
 using IronCrown.Presentation;
 using IronCrown.Simulation;
 using UnityEngine;
@@ -49,6 +50,7 @@ namespace IronCrown.Bootstrap
             builder.Register<CommanderResolver>(Lifetime.Singleton); // C15a
             builder.Register<CommanderUnlockResolver>(Lifetime.Singleton); // P2.1
             builder.Register<AdjacencyResolver>(Lifetime.Singleton); // P2.2
+            builder.Register<LocalJsonTelemetry>(Lifetime.Singleton).As<ITelemetry>(); // P2.6
 #pragma warning disable CS0618 // 保留旧注册兼容
             builder.Register<GachaResolver>(Lifetime.Singleton); // C16 [deprecated P2.1]
             builder.Register<ShopResolver>(Lifetime.Singleton); // C17 [deprecated P2.1]
