@@ -1,5 +1,5 @@
 // ============================================================================
-// Tests/EditMode/SaveMapperTests.cs �?SaveMapper 往返测�?// ============================================================================
+// Tests/EditMode/SaveMapperTests.cs — SaveMapper 存档映射测试
 
 using NUnit.Framework;
 using IronCrown.Domain;

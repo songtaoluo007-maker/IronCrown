@@ -88,23 +88,64 @@ namespace IronCrown.Domain
         public int retreatMoraleReset;                // 溃退后 morale 重置值
         public int retreatRecoveryTurns;              // 溃退恢复回合数
 
-        // === C16: 抽卡系统 ===
-        public int gachaTicketCostPerDraw;            // 每次抽卡消耗券数
-        public int gachaTicketsPerVictory;            // 战胜获得券数
-        public int gachaTicketsPerEncirclement;       // 包围歼敌获得券数
-        public int gachaTicketsPerCapitalCapture;     // 占领首都获得券数
-        public int gachaRarityWeightN;                // N 稀有度权重
-        public int gachaRarityWeightR;                // R 稀有度权重
-        public int gachaRarityWeightSR;               // SR 稀有度权重
-        public int gachaRarityWeightSSR;              // SSR 稀有度权重
-        public int gachaSsrPityThreshold;             // SSR 保底抽数
+        // === C16: 抽卡系统（已废弃,保留字段兼容旧存档） ===
+        [System.Obsolete("P2.1: 随机抽卡已退役,保留字段兼容旧存档")]
+        public int gachaTicketCostPerDraw;
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int gachaTicketsPerVictory;            // → meritPointsPerVictory
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int gachaTicketsPerEncirclement;
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int gachaTicketsPerCapitalCapture;
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int gachaRarityWeightN;
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int gachaRarityWeightR;
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int gachaRarityWeightSR;
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int gachaRarityWeightSSR;
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int gachaSsrPityThreshold;
         public int starBonusPerStar;                  // 每星战斗 buff %
         public int maxStarLevel;                      // 最大星级
 
-        // === C17: 商城 ===
-        public int shopBundle10DrawsCost;               // 10 连券包成本
-        public int shopBundle10DrawsGrants;             // 10 连券包给予抽数
-        public int shopSsrTicketCost;                   // SSR 保底券成本
-        public int shopSpecificCardTicketCost;          // 特定卡券成本
+        // === C17: 商城（已废弃,字段保留避免存档解析报错） ===
+        [System.Obsolete("P2.1: 随机抽卡已退役,保留字段兼容旧存档")]
+        public int shopBundle10DrawsCost;
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int shopBundle10DrawsGrants;
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int shopSsrTicketCost;
+        [System.Obsolete("P2.1: 随机抽卡已退役")]
+        public int shopSpecificCardTicketCost;
+
+        // === P2.1: 战功点定向解锁 ===
+        public int meritUnlockCostN;           // N 稀有度解锁成本
+        public int meritUnlockCostR;           // R 稀有度解锁成本
+        public int meritUnlockCostSR;          // SR 稀有度解锁成本
+        public int meritUnlockCostSSR;         // SSR 稀有度解锁成本
+        public int meritStarUpMultiplier;      // 升星成本乘数（百分比）
+
+        // === P2.4: 地形配置 ===
+
+        /// <summary>地形防御倍率（百分比，100=无修正）</summary>
+        public System.Collections.Generic.Dictionary<string, int> terrainDefenseMult = new()
+        {
+            ["Plain"] = 100, ["Forest"] = 110, ["Hills"] = 115,
+            ["Mountain"] = 125, ["Urban"] = 130, ["Swamp"] = 120,
+            ["River"] = 120, ["Coastline"] = 105, ["Desert"] = 100, ["Jungle"] = 115
+        };
+
+        /// <summary>格地形补给通行成本（BFS 累计，越高越难通过）</summary>
+        public System.Collections.Generic.Dictionary<string, int> supplyPassageCost = new()
+        {
+            ["Plain"] = 1, ["Forest"] = 2, ["Hills"] = 2,
+            ["Mountain"] = 3, ["Swamp"] = 3, ["River"] = 2,
+            ["Urban"] = 1, ["Coastline"] = 1, ["Desert"] = 2, ["Jungle"] = 3
+        };
+
+        /// <summary>补给衰减阈值（BFS 累计成本超过此值则补给衰减）</summary>
+        public int supplyDecayThreshold = 8;
     }
 }

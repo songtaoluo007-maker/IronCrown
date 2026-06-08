@@ -139,6 +139,15 @@ namespace IronCrown.Application.Tests
                 bytes.AddRange(System.BitConverter.GetBytes(cmdr.starLevel));
                 bytes.AddRange(System.BitConverter.GetBytes(cmdr.isActive));
             }
+            // P2.2: tiles
+            foreach (var tile in world.tiles.Values.OrderBy(t => t.id, System.StringComparer.Ordinal))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(tile.id));
+                bytes.AddRange(System.BitConverter.GetBytes(tile.gridX));
+                bytes.AddRange(System.BitConverter.GetBytes(tile.gridY));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(tile.terrain.ToString()));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(tile.provinceId));
+            }
             // warRelations
             foreach (var w in world.warRelations)
             {
@@ -716,6 +725,12 @@ namespace IronCrown.Application.Tests
             eco.gachaSsrPityThreshold = 50;
             eco.starBonusPerStar = 5;
             eco.maxStarLevel = 5;
+            // P2.1 merit 字段
+            eco.meritUnlockCostN = 10;
+            eco.meritUnlockCostR = 30;
+            eco.meritUnlockCostSR = 80;
+            eco.meritUnlockCostSSR = 200;
+            eco.meritStarUpMultiplier = 100;
 
             // 注册 4 张将军卡（N/R/SR/SSR 各一）
             config.Register("general_basic_officer", new CommanderConfig
@@ -759,14 +774,15 @@ namespace IronCrown.Application.Tests
 
             var rng = new RandomService(42);
             var commanderResolver = new CommanderResolver(config);
-            var gachaResolver = new GachaResolver(events, commanderResolver);
+            var unlockResolver = new CommanderUnlockResolver(events, commanderResolver);
 
-            // 抽 3 次卡（造 3 个将领）
+            // P2.1: 用战功点解锁 3 张卡（造 3 个将领）
             var drawn = new List<CommanderState>();
-            for (int i = 0; i < 3; i++)
+            var cardIds = new[] { "general_basic_officer", "general_engineer", "general_blitz" };
+            foreach (var cardId in cardIds)
             {
-                var cmdr = gachaResolver.DrawCard(world.countries["empire_north"], world, rng, config, eco);
-                Assert.IsNotNull(cmdr, $"第 {i + 1} 次抽卡应成功");
+                var cmdr = unlockResolver.UnlockCommander(world.countries["empire_north"], world, config, eco, cardId);
+                Assert.IsNotNull(cmdr, $"解锁 {cardId} 应成功");
                 drawn.Add(cmdr);
             }
 
@@ -838,15 +854,15 @@ namespace IronCrown.Application.Tests
 
             // === Path A: 含将领世界 → 跑 2 回合 → 存 → 读 → 再跑 2 回合 ===
             var worldA = BuildWorldWithProvinces();
-            worldA.countries["empire_north"].gachaTickets = 20;
+            worldA.countries["empire_north"].gachaTickets = 200;
             var eventsA = new EventBus();
             var rngA = new RandomService(seed);
             var cmdrResA = new CommanderResolver(config);
-            var gachaA = new GachaResolver(eventsA, cmdrResA);
+            var unlockA = new CommanderUnlockResolver(eventsA, cmdrResA);
 
-            // 先抽 2 张卡造将领
-            gachaA.DrawCard(worldA.countries["empire_north"], worldA, rngA, config, eco);
-            gachaA.DrawCard(worldA.countries["empire_north"], worldA, rngA, config, eco);
+            // P2.1: 用战功点解锁 2 张卡造将领
+            unlockA.UnlockCommander(worldA.countries["empire_north"], worldA, config, eco, "general_basic_officer");
+            unlockA.UnlockCommander(worldA.countries["empire_north"], worldA, config, eco, "general_engineer");
 
             var clockA = new GameClock(eventsA);
             var economyA = new EconomyResolver(config, eventsA);
@@ -881,14 +897,14 @@ namespace IronCrown.Application.Tests
 
             // === Path B: 直接跑 4 回合 ===
             var worldB = BuildWorldWithProvinces();
-            worldB.countries["empire_north"].gachaTickets = 20;
+            worldB.countries["empire_north"].gachaTickets = 200;
             var eventsB = new EventBus();
             var rngB = new RandomService(seed);
             var cmdrResB = new CommanderResolver(config);
-            var gachaB = new GachaResolver(eventsB, cmdrResB);
+            var unlockB = new CommanderUnlockResolver(eventsB, cmdrResB);
 
-            gachaB.DrawCard(worldB.countries["empire_north"], worldB, rngB, config, eco);
-            gachaB.DrawCard(worldB.countries["empire_north"], worldB, rngB, config, eco);
+            unlockB.UnlockCommander(worldB.countries["empire_north"], worldB, config, eco, "general_basic_officer");
+            unlockB.UnlockCommander(worldB.countries["empire_north"], worldB, config, eco, "general_engineer");
 
             var clockB = new GameClock(eventsB);
             var economyB = new EconomyResolver(config, eventsB);

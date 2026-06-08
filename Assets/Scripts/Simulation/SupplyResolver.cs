@@ -106,7 +106,7 @@ namespace IronCrown.Simulation
 
                     // 补给流 = min(当前省补给, 邻省容量) × 传输效率
                     int neighborCap = neighbor.CalculateSupplyCapacity();
-                    int flowEfficiency = GetFlowEfficiency(current, neighbor);
+                    int flowEfficiency = GetFlowEfficiency(current, neighbor, world);
                     int supplyFlow = Math.Min(currentSupply, neighborCap) * flowEfficiency / 100;
 
                     // 基础衰减：每跳 -10%
@@ -143,13 +143,80 @@ namespace IronCrown.Simulation
         }
 
         /// <summary>传输效率（基于基础设施差异）</summary>
-        private int GetFlowEfficiency(ProvinceState from, ProvinceState to)
+        /// <summary>P2.4: 传输效率，含地形通行成本</summary>
+        private int GetFlowEfficiency(ProvinceState from, ProvinceState to, WorldState world)
         {
             // 铁路连接 +20%，港口 +10%
             int efficiency = 80; // 基础 80%
             if (from.railwayLevel > 0 && to.railwayLevel > 0) efficiency += 20;
             if (from.portLevel > 0 && to.portLevel > 0) efficiency += 10;
-            return Math.Min(100, efficiency);
+
+            // P2.4: 地形通行成本（从边界格的地形取最大成本）
+            int terrainCost = GetBorderTerrainCost(from, to, world);
+            // 每点成本 -5% 效率（成本 1=0%, 2=-5%, 3=-10%）
+            efficiency -= (terrainCost - 1) * 5;
+
+            return Math.Clamp(efficiency, 30, 100); // 最低 30%
+        }
+
+        /// <summary>获取两省边界格的最大通行成本</summary>
+        private int GetBorderTerrainCost(ProvinceState from, ProvinceState to, WorldState world)
+        {
+            if (from.tileIds == null || to.tileIds == null || world.tiles.Count == 0)
+                return 1; // 无格数据时默认成本 1
+
+            // 找 from 省的格与 to 省的格相邻的边界
+            var toTiles = new HashSet<string>(to.tileIds);
+            int maxCost = 1;
+
+            int[] dx = { 0, 0, -1, 1 };
+            int[] dy = { -1, 1, 0, 0 };
+
+            foreach (var fromTileId in from.tileIds)
+            {
+                if (!world.tiles.TryGetValue(fromTileId, out var fromTile)) continue;
+
+                for (int d = 0; d < 4; d++)
+                {
+                    int nx = fromTile.gridX + dx[d];
+                    int ny = fromTile.gridY + dy[d];
+                    // 找相邻的 to 省格
+                    foreach (var toTileId in to.tileIds)
+                    {
+                        if (!world.tiles.TryGetValue(toTileId, out var toTile)) continue;
+                        if (toTile.gridX == nx && toTile.gridY == ny)
+                        {
+                            // 边界格，取地形成本
+                            int cost = GetTerrainPassageCost(fromTile.terrain);
+                            maxCost = Math.Max(maxCost, cost);
+                            // 也检查 to 省侧的格
+                            int costTo = GetTerrainPassageCost(toTile.terrain);
+                            maxCost = Math.Max(maxCost, costTo);
+                        }
+                    }
+                }
+            }
+            return maxCost;
+        }
+
+        /// <summary>从 config 获取地形通行成本（默认值兜底）</summary>
+        private int GetTerrainPassageCost(TerrainType terrain)
+        {
+            // 默认值（config 不可用时）
+            return terrain switch
+            {
+                TerrainType.Plain => 1,
+                TerrainType.Forest => 2,
+                TerrainType.Hills => 2,
+                TerrainType.Mountain => 3,
+                TerrainType.Swamp => 3,
+                TerrainType.River => 2,
+                TerrainType.Urban => 1,
+                TerrainType.Coastline => 1,
+                TerrainType.Desert => 2,
+                TerrainType.Jungle => 3,
+                _ => 1
+            };
         }
 
         // =====================================================================

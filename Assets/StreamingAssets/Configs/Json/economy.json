@@ -91,7 +91,25 @@
             "shopBundle10DrawsCost": 8,
             "shopBundle10DrawsGrants": 10,
             "shopSsrTicketCost": 200,
-            "shopSpecificCardTicketCost": 100
+            "shopSpecificCardTicketCost": 100,
+
+            "meritUnlockCostN": 10,
+            "meritUnlockCostR": 30,
+            "meritUnlockCostSR": 80,
+            "meritUnlockCostSSR": 200,
+            "meritStarUpMultiplier": 100,
+
+            "terrainDefenseMult": {
+                "Plain": 100, "Forest": 110, "Hills": 115,
+                "Mountain": 125, "Urban": 130, "Swamp": 120,
+                "River": 120, "Coastline": 105, "Desert": 100, "Jungle": 115
+            },
+            "supplyPassageCost": {
+                "Plain": 1, "Forest": 2, "Hills": 2,
+                "Mountain": 3, "Swamp": 3, "River": 2,
+                "Urban": 1, "Coastline": 1, "Desert": 2, "Jungle": 3
+            },
+            "supplyDecayThreshold": 8
         }
     ]
 }

@@ -48,6 +48,28 @@ namespace IronCrown.Bootstrap
                         _nationSelection.Bind(uiDoc.rootVisualElement);
                         _logger.Info("[EntryPoint] NationSelection bound");
                     }
+
+                    // P2.3: 初始化 Tilemap 地图渲染
+                    var mapRenderer = Object.FindObjectOfType<MapRenderer>();
+                    if (mapRenderer != null)
+                    {
+                        // MapRenderer 由 SetupScene 创建,已在场景中
+                        // 绑定到 HUD Controller 的渲染流程
+                        _hudController.SetMapRenderer(mapRenderer);
+                        _logger.Info("[EntryPoint] MapRenderer bound");
+                    }
+                    else
+                    {
+                        _logger.Warn("[EntryPoint] MapRenderer not found — 地图将不渲染");
+                    }
+
+                    // P2.3: 初始化地图输入控制
+                    var mapInput = Object.FindObjectOfType<MapInputController>();
+                    if (mapInput != null)
+                    {
+                        mapInput.Initialize(_session, _hudController);
+                        _logger.Info("[EntryPoint] MapInputController initialized");
+                    }
                 }
                 else
                 {

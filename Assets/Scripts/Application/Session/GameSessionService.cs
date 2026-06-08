@@ -22,13 +22,15 @@ namespace IronCrown.Application
         private readonly BattleResolver _battle;
         private readonly PeaceResolver _peace;
         private readonly CommanderResolver _commander; // C15a
-        private readonly GachaResolver _gacha;         // C16
-        private readonly ShopResolver _shop;           // C17
+        private readonly CommanderUnlockResolver _unlock; // P2.1
+        private readonly GachaResolver _gacha;         // C16 [deprecated P2.1]
+        private readonly ShopResolver _shop;           // C17 [deprecated P2.1]
         private readonly IEventPublisher _events;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
         private readonly ReadModelBuilder _builder;
         private readonly IAppLogger _logger;
+        private readonly ITelemetry _telemetry; // P2.6
 
         private WorldState _world;
         private int _initialSeed = 12345;
@@ -53,8 +55,10 @@ namespace IronCrown.Application
             ReadModelBuilder builder,
             IAppLogger logger,
             CommanderResolver commander = null,
+            CommanderUnlockResolver unlock = null,
             GachaResolver gacha = null,
-            ShopResolver shop = null)
+            ShopResolver shop = null,
+            ITelemetry telemetry = null)
         {
             _clock = clock;
             _config = config;
@@ -66,8 +70,10 @@ namespace IronCrown.Application
             _battle = battle;
             _peace = peace;
             _commander = commander;
+            _unlock = unlock;
             _gacha = gacha;
             _shop = shop;
+            _telemetry = telemetry;
             _events = events;
             _save = save;
             _rng = rng;
@@ -87,6 +93,9 @@ namespace IronCrown.Application
             _config.LoadAll();
             _clock.Reset(60);
             _world = _initializer.CreateNewGame(_config);
+
+            // P2.5: 建立省→部队空间索引
+            _world.RebuildProvinceUnitIndex();
 
             // 选国：默认取按 id 升序第一个
             _playerCountryId = playerCountryId;
@@ -126,6 +135,9 @@ namespace IronCrown.Application
 
             var eco = _config.Get<EconomyConfig>("global");
             if (eco == null) return CommandResult.Reject("经济配置未加载");
+
+            // P2.6: 埋点 — 命令发出
+            TrackCommand(cmd.type.ToString());
 
             switch (cmd.commandType)
             {
@@ -187,6 +199,10 @@ namespace IronCrown.Application
                         {
                             _world.selectedUnitId = cmd.unitId;
                             var movedUnit = _world.units[cmd.unitId];
+
+                            // P2.5: 更新空间索引
+                            UpdateUnitProvinceIndex(cmd.unitId, moveFrom, movedUnit.currentProvinceId);
+
                             _events.Publish(new UnitMovedEvent
                             {
                                 unitId = cmd.unitId,
@@ -244,65 +260,22 @@ namespace IronCrown.Application
                     _logger.Info($"[Session] 师 {cmd.unitId} 解除将领指挥");
                     return CommandResult.Accept();
 
-                case CommandType.DrawCard:
-                    if (_gacha == null)
-                        return CommandResult.Reject("抽卡系统未初始化");
-                    var playerCountry = _world.countries.TryGetValue(_playerCountryId, out var pc) ? pc : null;
-                    if (playerCountry == null)
-                        return CommandResult.Reject("找不到玩家国家");
-                    var ecoDraw = _config.Get<EconomyConfig>("global");
-                    if (ecoDraw == null)
-                        return CommandResult.Reject("经济配置未加载");
-                    var drawn = _gacha.DrawCard(playerCountry, _world, _rng, _config, ecoDraw);
-                    if (drawn == null)
-                        return CommandResult.Reject("券不足或卡池为空");
-                    _logger.Info($"[Session] 抽卡: {drawn.name} (星级 {drawn.starLevel})");
-                    return CommandResult.Accept();
-
-                case CommandType.Buy10DrawBundle:
-                    if (_shop == null)
-                        return CommandResult.Reject("商城未初始化");
-                    var shopCountry1 = _world.countries.TryGetValue(_playerCountryId, out var sc1) ? sc1 : null;
-                    if (shopCountry1 == null)
-                        return CommandResult.Reject("找不到玩家国家");
-                    var ecoShop1 = _config.Get<EconomyConfig>("global");
-                    if (ecoShop1 == null)
-                        return CommandResult.Reject("经济配置未加载");
-                    if (!_shop.BuyBundle(shopCountry1, ecoShop1, _world.turnNumber))
-                        return CommandResult.Reject("券不足");
-                    _logger.Info($"[Session] 购买10连券包，净增{ecoShop1.shopBundle10DrawsGrants - ecoShop1.shopBundle10DrawsCost}券");
-                    return CommandResult.Accept();
-
-                case CommandType.BuySsrTicket:
-                    if (_shop == null)
-                        return CommandResult.Reject("商城未初始化");
-                    var shopCountry2 = _world.countries.TryGetValue(_playerCountryId, out var sc2) ? sc2 : null;
-                    if (shopCountry2 == null)
-                        return CommandResult.Reject("找不到玩家国家");
-                    var ecoShop2 = _config.Get<EconomyConfig>("global");
-                    if (ecoShop2 == null)
-                        return CommandResult.Reject("经济配置未加载");
-                    var ssrCmdr = _shop.BuySsrTicket(shopCountry2, _world, _rng, _config, ecoShop2, _world.turnNumber);
-                    if (ssrCmdr == null)
-                        return CommandResult.Reject("SSR券购买失败");
-                    _logger.Info($"[Session] 购买SSR保底券: {ssrCmdr.name}");
-                    return CommandResult.Accept();
-
-                case CommandType.BuySpecificCardTicket:
-                    if (_shop == null)
-                        return CommandResult.Reject("商城未初始化");
+                // === P2.1: 战功点定向解锁（替代抽卡/商城） ===
+                case CommandType.UnlockCommander:
+                    if (_unlock == null)
+                        return CommandResult.Reject("解锁系统未初始化");
                     if (string.IsNullOrEmpty(cmd.targetCardId))
                         return CommandResult.Reject("缺少目标卡ID");
-                    var shopCountry3 = _world.countries.TryGetValue(_playerCountryId, out var sc3) ? sc3 : null;
-                    if (shopCountry3 == null)
+                    var unlockCountry = _world.countries.TryGetValue(_playerCountryId, out var uc) ? uc : null;
+                    if (unlockCountry == null)
                         return CommandResult.Reject("找不到玩家国家");
-                    var ecoShop3 = _config.Get<EconomyConfig>("global");
-                    if (ecoShop3 == null)
+                    var ecoUnlock = _config.Get<EconomyConfig>("global");
+                    if (ecoUnlock == null)
                         return CommandResult.Reject("经济配置未加载");
-                    var specificCmdr = _shop.BuySpecificCardTicket(shopCountry3, _world, _config, ecoShop3, cmd.targetCardId, _world.turnNumber);
-                    if (specificCmdr == null)
-                        return CommandResult.Reject("特定卡券购买失败");
-                    _logger.Info($"[Session] 购买特定卡券: {specificCmdr.name}");
+                    var unlocked = _unlock.UnlockCommander(unlockCountry, _world, _config, ecoUnlock, cmd.targetCardId);
+                    if (unlocked == null)
+                        return CommandResult.Reject("战功点不足或卡不存在");
+                    _logger.Info($"[Session] 战功解锁: {unlocked.name} (星级 {unlocked.starLevel})");
                     return CommandResult.Accept();
 
                 default:
@@ -317,12 +290,18 @@ namespace IronCrown.Application
             if (_clock.CurrentPhase == GamePhase.GameOver)
             {
                 _logger.Info("[Session] Game over");
+                // P2.6: 埋点 — 游戏结束
+                _telemetry?.TrackGameOver(_world?.winnerCountryId ?? "unknown", _clock.CurrentTurn, 0f, "conquest");
+                _telemetry?.FlushSessionSummary();
                 return;
             }
 
             if (_clock.CurrentPhase == GamePhase.TurnStart)
             {
                 _turnResolver.ExecuteTurn(_world);
+
+                // P2.6: 埋点 — 回合推进
+                _telemetry?.TrackTurnAdvanced(_clock.CurrentTurn, BuildCountrySnapshots());
             }
 
             _clock.AdvancePhase();
@@ -347,6 +326,9 @@ namespace IronCrown.Application
             _initialSeed = gameState.seed;
             _playerCountryId = gameState.playerCountryId;
             _world.playerCountryId = _playerCountryId;
+
+            // P2.5: 建立省→部队空间索引
+            _world.RebuildProvinceUnitIndex();
 
             // C11: 读档后重算师属性（brigrades → baseAttack/...）
             foreach (var unit in _world.units.Values)
@@ -374,12 +356,55 @@ namespace IronCrown.Application
             _selectedProvinceId = provinceId;
         }
 
+        /// <summary>P2.6: 构建国家快照</summary>
+        private Dictionary<string, CountrySnapshot> BuildCountrySnapshots()
+        {
+            var snapshots = new Dictionary<string, CountrySnapshot>();
+            if (_world == null) return snapshots;
+
+            foreach (var kv in _world.countries)
+            {
+                var c = kv.Value;
+                snapshots[kv.Key] = new CountrySnapshot
+                {
+                    countryId = c.id,
+                    capital = c.capital,
+                    manpower = c.manpower,
+                    provinces = _world.provinces.Values.Count(p => p.controllerCountry == c.id),
+                    units = c.unitIds.Count
+                };
+            }
+            return snapshots;
+        }
+
+        /// <summary>P2.6: 埋点 — 命令发出</summary>
+        private void TrackCommand(string commandType)
+        {
+            _telemetry?.TrackCommandIssued(commandType, _playerCountryId);
+        }
+
         public void SelectUnit(string unitId)
         {
             if (_world == null) return;
             if (unitId != null && !_world.units.ContainsKey(unitId))
                 return;
             _world.selectedUnitId = unitId;
+        }
+
+        /// <summary>P2.5: 更新空间索引（部队省际移动）</summary>
+        private void UpdateUnitProvinceIndex(string unitId, string fromProvinceId, string toProvinceId)
+        {
+            if (_world == null) return;
+            // 从旧省移除
+            if (!string.IsNullOrEmpty(fromProvinceId) && _world.provinceUnitIds.TryGetValue(fromProvinceId, out var fromList))
+                fromList.Remove(unitId);
+            // 加入新省
+            if (!string.IsNullOrEmpty(toProvinceId))
+            {
+                if (!_world.provinceUnitIds.ContainsKey(toProvinceId))
+                    _world.provinceUnitIds[toProvinceId] = new System.Collections.Generic.List<string>();
+                _world.provinceUnitIds[toProvinceId].Add(unitId);
+            }
         }
     }
 }

@@ -1,0 +1,41 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash ci/check-layering.sh
+      - run: bash ci/check-utf8.sh
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: activate unity license
+        uses: buildalon/activate-unity-license@v2
+        with:
+          license: Personal
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: run tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ env.UNITY_LICENSE }}
+        with:
+          testMode: all
+          artifactsPath: artifacts/ci
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-test-results
+          path: artifacts/ci
