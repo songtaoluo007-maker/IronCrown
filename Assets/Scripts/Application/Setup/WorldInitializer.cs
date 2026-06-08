@@ -87,6 +87,23 @@ namespace IronCrown.Application
                     neighbors = cfg.neighbors ?? Array.Empty<string>()
                 };
                 world.provinces[cfg.id] = state;
+
+                // P2.2: 生成 4 格 (2×2 子网格)
+                for (int n = 0; n < 4; n++)
+                {
+                    string tileId = $"{cfg.id}_t{n}";
+                    int tx = cfg.gridX * 2 + (n % 2);
+                    int ty = cfg.gridY * 2 + (n / 2);
+                    world.tiles[tileId] = new TileState
+                    {
+                        id = tileId,
+                        gridX = tx,
+                        gridY = ty,
+                        terrain = state.terrain,
+                        provinceId = cfg.id
+                    };
+                    state.tileIds.Add(tileId);
+                }
             }
 
             // C11: 初始部队 — 每国 1 个基础步兵师驻首都

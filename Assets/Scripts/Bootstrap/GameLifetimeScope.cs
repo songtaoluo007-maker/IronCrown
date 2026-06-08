@@ -48,6 +48,7 @@ namespace IronCrown.Bootstrap
             builder.Register<SupplyResolver>(Lifetime.Singleton);
             builder.Register<CommanderResolver>(Lifetime.Singleton); // C15a
             builder.Register<CommanderUnlockResolver>(Lifetime.Singleton); // P2.1
+            builder.Register<AdjacencyResolver>(Lifetime.Singleton); // P2.2
 #pragma warning disable CS0618 // 保留旧注册兼容
             builder.Register<GachaResolver>(Lifetime.Singleton); // C16 [deprecated P2.1]
             builder.Register<ShopResolver>(Lifetime.Singleton); // C17 [deprecated P2.1]

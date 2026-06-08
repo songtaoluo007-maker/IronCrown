@@ -60,8 +60,8 @@ namespace IronCrown.Infrastructure
                 var raw = JObject.Parse(json);
                 var runner = new SaveMigrationRunner(new ISaveMigration[]
                 {
-                    new Migration_0to1()
-                    // P2.2 地图迁移器在此追加
+                    new Migration_0to1(),
+                    new Migration_1to2()
                 });
                 raw = runner.Upgrade(raw);
 

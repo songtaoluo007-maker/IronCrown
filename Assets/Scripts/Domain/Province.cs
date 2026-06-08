@@ -50,6 +50,9 @@ namespace IronCrown.Domain
         public int gridY;
         public string[] neighbors;
 
+        // === P2.2: 格聚合 ===
+        public System.Collections.Generic.List<string> tileIds = new();
+
         // === 方法 ===
 
         /// <summary>计算补给容量</summary>

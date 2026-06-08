@@ -208,6 +208,175 @@ namespace IronCrown.Application.Tests
         }
 
         // ================================================================
+        // Test 7: Migration_1to2_GeneratesTiles
+        // ================================================================
+
+        [Test]
+        public void Migration_1to2_GeneratesTiles()
+        {
+            // 构造 v1 档（有 2 个省，无 tiles）
+            var raw = new JObject
+            {
+                ["schemaVersion"] = 1,
+                ["turnNumber"] = 3,
+                ["seed"] = 42,
+                ["rngState"] = 0,
+                ["phase"] = "TurnStart",
+                ["countries"] = new JArray(),
+                ["provinces"] = new JArray
+                {
+                    new JObject
+                    {
+                        ["id"] = "prov_a",
+                        ["name"] = "A",
+                        ["gridX"] = 0,
+                        ["gridY"] = 0,
+                        ["terrain"] = "Plain"
+                    },
+                    new JObject
+                    {
+                        ["id"] = "prov_b",
+                        ["name"] = "B",
+                        ["gridX"] = 1,
+                        ["gridY"] = 0,
+                        ["terrain"] = "Forest"
+                    }
+                },
+                ["units"] = new JArray(),
+                ["commanders"] = new JArray(),
+                ["activeBattles"] = new JArray(),
+                ["warRelations"] = new JArray(),
+                ["truces"] = new JArray()
+            };
+
+            var runner = new SaveMigrationRunner(new ISaveMigration[] { new Migration_0to1(), new Migration_1to2() });
+            var upgraded = runner.Upgrade(raw);
+
+            // schemaVersion 应为 2
+            Assert.AreEqual(2, upgraded["schemaVersion"]!.Value<int>());
+
+            // tiles 应有 8 个 (2省×4格)
+            var tiles = upgraded["tiles"] as JArray;
+            Assert.IsNotNull(tiles);
+            Assert.AreEqual(8, tiles.Count);
+
+            // prov_a 的 4 格坐标
+            var provATiles = tiles.Where(t => t["provinceId"]?.ToString() == "prov_a").ToList();
+            Assert.AreEqual(4, provATiles.Count);
+            Assert.IsTrue(provATiles.Any(t => t["gridX"]!.Value<int>() == 0 && t["gridY"]!.Value<int>() == 0));
+            Assert.IsTrue(provATiles.Any(t => t["gridX"]!.Value<int>() == 1 && t["gridY"]!.Value<int>() == 0));
+            Assert.IsTrue(provATiles.Any(t => t["gridX"]!.Value<int>() == 0 && t["gridY"]!.Value<int>() == 1));
+            Assert.IsTrue(provATiles.Any(t => t["gridX"]!.Value<int>() == 1 && t["gridY"]!.Value<int>() == 1));
+
+            // 省的 tileIds 应回填
+            var provA = upgraded["provinces"]!.First(p => p["id"]!.ToString() == "prov_a");
+            var tileIds = provA["tileIds"] as JArray;
+            Assert.IsNotNull(tileIds);
+            Assert.AreEqual(4, tileIds.Count);
+            Assert.IsTrue(tileIds.All(t => t!.ToString().StartsWith("prov_a_t")));
+
+            // 格地形继承省地形
+            foreach (var tile in provATiles)
+            {
+                Assert.AreEqual("Plain", tile["terrain"]!.ToString());
+            }
+        }
+
+        // ================================================================
+        // Test 8: Migration_1to2_ThenToRuntime_TilesExist
+        // ================================================================
+
+        [Test]
+        public void Migration_1to2_ThenToRuntime_TilesExist()
+        {
+            // 构造含省份的 v1 完整档
+            var raw = new JObject
+            {
+                ["schemaVersion"] = 1,
+                ["turnNumber"] = 1,
+                ["seed"] = 42,
+                ["rngState"] = 0,
+                ["phase"] = "TurnStart",
+                ["playerCountryId"] = "empire",
+                ["countries"] = new JArray
+                {
+                    new JObject
+                    {
+                        ["id"] = "empire",
+                        ["name"] = "帝国",
+                        ["treasury"] = 100,
+                        ["stability"] = 70,
+                        ["warSupport"] = 50,
+                        ["equipmentStockpile"] = 100,
+                        ["taxLevel"] = 1,
+                        ["civilLevel"] = 1,
+                        ["warExhaustion"] = 0,
+                        ["civilianFactories"] = 1,
+                        ["militaryFactories"] = 1,
+                        ["dockyards"] = 0,
+                        ["manpower"] = 50000,
+                        ["totalManpower"] = 100000,
+                        ["gachaTickets"] = 0,
+                        ["gachaPityCounter"] = 0
+                    }
+                },
+                ["provinces"] = new JArray
+                {
+                    new JObject
+                    {
+                        ["id"] = "prov_a",
+                        ["name"] = "A",
+                        ["gridX"] = 0,
+                        ["gridY"] = 0,
+                        ["terrain"] = "Plain",
+                        ["ownerCountry"] = "empire",
+                        ["controllerCountry"] = "empire",
+                        ["population"] = 1000,
+                        ["manpower"] = 500,
+                        ["infrastructure"] = 1,
+                        ["railwayLevel"] = 0,
+                        ["portLevel"] = 0,
+                        ["airBaseLevel"] = 0,
+                        ["industrySlots"] = 1,
+                        ["builtCivilianFactories"] = 0,
+                        ["builtMilitaryFactories"] = 0,
+                        ["resourceOutput"] = new JArray(),
+                        ["resistance"] = 0,
+                        ["compliance"] = 100,
+                        ["victoryPoint"] = 0,
+                        ["isCapital"] = false,
+                        ["neighbors"] = new JArray()
+                    }
+                },
+                ["units"] = new JArray(),
+                ["commanders"] = new JArray(),
+                ["activeBattles"] = new JArray(),
+                ["warRelations"] = new JArray(),
+                ["truces"] = new JArray()
+            };
+
+            // 迁移 v0→v1→v2
+            var runner = new SaveMigrationRunner(new ISaveMigration[] { new Migration_0to1(), new Migration_1to2() });
+            var upgraded = runner.Upgrade(raw);
+
+            // 反序列化
+            var state = upgraded.ToObject<GameState>();
+            Assert.IsNotNull(state);
+            Assert.AreEqual(2, state.schemaVersion);
+
+            // 经 SaveMapper.ToRuntime
+            var world = SaveMapper.ToRuntime(state);
+
+            // 验证 tiles
+            Assert.AreEqual(4, world.tiles.Count, "应有 4 个 tiles");
+            Assert.IsTrue(world.tiles.ContainsKey("prov_a_t0"));
+            Assert.IsTrue(world.tiles.ContainsKey("prov_a_t3"));
+
+            // 验证 province.tileIds
+            Assert.AreEqual(4, world.provinces["prov_a"].tileIds.Count);
+        }
+
+        // ================================================================
         // 辅助类
         // ================================================================
 

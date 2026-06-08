@@ -79,7 +79,8 @@ namespace IronCrown.Application
                     gridX = p.gridX,
                     gridY = p.gridY,
                     terrain = p.terrain.ToString(),
-                    neighbors = p.neighbors
+                    neighbors = p.neighbors,
+                    tileIds = p.tileIds?.ToArray()
                 }).ToArray(),
                 units = world.units.Values.Select(u => new UnitSaveData
                 {
@@ -170,6 +171,18 @@ namespace IronCrown.Application
             state.gameOverResult = world.gameOverResult;
             state.gameOverWinnerCountryId = world.gameOverWinnerCountryId;
 
+            // P2.2: 格持久化
+            state.tiles = world.tiles.Values
+                .OrderBy(t => t.id, System.StringComparer.Ordinal)
+                .Select(t => new TileSaveData
+                {
+                    id = t.id,
+                    gridX = t.gridX,
+                    gridY = t.gridY,
+                    terrain = t.terrain.ToString(),
+                    provinceId = t.provinceId
+                }).ToArray();
+
             return state;
         }
 
@@ -258,7 +271,26 @@ namespace IronCrown.Application
                         terrain = string.IsNullOrEmpty(pd.terrain) ? TerrainType.Plain : Enum.Parse<TerrainType>(pd.terrain),
                         neighbors = pd.neighbors ?? Array.Empty<string>()
                     };
+                    // P2.2: 恢复 tileIds
+                    if (pd.tileIds != null)
+                        p.tileIds = new List<string>(pd.tileIds);
                     world.provinces[p.id] = p;
+                }
+            }
+
+            // P2.2: 格恢复
+            if (save.tiles != null)
+            {
+                foreach (var td in save.tiles)
+                {
+                    world.tiles[td.id] = new TileState
+                    {
+                        id = td.id,
+                        gridX = td.gridX,
+                        gridY = td.gridY,
+                        terrain = string.IsNullOrEmpty(td.terrain) ? TerrainType.Plain : Enum.Parse<TerrainType>(td.terrain),
+                        provinceId = td.provinceId
+                    };
                 }
             }
 
