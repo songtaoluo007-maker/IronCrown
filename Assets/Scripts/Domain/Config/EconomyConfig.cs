@@ -126,5 +126,26 @@ namespace IronCrown.Domain
         public int meritUnlockCostSR;          // SR 稀有度解锁成本
         public int meritUnlockCostSSR;         // SSR 稀有度解锁成本
         public int meritStarUpMultiplier;      // 升星成本乘数（百分比）
+
+        // === P2.4: 地形配置 ===
+
+        /// <summary>地形防御倍率（百分比，100=无修正）</summary>
+        public System.Collections.Generic.Dictionary<string, int> terrainDefenseMult = new()
+        {
+            ["Plain"] = 100, ["Forest"] = 110, ["Hills"] = 115,
+            ["Mountain"] = 125, ["Urban"] = 130, ["Swamp"] = 120,
+            ["River"] = 120, ["Coastline"] = 105, ["Desert"] = 100, ["Jungle"] = 115
+        };
+
+        /// <summary>格地形补给通行成本（BFS 累计，越高越难通过）</summary>
+        public System.Collections.Generic.Dictionary<string, int> supplyPassageCost = new()
+        {
+            ["Plain"] = 1, ["Forest"] = 2, ["Hills"] = 2,
+            ["Mountain"] = 3, ["Swamp"] = 3, ["River"] = 2,
+            ["Urban"] = 1, ["Coastline"] = 1, ["Desert"] = 2, ["Jungle"] = 3
+        };
+
+        /// <summary>补给衰减阈值（BFS 累计成本超过此值则补给衰减）</summary>
+        public int supplyDecayThreshold = 8;
     }
 }
