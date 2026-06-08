@@ -1,7 +1,9 @@
-﻿name: CI
+name: CI
 on:
-  push: { branches: [ main ] }
-  pull_request: { branches: [ main ] }
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -15,16 +17,32 @@ jobs:
     steps:
       - name: check license
         id: lic
-        env: { UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }} }
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         run: |
-          if [ -z "$UNITY_LICENSE" ]; then echo "ready=false" >> "$GITHUB_OUTPUT"; else echo "ready=true" >> "$GITHUB_OUTPUT"; fi
-      - if: steps.lic.outputs.ready == 'true'
+          if [ -z "$UNITY_LICENSE" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::no UNITY_LICENSE, skip unity tests"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: checkout
+        if: steps.lic.outputs.ready == 'true'
         uses: actions/checkout@v4
-        with: { lfs: true }
-      - if: steps.lic.outputs.ready == 'true'
+        with:
+          lfs: true
+      - name: run tests
+        if: steps.lic.outputs.ready == 'true'
         uses: game-ci/unity-test-runner@v4
-        env: { UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }} }
-        with: { testMode: all, artifactsPath: artifacts/ci, githubToken: "${{ secrets.GITHUB_TOKEN }}" }
-      - if: always() && steps.lic.outputs.ready == 'true'
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          testMode: all
+          artifactsPath: artifacts/ci
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: upload artifacts
+        if: always() && steps.lic.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
-        with: { name: ci-test-results, path: artifacts/ci }
+        with:
+          name: ci-test-results
+          path: artifacts/ci
