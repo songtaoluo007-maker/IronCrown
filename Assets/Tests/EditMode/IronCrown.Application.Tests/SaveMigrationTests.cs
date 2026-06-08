@@ -5,8 +5,10 @@
 
 using NUnit.Framework;
 using IronCrown.Application;
+using IronCrown.Domain;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IronCrown.Application.Tests
 {
