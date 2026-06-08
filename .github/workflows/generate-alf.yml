@@ -1,0 +1,13 @@
+name: Generate Unity Activation File
+on:
+  workflow_dispatch:
+jobs:
+  request-activation-file:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: game-ci/request-activation-file@v2
+        id: requestFile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Unity_v6000.alf
+          path: ${{ steps.requestFile.outputs.filePath }}
