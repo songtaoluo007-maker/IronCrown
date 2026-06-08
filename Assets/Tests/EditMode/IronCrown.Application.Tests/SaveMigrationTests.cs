@@ -95,12 +95,13 @@ namespace IronCrown.Application.Tests
 
             // 从 v1 档开始
             var raw = MakeSaveJson(schemaVersion: 1);
-            var runner = new SaveMigrationRunner(migrations);
+            // 注入 targetVersion=4，验证纯链式逻辑（独立于 SaveSchema.CURRENT）
+            var runner = new SaveMigrationRunner(migrations, targetVersion: 4);
             var upgraded = runner.Upgrade(raw);
 
-            // 应跑到 v4
-            Assert.AreEqual(SaveSchema.CURRENT, upgraded["schemaVersion"]!.Value<int>(),
-                "应升级到 CURRENT");
+            // 应链式跑到 v4
+            Assert.AreEqual(4, upgraded["schemaVersion"]!.Value<int>(),
+                "应链式升级到 targetVersion=4");
 
             // 验证每步迁移都执行了（通过自定义字段）
             Assert.IsTrue(upgraded.ContainsKey("migrated_1to2"), "v1→v2 迁移应执行");
