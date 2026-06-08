@@ -15,6 +15,7 @@ namespace IronCrown.Application
         {
             var state = new GameState
             {
+                schemaVersion = SaveSchema.CURRENT,
                 turnNumber = world.turnNumber,
                 seed = seed,
                 rngState = rngState,

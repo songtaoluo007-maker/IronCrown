@@ -5,8 +5,10 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using IronCrown.Application;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace IronCrown.Infrastructure
@@ -53,8 +55,18 @@ namespace IronCrown.Infrastructure
                 }
 
                 var json = File.ReadAllText(path);
-                var state = JsonConvert.DeserializeObject<GameState>(json, Settings);
-                Debug.Log($"[Save] 读档成功: {path}");
+
+                // P2.0b: 迁移框架 — 先解析为 JObject，经 SaveMigrationRunner 升级后再反序列化
+                var raw = JObject.Parse(json);
+                var runner = new SaveMigrationRunner(new ISaveMigration[]
+                {
+                    new Migration_0to1()
+                    // P2.2 地图迁移器在此追加
+                });
+                raw = runner.Upgrade(raw);
+
+                var state = raw.ToObject<GameState>(JsonSerializer.Create(Settings));
+                Debug.Log($"[Save] 读档成功: {path} (schemaVersion={state.schemaVersion})");
                 return state;
             }
             catch (Exception e)

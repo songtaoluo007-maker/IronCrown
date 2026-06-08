@@ -8,6 +8,13 @@ using System.Collections.Generic;
 
 namespace IronCrown.Application
 {
+    /// <summary>存档 schema 版本常量</summary>
+    public static class SaveSchema
+    {
+        /// <summary>当前 schema 版本，每次存档结构变更时 +1</summary>
+        public const int CURRENT = 1;
+    }
+
     /// <summary>游戏存档数据结构（DTO，非运行时状态）</summary>
     [Serializable]
     public class TruceEntry { public string key; public int untilTurn; }
@@ -15,6 +22,9 @@ namespace IronCrown.Application
     [Serializable]
     public class GameState
     {
+        /// <summary>存档 schema 版本，缺失时默认 1（P2.0b 迁移框架）</summary>
+        public int schemaVersion;
+
         public int turnNumber;
         public int seed;
         public ulong rngState;
