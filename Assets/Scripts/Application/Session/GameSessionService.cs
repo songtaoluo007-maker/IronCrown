@@ -91,6 +91,9 @@ namespace IronCrown.Application
             _clock.Reset(60);
             _world = _initializer.CreateNewGame(_config);
 
+            // P2.5: 建立省→部队空间索引
+            _world.RebuildProvinceUnitIndex();
+
             // 选国：默认取按 id 升序第一个
             _playerCountryId = playerCountryId;
             if (string.IsNullOrEmpty(_playerCountryId) && _world.countries.Count > 0)
@@ -190,6 +193,10 @@ namespace IronCrown.Application
                         {
                             _world.selectedUnitId = cmd.unitId;
                             var movedUnit = _world.units[cmd.unitId];
+
+                            // P2.5: 更新空间索引
+                            UpdateUnitProvinceIndex(cmd.unitId, moveFrom, movedUnit.currentProvinceId);
+
                             _events.Publish(new UnitMovedEvent
                             {
                                 unitId = cmd.unitId,
@@ -308,6 +315,9 @@ namespace IronCrown.Application
             _playerCountryId = gameState.playerCountryId;
             _world.playerCountryId = _playerCountryId;
 
+            // P2.5: 建立省→部队空间索引
+            _world.RebuildProvinceUnitIndex();
+
             // C11: 读档后重算师属性（brigrades → baseAttack/...）
             foreach (var unit in _world.units.Values)
                 unit.RecalculateFromBrigades(_config);
@@ -340,6 +350,22 @@ namespace IronCrown.Application
             if (unitId != null && !_world.units.ContainsKey(unitId))
                 return;
             _world.selectedUnitId = unitId;
+        }
+
+        /// <summary>P2.5: 更新空间索引（部队省际移动）</summary>
+        private void UpdateUnitProvinceIndex(string unitId, string fromProvinceId, string toProvinceId)
+        {
+            if (_world == null) return;
+            // 从旧省移除
+            if (!string.IsNullOrEmpty(fromProvinceId) && _world.provinceUnitIds.TryGetValue(fromProvinceId, out var fromList))
+                fromList.Remove(unitId);
+            // 加入新省
+            if (!string.IsNullOrEmpty(toProvinceId))
+            {
+                if (!_world.provinceUnitIds.ContainsKey(toProvinceId))
+                    _world.provinceUnitIds[toProvinceId] = new System.Collections.Generic.List<string>();
+                _world.provinceUnitIds[toProvinceId].Add(unitId);
+            }
         }
     }
 }

@@ -98,6 +98,14 @@ namespace IronCrown.Simulation
                             world.units[unitId] = unit;
                             country.unitIds.Add(unitId);
                             produced.Add(unit);
+
+                            // P2.5: 更新空间索引
+                            if (!string.IsNullOrEmpty(unit.currentProvinceId))
+                            {
+                                if (!world.provinceUnitIds.ContainsKey(unit.currentProvinceId))
+                                    world.provinceUnitIds[unit.currentProvinceId] = new System.Collections.Generic.List<string>();
+                                world.provinceUnitIds[unit.currentProvinceId].Add(unitId);
+                            }
                         }
                         else
                         {
@@ -110,6 +118,14 @@ namespace IronCrown.Simulation
                             world.units[unitId] = unit;
                             country.unitIds.Add(unitId);
                             produced.Add(unit);
+
+                            // P2.5: 更新空间索引
+                            if (!string.IsNullOrEmpty(unit.currentProvinceId))
+                            {
+                                if (!world.provinceUnitIds.ContainsKey(unit.currentProvinceId))
+                                    world.provinceUnitIds[unit.currentProvinceId] = new System.Collections.Generic.List<string>();
+                                world.provinceUnitIds[unit.currentProvinceId].Add(unitId);
+                            }
                         }
 
                         completed.Add(order);

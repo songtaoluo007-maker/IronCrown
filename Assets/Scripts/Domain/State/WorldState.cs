@@ -27,6 +27,9 @@ namespace IronCrown.Domain
         public List<WarRelation> warRelations = new();
         public List<DiplomacyRelation> relations = new();
 
+        // === P2.5: 空间索引 (provinceId → unitIds) ===
+        public Dictionary<string, List<string>> provinceUnitIds = new();
+
         // === 游戏终局 ===
         public string gameOverResult;           // "Victory" | "Defeat" | null
         public string gameOverWinnerCountryId;  // 玩家胜=playerCountryId；失败=null
@@ -39,6 +42,27 @@ namespace IronCrown.Domain
         public bool TensionAllows(int threshold)
         {
             return worldTension >= threshold;
+        }
+
+        // === P2.5: 空间索引维护 ===
+
+        /// <summary>重建省→部队索引（从 units 字典全量构建）</summary>
+        public void RebuildProvinceUnitIndex()
+        {
+            provinceUnitIds.Clear();
+            foreach (var u in units.Values)
+            {
+                if (string.IsNullOrEmpty(u.currentProvinceId)) continue;
+                if (!provinceUnitIds.ContainsKey(u.currentProvinceId))
+                    provinceUnitIds[u.currentProvinceId] = new List<string>();
+                provinceUnitIds[u.currentProvinceId].Add(u.id);
+            }
+        }
+
+        /// <summary>获取省驻军 ID 列表（O(1)）</summary>
+        public List<string> GetUnitsInProvince(string provinceId)
+        {
+            return provinceUnitIds.TryGetValue(provinceId, out var list) ? list : new List<string>();
         }
     }
 }

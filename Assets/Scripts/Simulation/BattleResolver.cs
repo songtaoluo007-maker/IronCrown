@@ -359,8 +359,16 @@ namespace IronCrown.Simulation
             {
                 attacker.movesLeft -= 1;
                 string prevController = target.controllerCountry;
+                string attackerPrevProvince = attacker.currentProvinceId;
                 attacker.currentProvinceId = targetProvinceId;
                 target.controllerCountry = attacker.ownerCountry;
+
+                // P2.5: 更新空间索引
+                if (world.provinceUnitIds.TryGetValue(attackerPrevProvince, out var prevList))
+                    prevList.Remove(attacker.id);
+                if (!world.provinceUnitIds.ContainsKey(targetProvinceId))
+                    world.provinceUnitIds[targetProvinceId] = new System.Collections.Generic.List<string>();
+                world.provinceUnitIds[targetProvinceId].Add(attacker.id);
 
                 var eco6 = _config?.Get<EconomyConfig>("global");
                 target.resistance = eco6?.resistanceOnCapture ?? 50;
@@ -537,6 +545,13 @@ namespace IronCrown.Simulation
                 unit.morale = eco.retreatMoraleReset;
                 unit.recoveryTurnsLeft = eco.retreatRecoveryTurns;
 
+                // P2.5: 更新空间索引
+                if (world.provinceUnitIds.TryGetValue(fromProvince, out var retreatList))
+                    retreatList.Remove(uid);
+                if (!world.provinceUnitIds.ContainsKey(retreatProvinceId))
+                    world.provinceUnitIds[retreatProvinceId] = new System.Collections.Generic.List<string>();
+                world.provinceUnitIds[retreatProvinceId].Add(uid);
+
                 // 旅级同步补充
                 if (_config != null && unit.brigades != null && unit.brigades.Count > 0)
                 {
@@ -645,7 +660,18 @@ namespace IronCrown.Simulation
 
             string prevController = province.controllerCountry;
             if (attackers.Count > 0)
-                attackers[0].currentProvinceId = battle.provinceId;
+            {
+                var firstAttacker = attackers[0];
+                string prevProv = firstAttacker.currentProvinceId;
+                firstAttacker.currentProvinceId = battle.provinceId;
+
+                // P2.5: 更新空间索引
+                if (world.provinceUnitIds.TryGetValue(prevProv, out var occList))
+                    occList.Remove(firstAttacker.id);
+                if (!world.provinceUnitIds.ContainsKey(battle.provinceId))
+                    world.provinceUnitIds[battle.provinceId] = new System.Collections.Generic.List<string>();
+                world.provinceUnitIds[battle.provinceId].Add(firstAttacker.id);
+            }
             province.controllerCountry = battle.attackerOwnerCountry;
 
             var eco6 = _config?.Get<EconomyConfig>("global");
@@ -769,6 +795,10 @@ namespace IronCrown.Simulation
             world.units.Remove(unitId);
             if (world.countries.TryGetValue(owner, out var country))
                 country.unitIds.Remove(unitId);
+
+            // P2.5: 从空间索引移除
+            if (!string.IsNullOrEmpty(provinceId) && world.provinceUnitIds.TryGetValue(provinceId, out var unitList))
+                unitList.Remove(unitId);
 
             _events.Publish(new UnitDestroyedEvent
             {

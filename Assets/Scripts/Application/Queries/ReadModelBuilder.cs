@@ -45,7 +45,7 @@ namespace IronCrown.Application
 
             var provinces = world.provinces.Values
                 .OrderBy(p => p.id, System.StringComparer.Ordinal)
-                .Select(p => BuildProvinceView(p, colorMap, sortedUnits, battleProvinceIds))
+                .Select(p => BuildProvinceView(p, colorMap, sortedUnits, battleProvinceIds, world))
                 .ToList();
 
             var units = world.units.Values
@@ -116,7 +116,7 @@ namespace IronCrown.Application
             };
         }
 
-        public ProvinceView BuildProvinceView(ProvinceState p, Dictionary<string, string> colorMap, List<UnitState> sortedUnits = null, HashSet<string> battleProvinceIds = null)
+        public ProvinceView BuildProvinceView(ProvinceState p, Dictionary<string, string> colorMap, List<UnitState> sortedUnits = null, HashSet<string> battleProvinceIds = null, WorldState world = null)
         {
             // 按 controllerCountry 取色（占领后立即变色）
             string displayCountry = p.controllerCountry ?? p.ownerCountry;
@@ -124,24 +124,32 @@ namespace IronCrown.Application
             if (displayCountry != null && colorMap.TryGetValue(displayCountry, out var color))
                 ownerColor = color;
 
+            // P2.5: 使用空间索引 O(1) 替代全遍历 O(P×U)
             int garrisonCount = 0;
-            if (sortedUnits != null)
-            {
-                foreach (var u in sortedUnits)
-                {
-                    if (u.currentProvinceId == p.id)
-                        garrisonCount++;
-                }
-            }
-
-            // 收集驻军 unitId 列表
             string[] garrisonUnitIds = System.Array.Empty<string>();
-            if (sortedUnits != null)
+
+            if (world != null && world.provinceUnitIds.Count > 0)
             {
-                garrisonUnitIds = sortedUnits
-                    .Where(u => u.currentProvinceId == p.id)
-                    .Select(u => u.id)
-                    .ToArray();
+                // O(1) 索引查询
+                var unitIds = world.GetUnitsInProvince(p.id);
+                garrisonCount = unitIds.Count;
+                garrisonUnitIds = unitIds.ToArray();
+            }
+            else
+            {
+                // 降级: 全遍历 (索引未建立时)
+                if (sortedUnits != null)
+                {
+                    foreach (var u in sortedUnits)
+                    {
+                        if (u.currentProvinceId == p.id)
+                            garrisonCount++;
+                    }
+                    garrisonUnitIds = sortedUnits
+                        .Where(u => u.currentProvinceId == p.id)
+                        .Select(u => u.id)
+                        .ToArray();
+                }
             }
 
             return new ProvinceView
