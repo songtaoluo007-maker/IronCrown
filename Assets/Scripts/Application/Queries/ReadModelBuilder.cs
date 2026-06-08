@@ -111,8 +111,8 @@ namespace IronCrown.Application
                 peaceOfferCooldown = c.peaceOfferCooldown,
                 pendingPeaceOfferFrom = c.pendingPeaceOfferFrom,
                     pendingPeaceOfferExpiry = c.pendingPeaceOfferExpiry,
-                    gachaTickets = c.gachaTickets,
-                    gachaPityCounter = c.gachaPityCounter
+                    gachaTickets = c.gachaTickets, // P2.1: 语义改为战功点
+                    gachaPityCounter = c.gachaPityCounter // [deprecated P2.1]
             };
         }
 

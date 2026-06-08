@@ -91,7 +91,13 @@
             "shopBundle10DrawsCost": 8,
             "shopBundle10DrawsGrants": 10,
             "shopSsrTicketCost": 200,
-            "shopSpecificCardTicketCost": 100
+            "shopSpecificCardTicketCost": 100,
+
+            "meritUnlockCostN": 10,
+            "meritUnlockCostR": 30,
+            "meritUnlockCostSR": 80,
+            "meritUnlockCostSSR": 200,
+            "meritStarUpMultiplier": 100
         }
     ]
 }

@@ -60,9 +60,10 @@ namespace IronCrown.Domain
         public List<string> unitIds = new();  // 拥有的部队 ID 列表
         public List<string> commanderIds = new(); // C15a: 拥有的将领 ID 列表
 
-        // === 抽卡系统 (C16) ===
-        public int gachaTickets;          // 抽卡券
-        public int gachaPityCounter;      // SSR 保底计数器
+        // === 战功点 (P2.1, 旧字段名 gachaTickets 保留兼容存档) ===
+        public int gachaTickets;          // 战功点（语义改名,字段名暂留）
+        [System.Obsolete("P2.1: 随机抽卡已退役,保底计数不再使用")]
+        public int gachaPityCounter;      // 已废弃
 
         // === 建造队列 ===
         public List<ConstructionOrder> constructionQueue = new();

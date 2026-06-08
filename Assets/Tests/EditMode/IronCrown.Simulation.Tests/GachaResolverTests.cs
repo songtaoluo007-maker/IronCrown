@@ -1,9 +1,8 @@
 // ============================================================================
-// GachaResolverTests.cs — C16 抽卡系统测试
+// GachaResolverTests.cs — [已废弃 P2.1] 保留 AwardTickets 兼容测试
+// 新测试请使用 CommanderUnlockResolverTests
 // ============================================================================
 
-using System.Collections.Generic;
-using System.Linq;
 using NUnit.Framework;
 using IronCrown.Domain;
 using IronCrown.Simulation;
@@ -11,282 +10,81 @@ using IronCrown.Contracts;
 
 namespace IronCrown.Simulation.Tests
 {
+    /// <summary>
+    /// P2.1: GachaResolver 仅保留 AwardTicketsForVictory 兼容方法。
+    /// DrawCard/保底/商城测试全部移除,功能已迁移至 CommanderUnlockResolverTests。
+    /// </summary>
     public class GachaResolverTests
     {
-        private TestConfigRegistry _config;
         private EconomyConfig _eco;
-        private EventBus _events;
         private GachaResolver _gacha;
 
         [SetUp]
         public void SetUp()
         {
-            _config = new TestConfigRegistry();
             _eco = new EconomyConfig
             {
                 id = "global",
-                gachaTicketCostPerDraw = 1,
                 gachaTicketsPerVictory = 1,
                 gachaTicketsPerEncirclement = 3,
                 gachaTicketsPerCapitalCapture = 10,
-                gachaRarityWeightN = 50,
-                gachaRarityWeightR = 35,
-                gachaRarityWeightSR = 12,
-                gachaRarityWeightSSR = 3,
-                gachaSsrPityThreshold = 50,
                 starBonusPerStar = 5,
                 maxStarLevel = 5
             };
-            _config.Register("global", _eco);
-
-            // 注册测试卡
-            _config.Register("general_basic_officer", new CommanderConfig
-            {
-                id = "general_basic_officer", name = "普通军官", rarity = "N",
-                baseAttack = 5, baseDefense = 5, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0]
-            });
-            _config.Register("general_engineer", new CommanderConfig
-            {
-                id = "general_engineer", name = "防御工兵", rarity = "R",
-                baseAttack = 3, baseDefense = 10, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0]
-            });
-            _config.Register("general_ironwall", new CommanderConfig
-            {
-                id = "general_ironwall", name = "铁壁元帅", rarity = "SSR",
-                baseAttack = 5, baseDefense = 15, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0]
-            });
-            _config.Register("general_blitz", new CommanderConfig
-            {
-                id = "general_blitz", name = "突击先锋", rarity = "SR",
-                baseAttack = 20, baseDefense = -5, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0]
-            });
-
-            _events = new EventBus();
-            var commander = new CommanderResolver(_config);
-            _gacha = new GachaResolver(_events, commander);
+            // P2.1: GachaResolver 无参构造（兼容）
+            _gacha = new GachaResolver();
         }
 
-        private (CountryState country, WorldState world) MakeWorld()
+        private (CountryState country, WorldState world) MakeWorld(int tickets = 0)
         {
             var world = new WorldState();
-            var country = new CountryState
-            {
-                id = "empire",
-                name = "帝国",
-                gachaTickets = 10
-            };
+            var country = new CountryState { id = "empire", name = "帝国", gachaTickets = tickets };
             world.countries["empire"] = country;
             return (country, world);
-        }
-
-        [Test]
-        public void DrawCard_InsufficientTickets_Rejects()
-        {
-            var (country, world) = MakeWorld();
-            country.gachaTickets = 0;
-            var result = _gacha.DrawCard(country, world, new RandomService(42), _config, _eco);
-            Assert.IsNull(result);
-        }
-
-        [Test]
-        public void DrawCard_DeductsOneTicket()
-        {
-            var (country, world) = MakeWorld();
-            int before = country.gachaTickets;
-            _gacha.DrawCard(country, world, new RandomService(42), _config, _eco);
-            Assert.AreEqual(before - 1, country.gachaTickets);
-        }
-
-        [Test]
-        public void DrawCard_RarityDistribution_AcrossManyDraws()
-        {
-            var (country, world) = MakeWorld();
-            country.gachaTickets = 10000;
-            var rng = new RandomService(12345);
-            int n = 0, r = 0, sr = 0, ssr = 0;
-            int draws = 0;
-
-            while (country.gachaTickets > 0 && draws < 10000)
-            {
-                var cmdr = _gacha.DrawCard(country, world, rng, _config, _eco);
-                if (cmdr == null) break;
-                draws++;
-                var card = _config.Get<CommanderConfig>(cmdr.generalCardId);
-                if (card == null) continue;
-                switch (card.rarity)
-                {
-                    case "N": n++; break;
-                    case "R": r++; break;
-                    case "SR": sr++; break;
-                    case "SSR": ssr++; break;
-                }
-            }
-
-            Assert.AreEqual(10000, draws);
-            // 允许 ±5% 偏差
-            Assert.AreEqual(50.0, (double)n / draws * 100, 5.0); // N 50%
-            Assert.AreEqual(35.0, (double)r / draws * 100, 5.0); // R 35%
-            Assert.AreEqual(12.0, (double)sr / draws * 100, 5.0); // SR 12%
-            Assert.AreEqual(3.0, (double)ssr / draws * 100, 3.0); // SSR 3%
-        }
-
-        [Test]
-        public void DrawCard_SsrPity_AtThresholdGuaranteesSsr()
-        {
-            var (country, world) = MakeWorld();
-            country.gachaTickets = 100;
-            country.gachaPityCounter = 49; // 再抽 1 次触发保底
-            var rng = new RandomService(42);
-            var cmdr = _gacha.DrawCard(country, world, rng, _config, _eco);
-            Assert.IsNotNull(cmdr);
-            var card = _config.Get<CommanderConfig>(cmdr.generalCardId);
-            Assert.AreEqual("SSR", card.rarity);
-            Assert.AreEqual(0, country.gachaPityCounter); // 保底重置
-        }
-
-        [Test]
-        public void DrawCard_DuplicateCard_UpgradesStar()
-        {
-            var (country, world) = MakeWorld();
-            country.gachaTickets = 100;
-            var rng = new RandomService(42);
-
-            // 第一次抽到 engineer
-            var first = _gacha.DrawCard(country, world, rng, _config, _eco);
-            Assert.IsNotNull(first);
-            first.generalCardId = "general_engineer"; // 强制指定卡
-            first.starLevel = 0;
-
-            // 再抽一次 engineer（模拟重复）
-            // 需要让 rng 返回 engineer 的索引
-            // 简化：直接调用内部逻辑
-            var existing = world.commanders.Values
-                .FirstOrDefault(c => c.ownerCountry == "empire" && c.generalCardId == "general_engineer");
-            Assert.IsNotNull(existing);
-            Assert.AreEqual(0, existing.starLevel);
-
-            // 模拟升星
-            existing.starLevel++;
-            Assert.AreEqual(1, existing.starLevel);
-        }
-
-        [Test]
-        public void DrawCard_MaxStarDuplicate_ConvertsToExp()
-        {
-            var (country, world) = MakeWorld();
-            // 创建满星将领
-            var cmdr = new CommanderState
-            {
-                id = "cmdr_test",
-                name = "测试",
-                ownerCountry = "empire",
-                generalCardId = "general_ironwall",
-                starLevel = 5,
-                victories = 0,
-                isActive = true
-            };
-            world.commanders["cmdr_test"] = cmdr;
-            country.commanderIds.Add("cmdr_test");
-
-            // 模拟满星重复 → 转经验
-            int victoriesBefore = cmdr.victories;
-            cmdr.victories += 5;
-            Assert.AreEqual(victoriesBefore + 5, cmdr.victories);
-            Assert.AreEqual(5, cmdr.starLevel); // 星级不变
         }
 
         [Test]
         public void AwardTickets_Victory_AddsOne()
         {
             var (country, world) = MakeWorld();
-            int before = country.gachaTickets;
             _gacha.AwardTicketsForVictory(country, _eco);
-            Assert.AreEqual(before + 1, country.gachaTickets);
+            Assert.AreEqual(1, country.gachaTickets);
         }
 
         [Test]
         public void AwardTickets_Encirclement_AddsFour()
         {
             var (country, world) = MakeWorld();
-            int before = country.gachaTickets;
             _gacha.AwardTicketsForVictory(country, _eco, wasEncirclement: true);
-            Assert.AreEqual(before + 1 + 3, country.gachaTickets); // 1 普通 + 3 包围
+            Assert.AreEqual(4, country.gachaTickets);
         }
 
         [Test]
-        public void AwardTickets_CapitalCapture_AddsTen()
+        public void AwardTickets_CapitalCapture_AddsEleven()
         {
             var (country, world) = MakeWorld();
-            int before = country.gachaTickets;
             _gacha.AwardTicketsForVictory(country, _eco, capturedCapital: true);
-            Assert.AreEqual(before + 1 + 10, country.gachaTickets); // 1 普通 + 10 首都
+            Assert.AreEqual(11, country.gachaTickets);
         }
 
-        // =============================================================
-        // G3: 确定性 ID 测试（Phase1-closeout-fix）
-        // =============================================================
+        [Test]
+        public void DrawCard_Deprecated_ReturnsNull()
+        {
+            var (country, world) = MakeWorld(100);
+#pragma warning disable CS0618
+            var result = _gacha.DrawCard(country, world, new RandomService(42), new TestConfigRegistry(), _eco);
+#pragma warning restore CS0618
+            Assert.IsNull(result);
+        }
 
         [Test]
-        public void DrawCard_SameSeed_ProducesSameCommanderIds()
+        public void GrantCard_Deprecated_ReturnsNull()
         {
-            // 两个独立世界，同种子，各抽 20 次
-            // 验证每次生成的 commander.id 完全一致
-            var config = new TestConfigRegistry();
-            config.Register("global", _eco);
-
-            // 注册足够多不同稀有度的卡，确保 pool.Count > 0
-            config.Register("card_n1", new CommanderConfig { id = "card_n1", name = "N1", rarity = "N", baseAttack = 1, baseDefense = 1, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
-            config.Register("card_n2", new CommanderConfig { id = "card_n2", name = "N2", rarity = "N", baseAttack = 1, baseDefense = 1, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
-            config.Register("card_r1", new CommanderConfig { id = "card_r1", name = "R1", rarity = "R", baseAttack = 2, baseDefense = 2, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
-            config.Register("card_r2", new CommanderConfig { id = "card_r2", name = "R2", rarity = "R", baseAttack = 2, baseDefense = 2, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
-            config.Register("card_sr1", new CommanderConfig { id = "card_sr1", name = "SR1", rarity = "SR", baseAttack = 3, baseDefense = 3, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
-            config.Register("card_ssr1", new CommanderConfig { id = "card_ssr1", name = "SSR1", rarity = "SSR", baseAttack = 5, baseDefense = 5, baseMaxDivisions = 1, skills = new GeneralSkillEntry[0] });
-
-            int draws = 20;
-            var seed = 54321;
-
-            // World A
-            var worldA = new WorldState();
-            var countryA = new CountryState { id = "empire", name = "帝国", gachaTickets = draws + 5 };
-            worldA.countries["empire"] = countryA;
-            var eventsA = new EventBus();
-            var cmdrResA = new CommanderResolver(config);
-            var gachaA = new GachaResolver(eventsA, cmdrResA);
-            var rngA = new RandomService(seed);
-
-            var idsA = new List<string>();
-            for (int i = 0; i < draws; i++)
-            {
-                var cmdr = gachaA.DrawCard(countryA, worldA, rngA, config, _eco);
-                Assert.IsNotNull(cmdr, $"WorldA 第 {i + 1} 次抽卡应成功");
-                idsA.Add(cmdr.id);
-            }
-
-            // World B（独立实例，同种子）
-            var worldB = new WorldState();
-            var countryB = new CountryState { id = "empire", name = "帝国", gachaTickets = draws + 5 };
-            worldB.countries["empire"] = countryB;
-            var eventsB = new EventBus();
-            var cmdrResB = new CommanderResolver(config);
-            var gachaB = new GachaResolver(eventsB, cmdrResB);
-            var rngB = new RandomService(seed);
-
-            var idsB = new List<string>();
-            for (int i = 0; i < draws; i++)
-            {
-                var cmdr = gachaB.DrawCard(countryB, worldB, rngB, config, _eco);
-                Assert.IsNotNull(cmdr, $"WorldB 第 {i + 1} 次抽卡应成功");
-                idsB.Add(cmdr.id);
-            }
-
-            // 逐次比对 ID 序列
-            Assert.AreEqual(draws, idsA.Count, "WorldA 应抽到 20 张");
-            Assert.AreEqual(draws, idsB.Count, "WorldB 应抽到 20 张");
-            for (int i = 0; i < draws; i++)
-            {
-                Assert.AreEqual(idsA[i], idsB[i],
-                    $"第 {i + 1} 次抽卡 commander.id 应相同（确定性）");
-            }
+            var (country, world) = MakeWorld(100);
+#pragma warning disable CS0618
+            var result = _gacha.GrantCard(country, world, new TestConfigRegistry(), "general_test");
+#pragma warning restore CS0618
+            Assert.IsNull(result);
         }
     }
 }

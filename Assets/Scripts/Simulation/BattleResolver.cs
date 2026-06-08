@@ -695,7 +695,7 @@ namespace IronCrown.Simulation
                 }
             }
 
-            // C16: gachaTickets 累积
+            // P2.1: 战功点累积（原 gachaTickets,语义改名）
             if (ecoWin != null && world.countries.TryGetValue(battle.attackerOwnerCountry, out var atkCountry))
             {
                 atkCountry.gachaTickets += ecoWin.gachaTicketsPerVictory;

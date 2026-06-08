@@ -354,15 +354,9 @@ namespace IronCrown.Presentation
 
         private void OnGachaDraw()
         {
-            var result = _session.IssueCommand(new GameCommand
-            {
-                commandType = CommandType.DrawCard,
-                countryId = _session.PlayerCountryId
-            });
-            if (result.accepted)
-                ShowStatus("抽卡成功！");
-            else
-                ShowStatus($"被拒: {result.reason}");
+            // P2.1: 打开将领解锁页（而非抽卡）
+            // TODO: 打开 CommanderUnlockPanel 列表
+            ShowStatus("将领解锁: 请在面板中选择将军");
             Render();
         }
 
@@ -376,11 +370,12 @@ namespace IronCrown.Presentation
 
         private void OnShopOpen()
         {
+            // P2.1: 商城已退役,显示战功点余额
             var view = _session.GetWorldView();
             if (view == null) return;
             var player = view.countries?.Find(c => c.id == _session.PlayerCountryId);
             if (player == null) return;
-            ShowStatus($"商城 | 券: {player.gachaTickets}");
+            ShowStatus($"战功点: {player.gachaTickets}（商城已退役）");
         }
 
         // ================================================================
@@ -617,7 +612,7 @@ namespace IronCrown.Presentation
                 if (_warSupportLabel != null)
                     _warSupportLabel.text = $"⚔{playerView.warSupport}";
                 if (_gachaTicketsLabel != null)
-                    _gachaTicketsLabel.text = $"🎫{playerView.gachaTickets}";
+                    _gachaTicketsLabel.text = $"⭐{playerView.gachaTickets}"; // P2.1: 战功点
             }
 
             // 地图渲染

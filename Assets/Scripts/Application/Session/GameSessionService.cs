@@ -22,8 +22,9 @@ namespace IronCrown.Application
         private readonly BattleResolver _battle;
         private readonly PeaceResolver _peace;
         private readonly CommanderResolver _commander; // C15a
-        private readonly GachaResolver _gacha;         // C16
-        private readonly ShopResolver _shop;           // C17
+        private readonly CommanderUnlockResolver _unlock; // P2.1
+        private readonly GachaResolver _gacha;         // C16 [deprecated P2.1]
+        private readonly ShopResolver _shop;           // C17 [deprecated P2.1]
         private readonly IEventPublisher _events;
         private readonly ISaveRepository _save;
         private readonly IRandom _rng;
@@ -53,6 +54,7 @@ namespace IronCrown.Application
             ReadModelBuilder builder,
             IAppLogger logger,
             CommanderResolver commander = null,
+            CommanderUnlockResolver unlock = null,
             GachaResolver gacha = null,
             ShopResolver shop = null)
         {
@@ -66,6 +68,7 @@ namespace IronCrown.Application
             _battle = battle;
             _peace = peace;
             _commander = commander;
+            _unlock = unlock;
             _gacha = gacha;
             _shop = shop;
             _events = events;
@@ -244,65 +247,22 @@ namespace IronCrown.Application
                     _logger.Info($"[Session] 师 {cmd.unitId} 解除将领指挥");
                     return CommandResult.Accept();
 
-                case CommandType.DrawCard:
-                    if (_gacha == null)
-                        return CommandResult.Reject("抽卡系统未初始化");
-                    var playerCountry = _world.countries.TryGetValue(_playerCountryId, out var pc) ? pc : null;
-                    if (playerCountry == null)
-                        return CommandResult.Reject("找不到玩家国家");
-                    var ecoDraw = _config.Get<EconomyConfig>("global");
-                    if (ecoDraw == null)
-                        return CommandResult.Reject("经济配置未加载");
-                    var drawn = _gacha.DrawCard(playerCountry, _world, _rng, _config, ecoDraw);
-                    if (drawn == null)
-                        return CommandResult.Reject("券不足或卡池为空");
-                    _logger.Info($"[Session] 抽卡: {drawn.name} (星级 {drawn.starLevel})");
-                    return CommandResult.Accept();
-
-                case CommandType.Buy10DrawBundle:
-                    if (_shop == null)
-                        return CommandResult.Reject("商城未初始化");
-                    var shopCountry1 = _world.countries.TryGetValue(_playerCountryId, out var sc1) ? sc1 : null;
-                    if (shopCountry1 == null)
-                        return CommandResult.Reject("找不到玩家国家");
-                    var ecoShop1 = _config.Get<EconomyConfig>("global");
-                    if (ecoShop1 == null)
-                        return CommandResult.Reject("经济配置未加载");
-                    if (!_shop.BuyBundle(shopCountry1, ecoShop1, _world.turnNumber))
-                        return CommandResult.Reject("券不足");
-                    _logger.Info($"[Session] 购买10连券包，净增{ecoShop1.shopBundle10DrawsGrants - ecoShop1.shopBundle10DrawsCost}券");
-                    return CommandResult.Accept();
-
-                case CommandType.BuySsrTicket:
-                    if (_shop == null)
-                        return CommandResult.Reject("商城未初始化");
-                    var shopCountry2 = _world.countries.TryGetValue(_playerCountryId, out var sc2) ? sc2 : null;
-                    if (shopCountry2 == null)
-                        return CommandResult.Reject("找不到玩家国家");
-                    var ecoShop2 = _config.Get<EconomyConfig>("global");
-                    if (ecoShop2 == null)
-                        return CommandResult.Reject("经济配置未加载");
-                    var ssrCmdr = _shop.BuySsrTicket(shopCountry2, _world, _rng, _config, ecoShop2, _world.turnNumber);
-                    if (ssrCmdr == null)
-                        return CommandResult.Reject("SSR券购买失败");
-                    _logger.Info($"[Session] 购买SSR保底券: {ssrCmdr.name}");
-                    return CommandResult.Accept();
-
-                case CommandType.BuySpecificCardTicket:
-                    if (_shop == null)
-                        return CommandResult.Reject("商城未初始化");
+                // === P2.1: 战功点定向解锁（替代抽卡/商城） ===
+                case CommandType.UnlockCommander:
+                    if (_unlock == null)
+                        return CommandResult.Reject("解锁系统未初始化");
                     if (string.IsNullOrEmpty(cmd.targetCardId))
                         return CommandResult.Reject("缺少目标卡ID");
-                    var shopCountry3 = _world.countries.TryGetValue(_playerCountryId, out var sc3) ? sc3 : null;
-                    if (shopCountry3 == null)
+                    var unlockCountry = _world.countries.TryGetValue(_playerCountryId, out var uc) ? uc : null;
+                    if (unlockCountry == null)
                         return CommandResult.Reject("找不到玩家国家");
-                    var ecoShop3 = _config.Get<EconomyConfig>("global");
-                    if (ecoShop3 == null)
+                    var ecoUnlock = _config.Get<EconomyConfig>("global");
+                    if (ecoUnlock == null)
                         return CommandResult.Reject("经济配置未加载");
-                    var specificCmdr = _shop.BuySpecificCardTicket(shopCountry3, _world, _config, ecoShop3, cmd.targetCardId, _world.turnNumber);
-                    if (specificCmdr == null)
-                        return CommandResult.Reject("特定卡券购买失败");
-                    _logger.Info($"[Session] 购买特定卡券: {specificCmdr.name}");
+                    var unlocked = _unlock.UnlockCommander(unlockCountry, _world, _config, ecoUnlock, cmd.targetCardId);
+                    if (unlocked == null)
+                        return CommandResult.Reject("战功点不足或卡不存在");
+                    _logger.Info($"[Session] 战功解锁: {unlocked.name} (星级 {unlocked.starLevel})");
                     return CommandResult.Accept();
 
                 default:
