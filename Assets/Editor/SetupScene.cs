@@ -47,6 +47,39 @@ namespace IronCrown.Editor
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.10f, 0.10f, 0.12f);
             cam.orthographic = true;   // 2D 游戏，正交相机
+            cam.orthographicSize = 6f; // P2.3: 24 格(6省×4)铺满 16:9 视口
+            cam.transform.position = new Vector3(3f, 2.5f, -10f); // 居中于地图
+
+            // P2.3: 创建 Grid + Tilemap 用于世界空间地图渲染
+            var gridGo = new GameObject("MapGrid");
+            var grid = gridGo.AddComponent<Grid>();
+            grid.cellSize = new Vector3(1f, 1f, 0f); // 每格 1 单位
+            grid.cellLayout = GridLayout.CellLayout.Rectangle;
+
+            var tilemapGo = new GameObject("Tilemap");
+            tilemapGo.transform.SetParent(gridGo.transform);
+            var tilemap = tilemapGo.AddComponent<Tilemap>();
+            var tilemapRenderer = tilemapGo.AddComponent<TilemapRenderer>();
+            tilemapRenderer.sortingOrder = -1; // 地图在 HUD 之下
+
+            // 创建纯白 tile asset 用于运行时着色
+            var whiteTile = ScriptableObject.CreateInstance<Tile>();
+            whiteTile.name = "WhiteTile";
+            // 使用内置白色方块 sprite
+            var whiteSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.pict");
+            if (whiteSprite != null)
+                whiteTile.sprite = whiteSprite;
+            else
+                Debug.LogWarning("[SetupScene] 未找到内置 UISprite —— tile 可能不显示。");
+
+            // 挂 MapRenderer
+            var mapRenderer = tilemapGo.AddComponent<IronCrown.Presentation.MapRenderer>();
+            mapRenderer.SetTilemap(tilemap);
+            mapRenderer.SetTile(whiteTile);
+
+            // 挂 MapInputController
+            var mapInput = camGo.AddComponent<IronCrown.Presentation.MapInputController>();
+            // MapInputController 需要运行时初始化
 
             // 4. 创建 UIDocument
             var uiRoot = new GameObject("UIDocument");

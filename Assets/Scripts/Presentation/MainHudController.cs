@@ -16,6 +16,9 @@ namespace IronCrown.Presentation
         private readonly GameSessionService _session;
         private readonly IEventPublisher _events;
 
+        // P2.3: Tilemap 地图渲染器
+        private MapRenderer _mapRenderer;
+
         private Label _turnLabel;
         private Label _playerLabel;
         private Label _statusLabel;
@@ -77,6 +80,12 @@ namespace IronCrown.Presentation
         {
             _session = session;
             _events = events;
+        }
+
+        /// <summary>P2.3: 绑定 Tilemap 地图渲染器</summary>
+        public void SetMapRenderer(MapRenderer mapRenderer)
+        {
+            _mapRenderer = mapRenderer;
         }
 
         public void Bind(VisualElement root)
@@ -615,8 +624,16 @@ namespace IronCrown.Presentation
                     _gachaTicketsLabel.text = $"⭐{playerView.gachaTickets}"; // P2.1: 战功点
             }
 
-            // 地图渲染
-            RenderMap(vm);
+            // 地图渲染 (P2.3: Tilemap 或 UI Toolkit 降级)
+            if (_mapRenderer != null)
+            {
+                _mapRenderer.SetSelectedProvince(vm.selectedProvinceId);
+                _mapRenderer.Render(vm);
+            }
+            else
+            {
+                RenderMap(vm);
+            }
 
             // 省份详情
             RenderProvinceDetail(vm);
