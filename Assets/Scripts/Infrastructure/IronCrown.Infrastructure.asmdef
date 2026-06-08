@@ -3,7 +3,8 @@
   "rootNamespace": "IronCrown.Infrastructure",
   "references": [
     "IronCrown.Application",
-    "IronCrown.Domain"
+    "IronCrown.Domain",
+    "IronCrown.Contracts"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

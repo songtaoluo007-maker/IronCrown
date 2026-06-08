@@ -4,6 +4,8 @@
 // ============================================================================
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using IronCrown.Contracts;
 using IronCrown.Domain;
 using IronCrown.Simulation;
@@ -137,7 +139,7 @@ namespace IronCrown.Application
             if (eco == null) return CommandResult.Reject("经济配置未加载");
 
             // P2.6: 埋点 — 命令发出
-            TrackCommand(cmd.type.ToString());
+            TrackCommand(cmd.commandType.ToString());
 
             switch (cmd.commandType)
             {
@@ -291,7 +293,7 @@ namespace IronCrown.Application
             {
                 _logger.Info("[Session] Game over");
                 // P2.6: 埋点 — 游戏结束
-                _telemetry?.TrackGameOver(_world?.winnerCountryId ?? "unknown", _clock.CurrentTurn, 0f, "conquest");
+                _telemetry?.TrackGameOver(_world?.gameOverWinnerCountryId ?? "unknown", _clock.CurrentTurn, 0f, "conquest");
                 _telemetry?.FlushSessionSummary();
                 return;
             }
@@ -368,7 +370,7 @@ namespace IronCrown.Application
                 snapshots[kv.Key] = new CountrySnapshot
                 {
                     countryId = c.id,
-                    capital = c.capital,
+                    capital = c.GetResource("capital"),
                     manpower = c.manpower,
                     provinces = _world.provinces.Values.Count(p => p.controllerCountry == c.id),
                     units = c.unitIds.Count
