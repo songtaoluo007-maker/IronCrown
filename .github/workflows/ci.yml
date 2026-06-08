@@ -1,0 +1,30 @@
+﻿name: CI
+on:
+  push: { branches: [ main ] }
+  pull_request: { branches: [ main ] }
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash ci/check-layering.sh
+      - run: bash ci/check-utf8.sh
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: check license
+        id: lic
+        env: { UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }} }
+        run: |
+          if [ -z "$UNITY_LICENSE" ]; then echo "ready=false" >> "$GITHUB_OUTPUT"; else echo "ready=true" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.lic.outputs.ready == 'true'
+        uses: actions/checkout@v4
+        with: { lfs: true }
+      - if: steps.lic.outputs.ready == 'true'
+        uses: game-ci/unity-test-runner@v4
+        env: { UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }} }
+        with: { testMode: all, artifactsPath: artifacts/ci, githubToken: "${{ secrets.GITHUB_TOKEN }}" }
+      - if: always() && steps.lic.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with: { name: ci-test-results, path: artifacts/ci }
