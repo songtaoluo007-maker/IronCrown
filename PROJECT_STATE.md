@@ -2,7 +2,7 @@
 
 > **用途**:这是**给未来任何会话(Claude 新开窗口、换人、OpenClaw)的恢复点**。读完本文件 + `CHANGELOG.md` 即可无损重建项目全局,不依赖任何一轮对话的上下文。
 > **维护约定**:每个工作单**审查通过后**,更新本文件 §2(当前状态)与 §3(进度);决策变更更新 §4。本文件是浓缩快照+索引;完整流水账在 `CHANGELOG.md`,每阶段细节在 `WorkOrders/`。
-> 最后更新:2026-06-01(Phase 1 = C4→C17 实现完成·整体收口待审,见 Phase1-closeout)。
+> 最后更新:2026-06-09(Phase 2 P2.0–P2.6 已实现于 `feature/p2.0-foundation`·Claude 逐单审查完成·签发 `WorkOrders/P2-review-fixes.md`·修复 + 运行证据齐备后合 main)。
 
 ---
 
@@ -22,7 +22,8 @@
 ## 2. 当前状态(最新)
 - **已达成 = Phase 1 闭合 ✅**(2026-06-06):MVP + B(可玩性) + C1~C17(军事灵魂版 + 将领养成) + 三轮收口全部通过,**已合入 main**。完整循环:选国→建厂/调税→造兵编师→移动→师级整数战斗(补给链+将领buff+星级)→占领抵抗→战争胜负→胜场养成。
 - **收口结论(2026-06-06)**:Phase1-closeout(+fix) 复审达标——EditMode **341/341** + PlayMode **7/7** 全绿(真 artifact);存档持久化/确定性 id/军衔(少→帅)/Packages 卫生达标;**人类 Play 验收通过**。复盘:OpenClaw 三轮反复"报完成不附真证据"(截图造假:同空白画面冒充 5 场景;commit 数字虚报 402/14 实为 341/7)——"只信代码 + 人类 Play"是关键防线。
-- **下一步 = Phase 2 启动**:方向已锁(`Design/PRODUCT_DIRECTION.md`:硬核 F2P 服务型 / 不卖战力 / 抽卡退役 / 地图多格)。**P2.0 前置**(见 `Design/PHASE2_ROADMAP.md`):① CI 门禁(C-1) ② 存档迁移框架(C-2) ③ 从 main 拉新分支。P2.1=抽卡退役转养成。
+- **进行中 = Phase 2（P2.0–P2.6 已实现·审查待修复）**:OpenClaw 已在 `feature/p2.0-foundation`(领先 main 88 commit)实现 P2.0a CI 门禁 / P2.0b 存档迁移 / P2.1 抽卡退役 / P2.2 地图三层数据 / P2.3 Tilemap 渲染 / P2.4 地形玩法 / P2.5 空间索引+地图编辑器+中等地图 / P2.6 埋点。**Claude 静态逐单审查(2026-06-09)完成**:存档迁移(C-2)、空间索引(C-5)、抽卡退役(C-7,D3 守住)三大硬骨头真落地真接线(亮点);分层+确定性大体守住。发现 🔴1(P2.6 遥测序列化 bug + 违规则 8) 🟠2(地形确定性/重复硬编码、邻接死方法) 🟡3(P2.1 收尾、测试盲区、.meta 卫生) → 签发 `WorkOrders/P2-review-fixes.md`。
+- **下一步 / 合 main 闸门(未达)**:① OpenClaw 执行 P2-review-fixes(F1–F6) **并附运行证据**(batchmode 编译 + EditMode artifact + 真实 Play 截图——最近仍在修编译错误,全程无证据是当前最大未知);② Claude 复审;③ 人类 Play 验收。既有债 F7(`EconomyResolver` float 确定性破口,T5/B1.5 遗留)待人类确认数值等价后独立偿还。P3a(确定性回放)可并行。
 
 ## 3. 进度时间线(浓缩,细节见 CHANGELOG)
 | 阶段 | 内容 | 状态 |
@@ -61,7 +62,16 @@
 | C16 | 单机抽卡(gachaTickets/保底/升星) | ✅ |
 | C17 | 商城+抽卡面板+收藏页+HUD按钮 | ✅(Phase 2 P2.1 退役转养成) |
 | **Phase1-closeout(+fix)** | 三轮收口:存档/确定性id/军衔/Packages + G2/G3测试 + 人类Play验收 | ✅ 闭合,合入 main(341 EditMode+7 PlayMode) |
-| **Phase 2** | 硬核 F2P + 地图三层重构(Country→Province→Tile)+地形美化(见 PHASE2_ROADMAP) | 🗺️ 方向已锁,待 P2.0 启动 |
+| **P2.0a** | CI 门禁(lint:分层+UTF-8 / test:Unity,待 license) | ✅ 实现(脚本未深审) |
+| **P2.0b** | 存档迁移(ISaveMigration/Runner/0→1→2,接入读档) | ✅ 审查通过(亮点) |
+| **P2.1** | 抽卡退役→战功点定向解锁(D3 守住·确定性 id) | 🟡 核心通过·收尾待修(F4) |
+| **P2.2** | 地图三层数据(TileState+tileIds+邻接自动推导) | 🟢 通过·1 死方法待删(F3) |
+| **P2.3** | 渲染换栈(世界空间 Tilemap+正交相机) | 🟢 分层通过·线性查找小瑕疵 |
+| **P2.4** | 地形玩法(格地形→省主导聚合+地形倍率) | 🟠 确定性/重复硬编码待修(F2) |
+| **P2.5** | 空间索引(C-5 真偿还)+地图编辑器+~24 省 | 🟢 通过·测试盲区待补(F5) |
+| **P2.6** | 本地 JSON 埋点雏形 | 🔴 序列化 bug+违规则 8 待修(F1) |
+| **P2 合 main 闸门** | P2-review-fixes(F1–F6) + 运行证据(artifact/截图) | ⏳ 未达 |
+| **Phase 3** | 服务端/账号/PvP/LiveOps(P3a 确定性回放可并行) | 🗺️ 仅 P3a 已签 |
 
 ## 4. 锁定的关键决策(人类批准,勿无故重提)
 - **确定性**:Simulation 整数优先 + **SplitMix64** 自定义种子 PRNG;`float` 仅表现层;遍历按 id 升序;随机走注入的 `IRandom`。
