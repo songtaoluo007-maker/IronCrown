@@ -5,7 +5,6 @@
 
 using NUnit.Framework;
 using IronCrown.Domain;
-using IronCrown.Domain.Config;
 using IronCrown.Simulation;
 
 namespace IronCrown.Simulation.Tests

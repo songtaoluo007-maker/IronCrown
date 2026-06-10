@@ -44,6 +44,8 @@ namespace IronCrown.Application
         public string PlayerCountryId => _playerCountryId;
         public int InitialSeed => _initialSeed;
         public ReplayRecorder Recorder => _recorder;
+        /// <summary>测试/调试用: 运行时 WorldState（不用于生产逻辑）</summary>
+        public WorldState DebugWorld => _world;
 
         public GameSessionService(
             ITurnClock clock,

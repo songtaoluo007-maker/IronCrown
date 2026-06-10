@@ -107,7 +107,7 @@ namespace IronCrown.Tests
             string json = System.IO.File.ReadAllText(files[^1]);
             Assert.IsTrue(json.Contains("capital"), "JSON missing 'capital' field");
             Assert.IsTrue(json.Contains("500"), "JSON missing capital value 500");
-            Assert.IsFalse(json.Contains("countries": {}), "countries serialized as empty object");
+            Assert.IsFalse(json.Contains("\"countries\": {}"), "countries serialized as empty object");
 
             // cleanup
             System.IO.Directory.Delete(dir, true);

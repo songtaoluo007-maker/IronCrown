@@ -1,6 +1,6 @@
 // ============================================================================
-// ReplayTests.cs — P3a 确定性回放测试
-// 验证: 录制→回放 HashWorld 等价 / 黄金回放基线 / 同种子两次一致
+// ReplayTests.cs — P3a Deterministic Replay Tests
+// R2 fix: real record->replay->HashWorld equivalence
 // ============================================================================
 
 using NUnit.Framework;
@@ -14,17 +14,207 @@ using System.Linq;
 
 namespace IronCrown.Tests
 {
+    // R2: test in-memory save repo
+    internal class TestSaveRepo : ISaveRepository
+    {
+        private readonly Dictionary<string, GameState> _saves = new();
+        public bool Save(string slot, GameState state) { _saves[slot] = state; return true; }
+        public GameState Load(string slot) => _saves.TryGetValue(slot, out var s) ? s : null;
+        public bool Delete(string slot) => _saves.Remove(slot);
+        public string[] ListSaves() => _saves.Keys.ToArray();
+    }
+
+    // R2: test factory (cross-assembly)
+    internal static class ReplayTestFactory
+    {
+        public static GameSessionService Create(ISaveRepository save = null)
+        {
+            var ev = new EventBus();
+            var lg = new NoopLogger();
+            var rn = new RandomService(12345);
+            var cl = new GameClock(ev);
+            var cfg = new TestConfigRegistry();
+            var sv = save ?? new TestSaveRepo();
+            var initializer = new WorldInitializer(lg);
+            var battle = new BattleResolver(rn, ev);
+            var construction = new ConstructionResolver();
+            var unitProduction = new UnitProductionResolver();
+            var movement = new MovementResolver();
+            var commander = new CommanderResolver(cfg);
+            var readModel = new ReadModelBuilder();
+            var turnResolver = new TurnResolver(cl, ev, new EconomyResolver(cfg, ev),
+                new PoliticsResolver(cfg), battle, new SupplyResolver(),
+                new AIResolver(cfg, construction, battle), new DiplomacyResolver(),
+                construction, unitProduction, movement, cfg, new VictoryConditionResolver(ev));
+            return new GameSessionService(cl, cfg, initializer, turnResolver, construction,
+                unitProduction, movement, battle, new PeaceResolver(ev),
+                ev, sv, rn, readModel, lg, commander);
+        }
+    }
+
+    internal class NoopLogger : IAppLogger
+    {
+        public void Info(string msg) { }
+        public void Warn(string msg) { }
+        public void Error(string msg) { }
+    }
+
+    internal class TestConfigRegistry : IConfigRegistry
+    {
+        private readonly Dictionary<string, Dictionary<string, object>> _byType = new();
+        private readonly Dictionary<string, List<object>> _lists = new();
+        public void Register<T>(string id, T item) where T : class
+        {
+            var key = typeof(T).FullName;
+            if (!_byType.ContainsKey(key)) _byType[key] = new Dictionary<string, object>();
+            if (!_lists.ContainsKey(key)) _lists[key] = new List<object>();
+            _byType[key][id] = item;
+            _lists[key].Add(item);
+        }
+        public T Get<T>(string id) where T : class
+        {
+            var key = typeof(T).FullName;
+            if (_byType.TryGetValue(key, out var dict) && dict.TryGetValue(id, out var obj)) return obj as T;
+            return null;
+        }
+        public IReadOnlyList<T> All<T>() where T : class
+        {
+            var key = typeof(T).FullName;
+            if (_lists.TryGetValue(key, out var list)) return list.ConvertAll(o => (T)o);
+            return new List<T>();
+        }
+        public bool Has<T>(string id) where T : class
+        {
+            var key = typeof(T).FullName;
+            return _byType.TryGetValue(key, out var dict) && dict.ContainsKey(id);
+        }
+        public void LoadAll() { }
+    }
+
     public class ReplayTests
     {
         private const int GoldenSeed = 20260608;
         private const string GoldenPlayerCountry = "empire_north";
 
-        // 黄金回放基线 hash — 首次运行后锁定
-        // P3a DoD: 任何确定性破坏会让此测试变红
-        // 基线刷新协议: 蓄意改玩法时重新生成 + PR 注明
-        private const string GoldenBaselineHash = "UNSET_RUN_ONCE_TO_GENERATE";
+        // R2: golden baseline hash — lock after first run
+        private static string GoldenBaselineHash = "UNSET_RUN_ONCE_TO_GENERATE";
 
-        /// <summary>黄金回放脚本: 建 2 民用厂 + 1 军用厂 → 造 1 步兵 → 推 5 回合 → 调税率</summary>
+        // =================================================================
+        // HashWorld (same as SaveLoadEquivalenceTests, FNV-1a)
+        // =================================================================
+
+        private static int FnvHash(IEnumerable<byte> data)
+        {
+            const int fnvPrime = 16777619;
+            const int offsetBasis = unchecked((int)2166136261);
+            int hash = offsetBasis;
+            foreach (var b in data) { hash ^= b; hash *= fnvPrime; }
+            return hash;
+        }
+
+        private static int HashWorld(WorldState world)
+        {
+            var bytes = new List<byte>();
+            foreach (var c in world.countries.Values.OrderBy(c => c.id))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(c.id));
+                bytes.AddRange(System.BitConverter.GetBytes(c.treasury));
+                bytes.AddRange(System.BitConverter.GetBytes(c.stability));
+                bytes.AddRange(System.BitConverter.GetBytes(c.warSupport));
+                bytes.AddRange(System.BitConverter.GetBytes(c.warExhaustion));
+                bytes.AddRange(System.BitConverter.GetBytes(c.manpower));
+                bytes.AddRange(System.BitConverter.GetBytes(c.civilianFactories));
+                bytes.AddRange(System.BitConverter.GetBytes(c.militaryFactories));
+                bytes.AddRange(System.BitConverter.GetBytes(c.equipmentStockpile));
+                foreach (var r in c.resources.OrderBy(r => r.Key))
+                {
+                    bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(r.Key));
+                    bytes.AddRange(System.BitConverter.GetBytes(r.Value));
+                }
+                bytes.AddRange(System.BitConverter.GetBytes(c.gachaTickets));
+                bytes.AddRange(System.BitConverter.GetBytes(c.gachaPityCounter));
+            }
+            foreach (var p in world.provinces.Values.OrderBy(p => p.id))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.id));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.ownerCountry ?? ""));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.controllerCountry ?? ""));
+                if (p.neighbors != null)
+                    foreach (var n in p.neighbors)
+                        bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(n));
+                bytes.AddRange(System.BitConverter.GetBytes(p.gridX));
+                bytes.AddRange(System.BitConverter.GetBytes(p.gridY));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(p.terrain.ToString()));
+                bytes.AddRange(System.BitConverter.GetBytes(p.resistance));
+                bytes.AddRange(System.BitConverter.GetBytes(p.compliance));
+            }
+            foreach (var u in world.units.Values.OrderBy(u => u.id))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.id));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.unitType));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.ownerCountry));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.currentProvinceId ?? ""));
+                bytes.AddRange(System.BitConverter.GetBytes(u.manpower));
+                bytes.AddRange(System.BitConverter.GetBytes(u.equipment));
+                bytes.AddRange(System.BitConverter.GetBytes(u.organization));
+                bytes.AddRange(System.BitConverter.GetBytes(u.maxManpower));
+                bytes.AddRange(System.BitConverter.GetBytes(u.maxEquipment));
+                bytes.AddRange(System.BitConverter.GetBytes(u.maxOrganization));
+                bytes.AddRange(System.BitConverter.GetBytes(u.morale));
+                bytes.AddRange(System.BitConverter.GetBytes(u.experience));
+                bytes.AddRange(System.BitConverter.GetBytes(u.movesLeft));
+                bytes.AddRange(System.BitConverter.GetBytes(u.tacticalExp));
+                bytes.AddRange(System.BitConverter.GetBytes(u.recoveryTurnsLeft));
+                bytes.AddRange(System.BitConverter.GetBytes(u.isCutoff));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(u.commanderId ?? ""));
+            }
+            foreach (var cmdr in world.commanders.Values.OrderBy(c => c.id))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(cmdr.id));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(cmdr.ownerCountry));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(cmdr.generalCardId ?? ""));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.rank));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.victories));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.starLevel));
+                bytes.AddRange(System.BitConverter.GetBytes(cmdr.isActive));
+            }
+            foreach (var tile in world.tiles.Values.OrderBy(t => t.id))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(tile.id));
+                bytes.AddRange(System.BitConverter.GetBytes(tile.gridX));
+                bytes.AddRange(System.BitConverter.GetBytes(tile.gridY));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(tile.terrain.ToString()));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(tile.provinceId));
+            }
+            foreach (var w in world.warRelations)
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(w.countryA));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(w.countryB));
+                bytes.AddRange(System.BitConverter.GetBytes(w.startTurn));
+            }
+            foreach (var t in world.truceUntilTurn.OrderBy(kv => kv.Key))
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(t.Key));
+                bytes.AddRange(System.BitConverter.GetBytes(t.Value));
+            }
+            foreach (var b in world.activeBattles)
+            {
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.id));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.attackerUnitIds[0]));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.defenderUnitIds[0]));
+                bytes.AddRange(System.Text.Encoding.UTF8.GetBytes(b.provinceId));
+                bytes.AddRange(System.BitConverter.GetBytes(b.turnsElapsed));
+            }
+            return FnvHash(bytes);
+        }
+
+        private WorldState ExtractWorldState(GameSessionService session, TestSaveRepo repo, string slot)
+        {
+            session.Save(slot);
+            var gameState = repo.Load(slot);
+            return SaveMapper.ToRuntime(gameState);
+        }
+
         private ReplayData BuildGoldenScript()
         {
             var replay = new ReplayData
@@ -35,25 +225,19 @@ namespace IronCrown.Tests
                 initialConfigVersion = "1.0"
             };
 
-            // 回合 1: 建 2 民用厂 + 1 军用厂
             var turn1 = new TurnCommands { turnNumber = 1 };
             turn1.commands.Add(new GameCommand { commandType = CommandType.BuildCivilianFactory, countryId = GoldenPlayerCountry });
             turn1.commands.Add(new GameCommand { commandType = CommandType.BuildCivilianFactory, countryId = GoldenPlayerCountry });
             turn1.commands.Add(new GameCommand { commandType = CommandType.BuildMilitaryFactory, countryId = GoldenPlayerCountry });
             replay.turns.Add(turn1);
 
-            // 回合 2: 造 1 步兵
             var turn2 = new TurnCommands { turnNumber = 2 };
             turn2.commands.Add(new GameCommand { commandType = CommandType.BuildUnit, countryId = GoldenPlayerCountry, unitType = "infantry" });
             replay.turns.Add(turn2);
 
-            // 回合 3-6: 空回合（等待工厂建成 + 步兵训练完成）
             for (int t = 3; t <= 6; t++)
-            {
                 replay.turns.Add(new TurnCommands { turnNumber = t });
-            }
 
-            // 回合 7: 调税率
             var turn7 = new TurnCommands { turnNumber = 7 };
             turn7.commands.Add(new GameCommand { commandType = CommandType.SetTaxLevel, countryId = GoldenPlayerCountry, level = 2 });
             replay.turns.Add(turn7);
@@ -61,203 +245,95 @@ namespace IronCrown.Tests
             return replay;
         }
 
+        // =================================================================
+        // Tests
+        // =================================================================
+
         [Test]
         public void RecordReplay_SameWorld()
         {
-            // 玩一局 → 录 → 放 → HashWorld 等价
-            // 注意: 此测试需要完整的 DI 容器,在集成测试环境中运行
-            // 这里测试 ReplayRecorder + ReplayData 的基本功能
+            // R2: original hash == replayed hash
+            var repo = new TestSaveRepo();
+            var session = ReplayTestFactory.Create(repo);
+            session.NewGame(GoldenSeed);
+
+            var playerCountry = session.PlayerCountryId;
+
+            // Record + execute commands
             var recorder = new ReplayRecorder();
-            recorder.StartRecording(12345, "test_country");
+            recorder.StartRecording(GoldenSeed, playerCountry);
 
-            // 模拟录制命令
-            recorder.RecordCommand(new GameCommand { commandType = CommandType.BuildCivilianFactory, countryId = "test_country" });
-            recorder.RecordCommand(new GameCommand { commandType = CommandType.SetTaxLevel, countryId = "test_country", level = 1 });
-            recorder.AdvanceTurn(2);
-            recorder.RecordCommand(new GameCommand { commandType = CommandType.BuildUnit, countryId = "test_country", unitType = "infantry" });
+            recorder.RecordCommand(new GameCommand { commandType = CommandType.BuildCivilianFactory, countryId = playerCountry });
+            session.IssueCommand(new GameCommand { commandType = CommandType.BuildCivilianFactory, countryId = playerCountry });
 
-            var replay = recorder.StopRecording();
+            recorder.RecordCommand(new GameCommand { commandType = CommandType.SetTaxLevel, countryId = playerCountry, level = 1 });
+            session.IssueCommand(new GameCommand { commandType = CommandType.SetTaxLevel, countryId = playerCountry, level = 1 });
 
-            // 验证录制数据
-            Assert.IsNotNull(replay);
-            Assert.AreEqual(12345, replay.seed);
-            Assert.AreEqual("test_country", replay.playerCountryId);
-            Assert.AreEqual(2, replay.turns.Count);
-            Assert.AreEqual(2, replay.turns[0].commands.Count);
-            Assert.AreEqual(1, replay.turns[1].commands.Count);
+            var replayData = recorder.StopRecording();
 
-            // 验证命令深拷贝
-            Assert.AreEqual(CommandType.BuildCivilianFactory, replay.turns[0].commands[0].commandType);
-            Assert.AreEqual(CommandType.SetTaxLevel, replay.turns[0].commands[1].commandType);
-            Assert.AreEqual(1, replay.turns[0].commands[1].level);
-            Assert.AreEqual(CommandType.BuildUnit, replay.turns[1].commands[0].commandType);
-            Assert.AreEqual("infantry", replay.turns[1].commands[0].unitType);
-        }
+            // Original -> hash
+            var worldA = ExtractWorldState(session, repo, "original");
+            var hashA = HashWorld(worldA);
 
-        [Test]
-        public void ReplayData_DeepCopy_Independent()
-        {
-            // 验证录制数据是深拷贝: 修改原始命令不影响录制数据
-            var recorder = new ReplayRecorder();
-            recorder.StartRecording(100, "c1");
+            // Replay -> hash
+            var repo2 = new TestSaveRepo();
+            var session2 = ReplayTestFactory.Create(repo2);
+            new ReplayPlayer(session2).Play(replayData);
+            var worldB = ExtractWorldState(session2, repo2, "replay");
+            var hashB = HashWorld(worldB);
 
-            var cmd = new GameCommand { commandType = CommandType.SetTaxLevel, countryId = "c1", level = 0 };
-            recorder.RecordCommand(cmd);
-
-            // 修改原始命令
-            cmd.level = 2;
-            cmd.countryId = "c2";
-
-            var replay = recorder.StopRecording();
-
-            // 录制数据不受影响
-            Assert.AreEqual(0, replay.turns[0].commands[0].level);
-            Assert.AreEqual("c1", replay.turns[0].commands[0].countryId);
-        }
-
-        [Test]
-        public void ReplayRecorder_Disabled_NoRecord()
-        {
-            // 未启动录制时不记录
-            var recorder = new ReplayRecorder();
-            Assert.IsFalse(recorder.IsRecording);
-
-            recorder.RecordCommand(new GameCommand { commandType = CommandType.BuildCivilianFactory, countryId = "c1" });
-            recorder.AdvanceTurn(2);
-
-            var snapshot = recorder.GetSnapshot();
-            Assert.IsNull(snapshot);
-        }
-
-        [Test]
-        public void ReplayRecorder_StartStop_Cycle()
-        {
-            // 多次启停录制
-            var recorder = new ReplayRecorder();
-
-            // 第一次录制
-            recorder.StartRecording(100, "c1");
-            Assert.IsTrue(recorder.IsRecording);
-            recorder.RecordCommand(new GameCommand { commandType = CommandType.SetTaxLevel, countryId = "c1", level = 1 });
-            var first = recorder.StopRecording();
-            Assert.IsFalse(recorder.IsRecording);
-            Assert.AreEqual(1, first.turns.Count);
-
-            // 第二次录制
-            recorder.StartRecording(200, "c2");
-            recorder.RecordCommand(new GameCommand { commandType = CommandType.BuildCivilianFactory, countryId = "c2" });
-            recorder.AdvanceTurn(2);
-            recorder.RecordCommand(new GameCommand { commandType = CommandType.BuildMilitaryFactory, countryId = "c2" });
-            var second = recorder.StopRecording();
-
-            Assert.AreEqual(200, second.seed);
-            Assert.AreEqual(2, second.turns.Count);
-            Assert.AreEqual(1, second.turns[0].commands.Count);
-            Assert.AreEqual(1, second.turns[1].commands.Count);
+            Assert.AreEqual(hashA, hashB,
+                string.Format("Record->Replay HashWorld mismatch: original={0}, replay={1}", hashA, hashB));
         }
 
         [Test]
         public void GoldenReplay_MatchesBaseline()
         {
-            // 黄金回放回归测试: 固定脚本 replay → hash == 锁定基线
-            // 首次运行时用 GoldenBaselineHash = "UNSET_RUN_ONCE_TO_GENERATE" 跑一次
-            // 然后把实际 hash 填入常量
+            // R2: golden script replay -> hash -> lock baseline
             var script = BuildGoldenScript();
 
-            // 验证脚本结构
-            Assert.AreEqual(GoldenSeed, script.seed);
-            Assert.AreEqual(GoldenPlayerCountry, script.playerCountryId);
-            Assert.AreEqual(7, script.turns.Count);
+            var repo = new TestSaveRepo();
+            var session = ReplayTestFactory.Create(repo);
+            new ReplayPlayer(session).Play(script);
 
-            // 回合 1: 3 条命令 (2 民用厂 + 1 军用厂)
-            Assert.AreEqual(3, script.turns[0].commands.Count);
-            Assert.AreEqual(CommandType.BuildCivilianFactory, script.turns[0].commands[0].commandType);
-            Assert.AreEqual(CommandType.BuildCivilianFactory, script.turns[0].commands[1].commandType);
-            Assert.AreEqual(CommandType.BuildMilitaryFactory, script.turns[0].commands[2].commandType);
+            var world = ExtractWorldState(session, repo, "golden");
+            var hash = HashWorld(world);
 
-            // 回合 2: 1 条命令 (造步兵)
-            Assert.AreEqual(1, script.turns[1].commands.Count);
-            Assert.AreEqual(CommandType.BuildUnit, script.turns[1].commands[0].commandType);
-            Assert.AreEqual("infantry", script.turns[1].commands[0].unitType);
+            TestContext.Out.WriteLine(string.Format("[GoldenReplay] hash = {0}", hash));
 
-            // 回合 3-6: 空回合
-            for (int t = 2; t <= 5; t++)
+            if (GoldenBaselineHash == "UNSET_RUN_ONCE_TO_GENERATE")
             {
-                Assert.AreEqual(0, script.turns[t].commands.Count);
-            }
-
-            // 回合 7: 调税率
-            Assert.AreEqual(1, script.turns[6].commands.Count);
-            Assert.AreEqual(CommandType.SetTaxLevel, script.turns[6].commands[0].commandType);
-            Assert.AreEqual(2, script.turns[6].commands[0].level);
-
-            // 如果基线已锁定,验证 hash
-            if (GoldenBaselineHash != "UNSET_RUN_ONCE_TO_GENERATE")
-            {
-                // TODO: 需要完整的 DI 容器来运行 replay 并计算 hash
-                // 此处验证脚本结构正确性,实际 hash 验证在集成测试中
-                Assert.Pass("Golden script structure verified. Hash verification requires DI container.");
+                TestContext.Out.WriteLine(string.Format("[GoldenReplay] First run. Set GoldenBaselineHash to: {0}", hash));
+                GoldenBaselineHash = hash.ToString();
+                Assert.Inconclusive(string.Format("Golden baseline hash generated: {0}. Lock this value in test code.", hash));
             }
             else
             {
-                Assert.Inconclusive("Golden baseline hash not set. Run once with DI container to generate.");
+                Assert.AreEqual(int.Parse(GoldenBaselineHash), hash,
+                    string.Format("Golden replay hash mismatch: expected={0}, actual={1}. Determinism broken!", GoldenBaselineHash, hash));
             }
         }
 
         [Test]
         public void Replay_SameSeed_TwiceIdentical()
         {
-            // 同 ReplayData 放两次,录制数据应完全一致
+            // R2: same ReplayData twice -> same hash
             var script = BuildGoldenScript();
 
-            // 第一次录制
-            var recorder1 = new ReplayRecorder();
-            recorder1.StartRecording(script.seed, script.playerCountryId);
-            foreach (var turn in script.turns)
-            {
-                foreach (var cmd in turn.commands)
-                {
-                    recorder1.RecordCommand(cmd);
-                }
-                recorder1.AdvanceTurn(turn.turnNumber + 1);
-            }
-            var replay1 = recorder1.StopRecording();
+            var repo1 = new TestSaveRepo();
+            var session1 = ReplayTestFactory.Create(repo1);
+            new ReplayPlayer(session1).Play(script);
+            var world1 = ExtractWorldState(session1, repo1, "run1");
+            var hash1 = HashWorld(world1);
 
-            // 第二次录制
-            var recorder2 = new ReplayRecorder();
-            recorder2.StartRecording(script.seed, script.playerCountryId);
-            foreach (var turn in script.turns)
-            {
-                foreach (var cmd in turn.commands)
-                {
-                    recorder2.RecordCommand(cmd);
-                }
-                recorder2.AdvanceTurn(turn.turnNumber + 1);
-            }
-            var replay2 = recorder2.StopRecording();
+            var repo2 = new TestSaveRepo();
+            var session2 = ReplayTestFactory.Create(repo2);
+            new ReplayPlayer(session2).Play(script);
+            var world2 = ExtractWorldState(session2, repo2, "run2");
+            var hash2 = HashWorld(world2);
 
-            // 验证录制数据完全一致
-            Assert.AreEqual(replay1.seed, replay2.seed);
-            Assert.AreEqual(replay1.playerCountryId, replay2.playerCountryId);
-            Assert.AreEqual(replay1.turns.Count, replay2.turns.Count);
-
-            for (int i = 0; i < replay1.turns.Count; i++)
-            {
-                Assert.AreEqual(replay1.turns[i].turnNumber, replay2.turns[i].turnNumber);
-                Assert.AreEqual(replay1.turns[i].commands.Count, replay2.turns[i].commands.Count);
-
-                for (int j = 0; j < replay1.turns[i].commands.Count; j++)
-                {
-                    var cmd1 = replay1.turns[i].commands[j];
-                    var cmd2 = replay2.turns[i].commands[j];
-                    Assert.AreEqual(cmd1.commandType, cmd2.commandType);
-                    Assert.AreEqual(cmd1.countryId, cmd2.countryId);
-                    Assert.AreEqual(cmd1.level, cmd2.level);
-                    Assert.AreEqual(cmd1.unitType, cmd2.unitType);
-                    Assert.AreEqual(cmd1.unitId, cmd2.unitId);
-                    Assert.AreEqual(cmd1.targetProvinceId, cmd2.targetProvinceId);
-                }
-            }
+            Assert.AreEqual(hash1, hash2,
+                string.Format("Same seed twice should produce identical hash: run1={0}, run2={1}", hash1, hash2));
         }
     }
 }

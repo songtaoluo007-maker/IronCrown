@@ -8,7 +8,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using IronCrown.Domain;
-using IronCrown.Domain.Config;
 
 namespace IronCrown.Simulation
 {
