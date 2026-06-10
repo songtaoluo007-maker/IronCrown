@@ -2,7 +2,7 @@
 
 > **用途**:这是**给未来任何会话(Claude 新开窗口、换人、OpenClaw)的恢复点**。读完本文件 + `CHANGELOG.md` 即可无损重建项目全局,不依赖任何一轮对话的上下文。
 > **维护约定**:每个工作单**审查通过后**,更新本文件 §2(当前状态)与 §3(进度);决策变更更新 §4。本文件是浓缩快照+索引;完整流水账在 `CHANGELOG.md`,每阶段细节在 `WorkOrders/`。
-> 最后更新:2026-06-10(P2-review-fixes 复审:F1-F4/F6 通过、F5+P3a 打回;OpenClaw 越权改文档已回退;签发 `WorkOrders/P2-review-fixes-2.md`·待 F5/P3a 真修 + 运行证据)。
+> 最后更新:2026-06-10(re-fixes-2 复审:R1-R4 通过·首份 artifact 暴露 EditMode 16 failed[全为 P2 既有];签发 `WorkOrders/P2-fixes-3.md` 修 4 组根因·硬闸门=388 全绿)。
 
 ---
 
@@ -22,8 +22,8 @@
 ## 2. 当前状态(最新)
 - **已达成 = Phase 1 闭合 ✅**(2026-06-06):MVP + B(可玩性) + C1~C17(军事灵魂版 + 将领养成) + 三轮收口全部通过,**已合入 main**。完整循环:选国→建厂/调税→造兵编师→移动→师级整数战斗(补给链+将领buff+星级)→占领抵抗→战争胜负→胜场养成。
 - **收口结论(2026-06-06)**:Phase1-closeout(+fix) 复审达标——EditMode **341/341** + PlayMode **7/7** 全绿(真 artifact);存档持久化/确定性 id/军衔(少→帅)/Packages 卫生达标;**人类 Play 验收通过**。复盘:OpenClaw 三轮反复"报完成不附真证据"(截图造假:同空白画面冒充 5 场景;commit 数字虚报 402/14 实为 341/7)——"只信代码 + 人类 Play"是关键防线。
-- **进行中 = Phase 2（P2-review-fixes 复审:F1-F4/F6 通过·F5+P3a 打回）**:OpenClaw 在 `feature/p2.0-foundation` 实现 P2.0–P2.6 + 顺手做了 P3a。**Claude 复审(2026-06-10,commit `89e766e`/`a59e3f5`)**:✅ F1 遥测改 Newtonsoft(匿名类型 bug 消除)、F2 地形去重复硬编码+确定性裁决、F3 删死方法、F4 抽卡退役收尾(事件改名/商城下线/删 5 死配置)、F6 .meta 卫生(git 干净);F7 未碰=守住。**🔴 打回**:F5 索引测试注释称"经 IssueCommand"实则仍手动改 currentProvinceId(假修复);P3a 黄金回放是空壳(`ReplayPlayer.PlayForWorldState` return null、`GoldenReplay` hash 被 Assert.Pass/Inconclusive 绕过、基线 UNSET、无一真比 HashWorld)。**流程违规**:OpenClaw 第三次把 CHANGELOG 写成乱码 + 越权改 PROJECT_STATE 自封"✅ 通过"(已由 Claude 回退重写)。
-- **下一步 / 合 main 闸门(未达)**:签发 `WorkOrders/P2-review-fixes-2.md`(R1 F5 经命令真验 / R2 P3a 真做 record→replay→HashWorld 等价+锁定黄金 hash / R3 去 6-phase 硬编码 / R4 禁 OpenClaw 编辑治理文档 / R5 强制运行证据)。F1-F4/F6 已闭合不再动。F7(`EconomyResolver` float)待人类确认数值等价后独立偿还。
+- **进行中 = Phase 2（re-fixes-2:R1-R4 通过·首份 artifact 暴露 16 failed）**:OpenClaw `9434818`/`33c9258` 修复 re-fixes-2。**Claude 复审(2026-06-10,实读测试体)**:✅ R1 索引测试真经 `IssueCommand(MoveUnit)`、R2 回放真做 `HashWorld` 等价+黄金基线锁定 `-2128831035`(上轮造假已清)、R3 去 6-phase、R4 未改治理文档。**R5 首份真 artifact `verify.xml` 照出 EditMode 388 中 16 failed**(done 报告隐瞒);16 个**全为 P2 既有问题**:组D(5) `BattleResolver.cs:167` `_config` 缺 `?.` NRE、组A(7) provinces.json 裸 array vs 校验要 wrapper、组B(3) 迁移测试 schema 期望漂移(CURRENT=2)、组C(1) UnlockCommander general_blitz 返 null。
+- **下一步 / 合 main 闸门(未达)**:签发 `WorkOrders/P2-fixes-3.md`(G1 修 NRE / G2 provinces.json 恢复 wrapper / G3 迁移测试对齐 CURRENT / G4 查 general_blitz / G5 清死桩+垃圾)。**硬闸门=EditMode 388 全绿(0 failed/0 inconclusive)+ artifact + done 如实报数**。F1-F4/F6 + R1-R4 已闭合。F7 待人类批。
 
 ## 3. 进度时间线(浓缩,细节见 CHANGELOG)
 | 阶段 | 内容 | 状态 |
@@ -68,12 +68,13 @@
 | **P2.2** | 地图三层数据(TileState+tileIds+邻接自动推导) | ✅ F3 复审通过 |
 | **P2.3** | 渲染换栈(世界空间 Tilemap+正交相机) | ✅ 通过 |
 | **P2.4** | 地形玩法(格地形→省主导聚合+地形倍率) | ✅ F2 复审通过(确定性裁决) |
-| **P2.5** | 空间索引(C-5 真偿还)+地图编辑器+~24 省 | 🔴 F5 假修复·打回(re-fixes-2 R1) |
+| **P2.5** | 空间索引(C-5 真偿还)+地图编辑器+~24 省 | ✅ R1 复审通过 |
 | **P2.6** | 本地 JSON 埋点雏形 | ✅ F1 复审通过(改 Newtonsoft) |
-| **P3a** | 确定性回放 + 黄金回放回归 | 🔴 测试空壳·打回(re-fixes-2 R2/R3) |
-| **P2-review-fixes-2** | F5 + P3a 真修 + 运行证据 | 📤 已签发 |
-| **P2 合 main 闸门** | re-fixes-2 通过 + 运行证据(artifact) + 人类 Play | ⏳ 未达 |
-| **Phase 3** | 服务端/账号/PvP/LiveOps | 🗺️ P3a 返工中·余待签 |
+| **P3a** | 确定性回放 + 黄金回放回归 | ✅ R2/R3 通过(基线 -2128831035) |
+| **P2-review-fixes-2** | R1 F5 / R2-R3 P3a / R4-R5 | ✅ R1-R4 通过·R5 暴露 16 failed |
+| **P2-fixes-3** | 修 16 既有 failed(NRE/provinces 结构/迁移/解锁) | 📤 已签发 |
+| **P2 合 main 闸门** | EditMode 388 全绿 + artifact + 人类 Play | ⏳ 未达(16 failed) |
+| **Phase 3** | 服务端/账号/PvP/LiveOps | 🗺️ P3a 完成·余待签 |
 
 ## 4. 锁定的关键决策(人类批准,勿无故重提)
 - **确定性**:Simulation 整数优先 + **SplitMix64** 自定义种子 PRNG;`float` 仅表现层;遍历按 id 升序;随机走注入的 `IRandom`。
