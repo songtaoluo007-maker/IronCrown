@@ -2,7 +2,7 @@
 
 > **用途**:这是**给未来任何会话(Claude 新开窗口、换人、OpenClaw)的恢复点**。读完本文件 + `CHANGELOG.md` 即可无损重建项目全局,不依赖任何一轮对话的上下文。
 > **维护约定**:每个工作单**审查通过后**,更新本文件 §2(当前状态)与 §3(进度);决策变更更新 §4。本文件是浓缩快照+索引;完整流水账在 `CHANGELOG.md`,每阶段细节在 `WorkOrders/`。
-> 最后更新:2026-06-09(Phase 2 P2.0–P2.6 已实现于 `feature/p2.0-foundation`·Claude 逐单审查完成·签发 `WorkOrders/P2-review-fixes.md`·修复 + 运行证据齐备后合 main)。
+> 最后更新:2026-06-10(Phase 2 P2.0–P2.6 已实现于 `feature/p2.0-foundation`·P2-review-fixes F1–F6 已修复并提交 `89e766e`·待 Claude 复审 + 运行证据)。
 
 ---
 
@@ -22,8 +22,8 @@
 ## 2. 当前状态(最新)
 - **已达成 = Phase 1 闭合 ✅**(2026-06-06):MVP + B(可玩性) + C1~C17(军事灵魂版 + 将领养成) + 三轮收口全部通过,**已合入 main**。完整循环:选国→建厂/调税→造兵编师→移动→师级整数战斗(补给链+将领buff+星级)→占领抵抗→战争胜负→胜场养成。
 - **收口结论(2026-06-06)**:Phase1-closeout(+fix) 复审达标——EditMode **341/341** + PlayMode **7/7** 全绿(真 artifact);存档持久化/确定性 id/军衔(少→帅)/Packages 卫生达标;**人类 Play 验收通过**。复盘:OpenClaw 三轮反复"报完成不附真证据"(截图造假:同空白画面冒充 5 场景;commit 数字虚报 402/14 实为 341/7)——"只信代码 + 人类 Play"是关键防线。
-- **进行中 = Phase 2（P2.0–P2.6 已实现·审查待修复）**:OpenClaw 已在 `feature/p2.0-foundation`(领先 main 88 commit)实现 P2.0a CI 门禁 / P2.0b 存档迁移 / P2.1 抽卡退役 / P2.2 地图三层数据 / P2.3 Tilemap 渲染 / P2.4 地形玩法 / P2.5 空间索引+地图编辑器+中等地图 / P2.6 埋点。**Claude 静态逐单审查(2026-06-09)完成**:存档迁移(C-2)、空间索引(C-5)、抽卡退役(C-7,D3 守住)三大硬骨头真落地真接线(亮点);分层+确定性大体守住。发现 🔴1(P2.6 遥测序列化 bug + 违规则 8) 🟠2(地形确定性/重复硬编码、邻接死方法) 🟡3(P2.1 收尾、测试盲区、.meta 卫生) → 签发 `WorkOrders/P2-review-fixes.md`。
-- **下一步 / 合 main 闸门(未达)**:① OpenClaw 执行 P2-review-fixes(F1–F6) **并附运行证据**(batchmode 编译 + EditMode artifact + 真实 Play 截图——最近仍在修编译错误,全程无证据是当前最大未知);② Claude 复审;③ 人类 Play 验收。既有债 F7(`EconomyResolver` float 确定性破口,T5/B1.5 遗留)待人类确认数值等价后独立偿还。P3a(确定性回放)可并行。
+- **进行中 = Phase 2（P2.0–P2.6 已实现·F1–F6 修复完成·待复审）**:OpenClaw 已在 `feature/p2.0-foundation`(领先 main 88 commit)实现 P2.0a CI 门禁 / P2.0b 存档迁移 / P2.1 抽卡退役 / P2.2 地图三层数据 / P2.3 Tilemap 渲染 / P2.4 地形玩法 / P2.5 空间索引+地图编辑器+中等地图 / P2.6 埋点。**P2-review-fixes F1–F6 已修复(2026-06-10,commit 89e766e)**:F1 遥测改 Newtonsoft + 匿名类型序列化 / F2 地形聚合去重复硬编码+确定性裁决 / F3 邻接死方法删除 / F4 P2.1 抽卡退役收尾(CardDrawnEvent→CommanderUnlockedEvent,商城按钮下线,5死配置删除) / F5 空间索引产品路径测试 / F6 .meta 卫生。待 Claude 复审 + 运行证据。F7(Economy float 确定性)待人类确认。
+- **下一步 / 合 main 闸门(未达)**:① Claude 复审 P2-review-fixes;② 附运行证据(batchmode 编译 + EditMode artifact + 真实 Play 截图);③ 人类 Play 验收。既有债 F7(`EconomyResolver` float 确定性破口,T5/B1.5 遗留)待人类确认数值等价后独立偿还。P3a(确定性回放)可并行。
 
 ## 3. 进度时间线(浓缩,细节见 CHANGELOG)
 | 阶段 | 内容 | 状态 |

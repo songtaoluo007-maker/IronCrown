@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using IronCrown.Application.Replay;
 using IronCrown.Contracts;
 using IronCrown.Domain;
 using IronCrown.Simulation;
@@ -33,6 +34,7 @@ namespace IronCrown.Application
         private readonly ReadModelBuilder _builder;
         private readonly IAppLogger _logger;
         private readonly ITelemetry _telemetry; // P2.6
+        private readonly ReplayRecorder _recorder; // P3a: 回放录制
 
         private WorldState _world;
         private int _initialSeed = 12345;
@@ -40,6 +42,8 @@ namespace IronCrown.Application
         private string _selectedProvinceId;
 
         public string PlayerCountryId => _playerCountryId;
+        public int InitialSeed => _initialSeed;
+        public ReplayRecorder Recorder => _recorder;
 
         public GameSessionService(
             ITurnClock clock,
@@ -60,7 +64,8 @@ namespace IronCrown.Application
             CommanderUnlockResolver unlock = null,
             GachaResolver gacha = null,
             ShopResolver shop = null,
-            ITelemetry telemetry = null)
+            ITelemetry telemetry = null,
+            ReplayRecorder recorder = null)
         {
             _clock = clock;
             _config = config;
@@ -76,6 +81,7 @@ namespace IronCrown.Application
             _gacha = gacha;
             _shop = shop;
             _telemetry = telemetry;
+            _recorder = recorder;
             _events = events;
             _save = save;
             _rng = rng;
@@ -114,6 +120,9 @@ namespace IronCrown.Application
 
             _logger.Info($"[Session] New game: {_world.countries.Count} countries, player={_playerCountryId}");
             _world.playerCountryId = _playerCountryId;
+
+            // P3a: 开始录制回放
+            _recorder?.StartRecording(_initialSeed, _playerCountryId);
         }
 
         public void SetPlayerCountry(string countryId)
@@ -140,6 +149,9 @@ namespace IronCrown.Application
 
             // P2.6: 埋点 — 命令发出
             TrackCommand(cmd.commandType.ToString());
+
+            // P3a: 回放录制
+            _recorder?.RecordCommand(cmd);
 
             switch (cmd.commandType)
             {
@@ -304,6 +316,9 @@ namespace IronCrown.Application
 
                 // P2.6: 埋点 — 回合推进
                 _telemetry?.TrackTurnAdvanced(_clock.CurrentTurn, BuildCountrySnapshots());
+
+                // P3a: 回放录制 — 回合推进
+                _recorder?.AdvanceTurn(_clock.CurrentTurn + 1);
             }
 
             _clock.AdvancePhase();
