@@ -2,7 +2,7 @@
 
 > **用途**:这是**给未来任何会话(Claude 新开窗口、换人、OpenClaw)的恢复点**。读完本文件 + `CHANGELOG.md` 即可无损重建项目全局,不依赖任何一轮对话的上下文。
 > **维护约定**:每个工作单**审查通过后**,更新本文件 §2(当前状态)与 §3(进度);决策变更更新 §4。本文件是浓缩快照+索引;完整流水账在 `CHANGELOG.md`,每阶段细节在 `WorkOrders/`。
-> 最后更新:2026-06-10(re-fixes-2 复审:R1-R4 通过·首份 artifact 暴露 EditMode 16 failed[全为 P2 既有];签发 `WorkOrders/P2-fixes-3.md` 修 4 组根因·硬闸门=388 全绿)。
+> 最后更新:2026-06-10(① re-fixes-2 复审:R1-R4 通过·首份 artifact 暴露 16 failed→签发 `WorkOrders/P2-fixes-3.md`[硬闸门=388 全绿];② 新增 `Design/LAUNCH_PLAN.md` 上市全案 v0.1 草案[8 项待人类拍板];③ ⚠ 发现 origin/main 于 06-08 被合入未审查 feature 快照 a3d2f41[早于全部审查轮+CI 红],fixes-3 全绿后用审查过的分支头重新合并覆盖,期间勿从 main 构建)。
 
 ---
 
@@ -11,6 +11,7 @@
 2. [`PROJECT_RULES.md`](PROJECT_RULES.md) — 14 条**工程**宪法(最高约束,不可违反)。
    - ⭐ [`Design/PRODUCT_DIRECTION.md`](Design/PRODUCT_DIRECTION.md) — **产品**宪法(2026-06-02 锁定:硬核策略为主 / F2P 服务型 / 不卖战力 / 抽卡退役 / 地图多格)。
    - [`Design/PHASE2_ROADMAP.md`](Design/PHASE2_ROADMAP.md) + [`Design/MAP_ARCHITECTURE.md`](Design/MAP_ARCHITECTURE.md) — Phase 2 路线 + 地图三层重构设计。
+   - [`Design/LAUNCH_PLAN.md`](Design/LAUNCH_PLAN.md) — **上市全案 v0.1 草案**(总架构/模块全集/AI 协作 v2/测试 L0-L10/工程化/路线图闸门/8 项待人类拍板,2026-06-10,待批准)。
 3. [`ARCHITECTURE.md`](ARCHITECTURE.md) — 架构(分层/数据流/配置/测试/MVP 任务表 + 附录 A 现状→目标 / 附录 B 审查门禁 / 附录 C 技术债)。
 4. [`CHANGELOG.md`](CHANGELOG.md) — 完整时间线(查"某步到底做了什么/为什么"的最权威来源)。
 5. [`WorkOrders/`](WorkOrders/) — 各阶段工作单(要看某阶段详细规格时读对应单)。
