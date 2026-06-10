@@ -97,7 +97,7 @@ namespace IronCrown.Tests
         private const string GoldenPlayerCountry = "empire_north";
 
         // R2: golden baseline hash — lock after first run
-        private static string GoldenBaselineHash = "UNSET_RUN_ONCE_TO_GENERATE";
+        private static string GoldenBaselineHash = "-2128831035";
 
         // =================================================================
         // HashWorld (same as SaveLoadEquivalenceTests, FNV-1a)
