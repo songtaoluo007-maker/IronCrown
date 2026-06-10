@@ -30,11 +30,6 @@ namespace IronCrown.Simulation.Tests
                 gachaTicketsPerVictory = 1,
                 gachaTicketsPerEncirclement = 3,
                 gachaTicketsPerCapitalCapture = 10,
-                gachaRarityWeightN = 50,
-                gachaRarityWeightR = 35,
-                gachaRarityWeightSR = 12,
-                gachaRarityWeightSSR = 3,
-                gachaSsrPityThreshold = 50,
                 starBonusPerStar = 5,
                 maxStarLevel = 5,
                 // P2.1 merit 字段

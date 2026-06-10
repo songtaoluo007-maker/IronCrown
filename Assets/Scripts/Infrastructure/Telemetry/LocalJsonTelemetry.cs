@@ -1,6 +1,7 @@
 // ============================================================================
 // Infrastructure/Telemetry/LocalJsonTelemetry.cs — P2.6 本地 JSON 埋点
 // 写本地 JSON 文件，不接外部服务/网络
+// 序列化使用 Newtonsoft.Json（规则 8: 不重复造轮子）
 // ============================================================================
 
 using System;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Newtonsoft.Json;
 using IronCrown.Contracts;
 
 namespace IronCrown.Infrastructure.Telemetry
@@ -42,6 +44,8 @@ namespace IronCrown.Infrastructure.Telemetry
                 turn = turnNumber,
                 data = new Dictionary<string, object>
                 {
+                    // F1 fix: Newtonsoft 序列化匿名类型（property getter → JSON）,
+                    // 替换原 JsonUtility 反射 field 导致空对象的问题
                     ["countries"] = countrySnapshots.ToDictionary(
                         kv => kv.Key,
                         kv => (object)new { capital = kv.Value.capital, manpower = kv.Value.manpower, provinces = kv.Value.provinces, units = kv.Value.units })
@@ -154,7 +158,6 @@ namespace IronCrown.Infrastructure.Telemetry
                 totalCommands = _commandCount,
                 winnerCountryId = _winnerCountryId,
                 victoryType = _victoryType,
-                // 漏斗: 发展→首战→首占→终局
                 funnel = new SessionFunnel
                 {
                     firstBattleTurn = _events.FirstOrDefault(e => e.type == "battle_resolved")?.turn ?? 0,
@@ -164,7 +167,7 @@ namespace IronCrown.Infrastructure.Telemetry
                 events = _events
             };
 
-            string json = JsonUtility.ToJson(summary, true);
+            string json = JsonConvert.SerializeObject(summary, Formatting.Indented);
             string filename = $"session-{DateTime.UtcNow:yyyyMMdd-HHmmss}.json";
             string path = Path.Combine(_outputDir, filename);
             File.WriteAllText(path, json, Encoding.UTF8);
@@ -202,82 +205,6 @@ namespace IronCrown.Infrastructure.Telemetry
             public int firstBattleTurn;
             public int firstOccupationTurn;
             public int gameOverTurn;
-        }
-
-        // === 简单 JSON 序列化（不依赖 Newtonsoft） ===
-        private static class JsonUtility
-        {
-            public static string ToJson(object obj, bool pretty = false)
-            {
-                var sb = new StringBuilder();
-                SerializeObject(sb, obj, pretty, 0);
-                return sb.ToString();
-            }
-
-            private static void SerializeObject(StringBuilder sb, object obj, bool pretty, int indent)
-            {
-                if (obj == null) { sb.Append("null"); return; }
-
-                var type = obj.GetType();
-
-                if (obj is string s) { sb.Append('"').Append(Escape(s)).Append('"'); return; }
-                if (obj is bool b) { sb.Append(b ? "true" : "false"); return; }
-                if (obj is int or long or short or byte) { sb.Append(obj); return; }
-                if (obj is float f) { sb.Append(f.ToString("F2")); return; }
-                if (obj is double d) { sb.Append(d.ToString("F2")); return; }
-
-                if (obj is System.Collections.IDictionary dict)
-                {
-                    sb.Append('{');
-                    bool first = true;
-                    foreach (System.Collections.DictionaryEntry entry in dict)
-                    {
-                        if (!first) sb.Append(',');
-                        first = false;
-                        if (pretty) { sb.AppendLine(); Pad(sb, indent + 1); }
-                        sb.Append('"').Append(Escape(entry.Key.ToString()!)).Append("\":");
-                        if (pretty) sb.Append(' ');
-                        SerializeObject(sb, entry.Value, pretty, indent + 1);
-                    }
-                    if (pretty && !first) { sb.AppendLine(); Pad(sb, indent); }
-                    sb.Append('}');
-                    return;
-                }
-
-                if (obj is System.Collections.IList list)
-                {
-                    sb.Append('[');
-                    for (int i = 0; i < list.Count; i++)
-                    {
-                        if (i > 0) sb.Append(',');
-                        if (pretty) { sb.AppendLine(); Pad(sb, indent + 1); }
-                        SerializeObject(sb, list[i], pretty, indent + 1);
-                    }
-                    if (pretty && list.Count > 0) { sb.AppendLine(); Pad(sb, indent); }
-                    sb.Append(']');
-                    return;
-                }
-
-                // 反射序列化对象字段
-                sb.Append('{');
-                var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                bool firstField = true;
-                foreach (var field in fields)
-                {
-                    var value = field.GetValue(obj);
-                    if (!firstField) sb.Append(',');
-                    firstField = false;
-                    if (pretty) { sb.AppendLine(); Pad(sb, indent + 1); }
-                    sb.Append('"').Append(Escape(field.Name)).Append("\":");
-                    if (pretty) sb.Append(' ');
-                    SerializeObject(sb, value, pretty, indent + 1);
-                }
-                if (pretty && fields.Length > 0) { sb.AppendLine(); Pad(sb, indent); }
-                sb.Append('}');
-            }
-
-            private static string Escape(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r");
-            private static void Pad(StringBuilder sb, int indent) { for (int i = 0; i < indent; i++) sb.Append("  "); }
         }
     }
 }

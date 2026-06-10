@@ -97,16 +97,6 @@ namespace IronCrown.Domain
         public int gachaTicketsPerEncirclement;
         [System.Obsolete("P2.1: 随机抽卡已退役")]
         public int gachaTicketsPerCapitalCapture;
-        [System.Obsolete("P2.1: 随机抽卡已退役")]
-        public int gachaRarityWeightN;
-        [System.Obsolete("P2.1: 随机抽卡已退役")]
-        public int gachaRarityWeightR;
-        [System.Obsolete("P2.1: 随机抽卡已退役")]
-        public int gachaRarityWeightSR;
-        [System.Obsolete("P2.1: 随机抽卡已退役")]
-        public int gachaRarityWeightSSR;
-        [System.Obsolete("P2.1: 随机抽卡已退役")]
-        public int gachaSsrPityThreshold;
         public int starBonusPerStar;                  // 每星战斗 buff %
         public int maxStarLevel;                      // 最大星级
 

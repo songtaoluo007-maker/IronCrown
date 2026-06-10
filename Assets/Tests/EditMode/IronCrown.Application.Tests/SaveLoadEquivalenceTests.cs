@@ -718,11 +718,6 @@ namespace IronCrown.Application.Tests
             var eco = config.Get<EconomyConfig>("global");
             eco.gachaTicketCostPerDraw = 1;
             eco.gachaTicketsPerVictory = 1;
-            eco.gachaRarityWeightN = 50;
-            eco.gachaRarityWeightR = 35;
-            eco.gachaRarityWeightSR = 12;
-            eco.gachaRarityWeightSSR = 3;
-            eco.gachaSsrPityThreshold = 50;
             eco.starBonusPerStar = 5;
             eco.maxStarLevel = 5;
             // P2.1 merit 字段

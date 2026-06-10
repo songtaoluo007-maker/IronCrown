@@ -1,12 +1,14 @@
 // ============================================================================
 // Simulation/TerrainAggregator.cs — 省级地形聚合（P2.2/P2.4）
 // 省战斗地形 = 省内格地形的主导类型
-// 聚合方式: 出现最多的格地形;平票取防御倍率高者
+// 聚合方式: 出现最多的格地形;平票取防御倍率高者（从 config 读取,非硬编码）
+// F2 修复: 删除硬编码 GetBaseDefenseWeight,改用 EconomyConfig.terrainDefenseMult
 // ============================================================================
 
 using System.Collections.Generic;
 using System.Linq;
 using IronCrown.Domain;
+using IronCrown.Domain.Config;
 
 namespace IronCrown.Simulation
 {
@@ -14,9 +16,9 @@ namespace IronCrown.Simulation
     {
         /// <summary>
         /// 获取省份的战斗地形（由省内格地形聚合得出）。
-        /// 聚合规则: 主导地形（出现最多）;平票取防御倍率高者。
+        /// 聚合规则: 主导地形（出现最多）;平票取 config 防御倍率高者,再按枚举值升序兜底。
         /// </summary>
-        public static TerrainType GetProvinceCombatTerrain(ProvinceState province, WorldState world)
+        public static TerrainType GetProvinceCombatTerrain(ProvinceState province, WorldState world, EconomyConfig eco)
         {
             if (province.tileIds == null || province.tileIds.Count == 0)
                 return province.terrain; // 无格时回退省地形
@@ -39,31 +41,15 @@ namespace IronCrown.Simulation
             // 找最大出现次数
             int maxCount = counts.Values.Max();
 
-            // 平票: 取防御倍率高者
+            // 平票: 按 config 防御倍率降序 → 枚举值升序兜底（确定性）
             var candidates = counts.Where(kv => kv.Value == maxCount).Select(kv => kv.Key).ToList();
             if (candidates.Count == 1)
                 return candidates[0];
 
-            return candidates.OrderByDescending(t => GetBaseDefenseWeight(t)).First();
-        }
-
-        /// <summary>基础防御权重（用于平票裁决，不含 config 倍率）</summary>
-        private static int GetBaseDefenseWeight(TerrainType terrain)
-        {
-            return terrain switch
-            {
-                TerrainType.Plain => 100,
-                TerrainType.Forest => 110,
-                TerrainType.Hills => 115,
-                TerrainType.Mountain => 125,
-                TerrainType.Urban => 130,
-                TerrainType.Swamp => 120,
-                TerrainType.River => 120,
-                TerrainType.Coastline => 105,
-                TerrainType.Desert => 100,
-                TerrainType.Jungle => 115,
-                _ => 100
-            };
+            return candidates
+                .OrderByDescending(t => eco != null && eco.terrainDefenseMult.TryGetValue(t.ToString(), out var m) ? m : 100)
+                .ThenBy(t => (int)t)
+                .First();
         }
     }
 }

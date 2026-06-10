@@ -129,10 +129,11 @@ namespace IronCrown.Presentation
             _onOfferPeace = _ => OfferPeace();
             _onRecruitCommander = _ => RecruitCommander();
 
-            // C17: 抽卡/商城/收藏
+            // C17: 抽卡/商城/收藏（P2.1: 商城按钮下线）
             _gachaDrawBtn = root.Q<Button>("gacha-draw-btn");
             _collectionBtn = root.Q<Button>("collection-btn");
             _shopBtn = root.Q<Button>("shop-btn");
+            if (_shopBtn != null) _shopBtn.style.display = DisplayStyle.None; // P2.1: 商城退役
             _onGachaDraw = _ => OnGachaDraw();
             _onCollection = _ => OnCollectionOpen();
             _onShop = _ => OnShopOpen();

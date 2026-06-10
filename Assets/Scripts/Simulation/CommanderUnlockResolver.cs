@@ -75,7 +75,7 @@ namespace IronCrown.Simulation
 
             // 新卡 → 创建将领（不消耗 capital/manpower）
             var newCmdr = CreateCommanderFromCard(card, country, world);
-            _events.Publish(new CardDrawnEvent
+            _events.Publish(new CommanderUnlockedEvent
             {
                 rarity = card.rarity ?? "N",
                 cardId = cardId,

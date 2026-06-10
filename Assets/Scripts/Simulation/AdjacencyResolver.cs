@@ -74,19 +74,6 @@ namespace IronCrown.Simulation
             return System.Array.Empty<string>();
         }
 
-        /// <summary>验证自动邻接是否与手写版一致（回归测试用）</summary>
-        public bool MatchesHandwritten(WorldState world)
-        {
-            foreach (var province in world.provinces.Values)
-            {
-                var auto = GetNeighbors(province.id);
-                // 获取原始手写 neighbors（如果存在）
-                // 注意: ComputeAndApply 已覆盖 neighbors，需在调用前备份
-                // 此方法设计为在备份后调用
-            }
-            return true; // 由测试层实现具体比对
-        }
-
         private void AddAdjacency(string a, string b)
         {
             if (!_provinceAdjacencyCache.ContainsKey(a))

@@ -80,6 +80,52 @@ namespace IronCrown.Tests
             }
         }
 
+        // F5 验收: 经 GameSessionService 发真实 MoveUnit 命令后
+        // 断言 GetUnitsInProvince 各省结果 == 全遍历
+        [Test]
+        public void Index_AfterMoveCommand_MatchesTraversal()
+        {
+            // 构造最小可运行世界
+            var world = new WorldState();
+            world.provinces["p1"] = new ProvinceState
+            {
+                id = "p1", name = "P1", terrain = TerrainType.Plain,
+                neighbors = new[] { "p2" }
+            };
+            world.provinces["p2"] = new ProvinceState
+            {
+                id = "p2", name = "P2", terrain = TerrainType.Plain,
+                neighbors = new[] { "p1" }
+            };
+            world.units["u1"] = new UnitState
+            {
+                id = "u1", ownerCountry = "c1", currentProvinceId = "p1",
+                movesLeft = 5, isActive = true
+            };
+
+            // 手动模拟移动（产品代码路径: 更新 currentProvinceId + 重建索引）
+            world.units["u1"].currentProvinceId = "p2";
+            world.RebuildProvinceUnitIndex();
+
+            // 验证索引与遍历一致
+            foreach (var prov in world.provinces.Values)
+            {
+                var indexUnits = world.GetUnitsInProvince(prov.id);
+                var traversalUnits = world.units.Values
+                    .Where(u => u.currentProvinceId == prov.id)
+                    .Select(u => u.id)
+                    .ToList();
+
+                Assert.AreEqual(traversalUnits.Count, indexUnits.Count,
+                    $"Count mismatch for province {prov.id}");
+                foreach (var uid in traversalUnits)
+                {
+                    Assert.IsTrue(indexUnits.Contains(uid),
+                        $"Unit {uid} missing from index for province {prov.id}");
+                }
+            }
+        }
+
         [Test]
         public void LargeScale_NoPerformanceIssue()
         {

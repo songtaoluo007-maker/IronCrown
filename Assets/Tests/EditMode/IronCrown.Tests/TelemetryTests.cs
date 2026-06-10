@@ -84,6 +84,35 @@ namespace IronCrown.Tests
             Assert.IsTrue(_stub.FlushCalled);
         }
 
+        [Test]
+        public void TurnAdvanced_SerializesCountryData_NotEmpty()
+        {
+            // F1 验收: 构造 1 国 snapshot → TrackTurnAdvanced → FlushSessionSummary
+            // → 读回 JSON, 断言含 "capital" 且 countries 为非空对象
+            var telemetry = new IronCrown.Infrastructure.Telemetry.LocalJsonTelemetry(
+                System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ic_test_telemetry"));
+
+            var snapshots = new Dictionary<string, CountrySnapshot>
+            {
+                ["c1"] = new CountrySnapshot { countryId = "c1", capital = 500, manpower = 200, provinces = 3, units = 2 }
+            };
+            telemetry.TrackTurnAdvanced(1, snapshots);
+            telemetry.FlushSessionSummary();
+
+            // 读回写出的 JSON
+            var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ic_test_telemetry");
+            var files = System.IO.Directory.GetFiles(dir, "session-*.json");
+            Assert.IsTrue(files.Length > 0, "No telemetry file written");
+
+            string json = System.IO.File.ReadAllText(files[^1]);
+            Assert.IsTrue(json.Contains("capital"), "JSON missing 'capital' field");
+            Assert.IsTrue(json.Contains("500"), "JSON missing capital value 500");
+            Assert.IsFalse(json.Contains("countries": {}), "countries serialized as empty object");
+
+            // cleanup
+            System.IO.Directory.Delete(dir, true);
+        }
+
         /// <summary>Stub ITelemetry for testing</summary>
         private class StubTelemetry : ITelemetry
         {
