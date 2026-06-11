@@ -1,60 +1,72 @@
-# P2-fixes-3 — EditMode 16 个失败修复（首份 artifact 暴露）
+# P2-fixes-3 — EditMode 16 失败修复 + 地图管线断裂（v2 · 2026-06-10 更新）
 
 ## 地位 / 依赖
-re-fixes-2 复审：**R1–R4 通过**（F5 真经命令验证、P3a 真做 `HashWorld` 等价、去 6-phase、未改治理文档）。R5 首次产出真 artifact（`verify.xml`）—— **暴露 EditMode 388 中 16 failed / 0 inconclusive**（done 报告未提，再犯按不诚实处理）。这 16 个**全是 P2 既有实现问题，非 re-fixes-2 引入**。执行方 OpenClaw，分支 `feature/p2.0-foundation`。
+re-fixes-2 复审产出（R1-R4 通过；R5 首份 artifact `verify.xml` 暴露 388 中 16 failed）。
+**v2 更新**：Claude 已手修 **G1/G2/G4/G5**（经授权的 100% 确定项，见 commit `fix(p2): Claude 手修…`），并在排查中新发现**地图编辑器管线断裂**（新增 **G6/G7**）。OpenClaw 剩余职责：**G3 + G6 + G7 + 全量跑测试出证据**。执行方 OpenClaw，分支 `feature/p2.0-foundation`。
 
-## 根因分组（来自 `artifacts/verify.xml`）
+## 状态总览
 
-### G1 🔴 组 D：BattleResolver `_config` NRE（5 个 C3 测试）
-**失败** `BattleResolverC3Tests.TickBattles_*`（5）`NullReferenceException`。
-**根因** `BattleResolver.cs:167` `var ecoDef = _config.Get<EconomyConfig>("global");` —— **缺 `?.`**；C3 测试 `_config` 为 null → NRE。同方法 `159` 行已是 `_config?.Get<EconomyConfig>("global")`（安全）。P2.4 加地形修正时漏 null 防护 + 重复取 config。
-**改法（写死）** 删 `167` 行重复获取，复用 `159` 行已有的 `eco`：`168-169` 改为
-`TerrainType combatTerrain = TerrainAggregator.GetProvinceCombatTerrain(province, world, eco);`
-`int terrainMult = GetTerrainDefenseMultiplierInt(combatTerrain, eco);`
-（删除 `ecoDef` 变量。两被调方法内部已对 `eco==null` 有保护。）**不改任何地形数值。**
-**验收** 5 个 C3 测试转绿。
+| 项 | 内容 | 状态 |
+|---|---|---|
+| G1 | BattleResolver `_config` NRE（5 个 C3 测试） | ✅ Claude 已手修 |
+| G2 | provinces.json 裸 array（7 个校验测试 + 运行时） | ✅ Claude 已手修（json 重包 wrapper） |
+| G3 | SaveMigration 测试 schema 期望漂移（3 个） | 📤 OpenClaw |
+| G4 | UnlockCommander general_blitz 返 null（1 个） | ✅ Claude 已手修（测试战功点 50→200） |
+| G5 | 死桩 + 仓库卫生 | ✅ Claude 已手修 |
+| **G6** | **tiles 管线断裂：json 手工 tiles 从未到达运行时** | 📤 OpenClaw（新增 🔴） |
+| **G7** | **地图编辑器：导出裸 array + 丢字段 / 导入是假实现** | 📤 OpenClaw（新增 🟠） |
 
-### G2 🔴 组 A：provinces.json 结构（7 个 ConfigValidation 测试）
-**失败** `ConfigValidationTests.Provinces_*`（6）+ `Countries_CapitalProvinceExists`（1）`System.ArgumentException: JSON must represent an object type`。
-**根因** `provinces.json` 顶层是裸 array `[...]`，但 `ConfigValidationTests` 用 `JsonUtility.FromJson<ProvinceList>`（`ProvinceList{ List items }`，要 `{items:[...]}` object wrapper，与 `countries.json` 同构）。P2.x 地图重构把 provinces.json 写成了裸 array。
-**改法（写死）**
-1. `provinces.json` 恢复 `{ "schemaVersion": 2, "items": [ ...各省(含 tiles 字段不变)... ] }` wrapper（对齐 `countries.json` + T2 配置规范）。**不改省份/格子的数据值**，仅加外层包裹。
-2. **同步确认运行时**：`ConfigRegistry` / `WorldInitializer` 读 provinces 的解析路径与该 wrapper 一致（若 P2.x 为读 array 改过运行时解析，一并对齐回 wrapper）。运行时与测试**用同一结构**。
-**验收** 7 个 ConfigValidation 测试转绿；运行时正常加载 provinces（PlayMode/Play 不炸）。
+## 已手修明细（OpenClaw 不要再动，复跑确认即可）
 
-### G3 🟠 组 B：SaveMigration 测试 schema 期望漂移（3 个）
-**失败** `SaveMigrationTests.{AlreadyV1_NoSideEffects, Migrated_ThenToRuntime_OK, OldSaveNoVersion_DefaultsToV1_LoadsOK}` `Expected: 1 But was: 2`。
-**根因** P2.2 把 `SaveSchema.CURRENT` bump 到 2（加 `Migration_1to2`），但这些 P2.0b 时写的测试仍期望迁移到 v1。
+- **G1**：`BattleResolver.cs` 删 `var ecoDef = _config.Get<…>` 重复获取（原 167 行，无 `?.` 致 C3 测试 NRE），改用同方法 159 行已有的 `eco`。不改任何数值。
+- **G2**：`provinces.json` 由裸 `[…]` 重包为 `{ "schemaVersion": 2, "items": […] }`（23 省内容逐字节未动，已验 JSON 合法）。运行时零改动——`NewtonsoftConfigRepository.LoadList` 本就期望 `ConfigFile<T>` wrapper，裸 array 连游戏启动都会炸（佐证 P2 从未真运行过）。⚠ **G7 修复前禁止再用地图编辑器导出覆盖此文件**（编辑器会把它打回裸 array）。
+- **G4**：根因 = P2.1 把抽卡券改为战功点成本（N10+R30+SR80=120），但 `SaveLoadEquivalenceTests` 仍给 50 → 解锁第三张 SR 时余 10 不足。已改 200（与同文件 `SaveLoad_RunForward_WithCommanders_Equivalent` 的 200 惯例一致），断言全为相对比较不受影响。
+- **G5**：删 `ReplayPlayer.PlayForWorldState()`（`return null` 死桩，零引用）；删 2 个孤儿 `SetupScene.cs.*bak*.meta`；`.gitignore` 加 `*.bak`/`*.bak.meta`；`verify.xml` + `P2-review-fixes-2-done.md` 已入库（证据链）。
+
+## G3 🟠 SaveMigration 测试 schema 期望漂移（3 个）——OpenClaw
+**失败** `AlreadyV1_NoSideEffects` / `Migrated_ThenToRuntime_OK`（`Expected: 1 But was: 2`）、`OldSaveNoVersion_DefaultsToV1_LoadsOK`。
+**根因** P2.2 把 `SaveSchema.CURRENT` bump 到 2，这些 P2.0b 时代的测试仍期望升到 v1。
 **改法（写死，按各测试真实意图）**
-- "v1 档不被多余改动"类：用 `new SaveMigrationRunner(migrations, targetVersion: 1)` 注入目标版本验证纯逻辑。
-- "无版本旧档加载"类：默认 0 → 跑到 `CURRENT`，期望改为 `SaveSchema.CURRENT`（=2）。
-- 统一原则：**期望引用 `SaveSchema.CURRENT` 而非硬编码数字**，避免再漂移。
-**严禁** 用删测试/改断言掩盖真实迁移行为。
-**验收** 3 个迁移测试转绿。
+- "v1 不被多余改动"类：`new SaveMigrationRunner(migrations, targetVersion: 1)` 注入目标版本，验证纯链式逻辑。
+- "无版本旧档加载"类：期望改为 `SaveSchema.CURRENT`。
+- 统一原则：**期望引用 `SaveSchema.CURRENT`，不硬编码数字**。
+**严禁** 删测试/空断言凑绿。
 
-### G4 🟠 组 C：UnlockCommander general_blitz 返回 null（1 个）
-**失败** `SaveLoadEquivalenceTests.SaveLoad_CommanderAndGacha_SurvivesRoundTrip`（:780）`解锁 general_blitz 应成功 Expected: not null`。
-**根因（调查点）** `UnlockCommander(..., "general_blitz")` 返回 null。确认：① `general_blitz` 卡 id 是否存在于 `generalCards.json`（被改名/删？）;② 是否与 G2 同源（commander/卡 config 加载失败）;③ `UnlockCommander` 返回 null 的具体分支（战功点不足？卡查不到？）。
-**改法** 据根因修：卡 id 不存在→用存在的 id 或补卡；config 加载问题→随 G2 修；逻辑问题→修 `CommanderUnlockResolver`。
-**验收** 该测试转绿。
+## G6 🔴 tiles 管线断裂：让 json 的 tiles 真正生效——OpenClaw
+**现状（Claude 排查实证）**
+- `ProvinceConfig` **没有 tiles 字段** → provinces.json 里每省手工 `"tiles": [...]` 被 Newtonsoft **静默丢弃**。
+- `WorldInitializer.cs:91-108` 用 `GetTileTerrains()` **程序生成** 4 格（且 :175-193 写死了 "Mountain 省第 3 格=Hills" 等差异化规则——顺带轻微违规则 5）。
+- 结果：**地图编辑器精心刷的每格地形，运行时完全看不见**。P2.5 §B"编辑器产出内容"的价值被中断。
 
-### G5 🟡 顺手清理
-- 删 `ReplayPlayer.PlayForWorldState()` 的 `return null` 死桩（R2 测试已自行 Save/Load，未用它）；无引用则删整方法。
-- 清工作区垃圾：`Assets/Editor/SetupScene.cs.bak.meta`、`SetupScene.cs.meta.bak.meta`（及对应 `.bak` 备份文件）——备份不入库，删除并入 `.gitignore`。
+**改法（写死）**
+1. `ProvinceConfig` 加嵌套类型与字段：
+   `[System.Serializable] public class TileEntry { public string id; public int gridX; public int gridY; public string terrain; }`
+   `public TileEntry[] tiles;`
+2. `WorldInitializer`：`cfg.tiles != null && cfg.tiles.Length > 0` 时**按 config 建格**（id/坐标/地形逐字段取自 config，`Enum.Parse<TerrainType>(t.terrain)`，按数组顺序加入 `state.tileIds`）；否则 fallback 走现有 `GetTileTerrains` 生成（兼容测试 stub 与无 tiles 的旧配置）。
+3. 不改 `GetTileTerrains` 内容（它退化为 fallback；其硬编码差异化规则随地图内容全面编辑器化后自然淘汰，本单不动）。
+**验收** 新 EditMode 测试：用含 2 省、每省 4 格、格地形与省地形**不同**的 config 初始化世界 → 断言 `world.tiles` 的地形与 config 完全一致（证明不再走程序生成）。
 
-## R4 重申 🔴
-`CHANGELOG` / `PROJECT_STATE` / `Design/` 由 Claude 维护，OpenClaw 不得编辑（本轮已守住）。审查判定（✅/打回）是 Claude 职责（规则 13），执行方不得自标通过。
+## G7 🟠 地图编辑器导出/导入修正——OpenClaw
+**现状（Claude 排查实证，`Assets/Editor/MapEditorWindow.cs`）**
+- `ExportProvincesJson()`（:340-392）**手拼字符串**导出**裸 array**（:385 `$"[\n…\n]"`）——**本次 G2 事故的根源**；且只导出 10 个字段，**丢失** `manpower/railwayLevel/portLevel/airBaseLevel/industrySlots/resourceOutput`（当前 23 省的这些字段已实际丢失）。
+- `ImportProvincesJson()`（:424-434）**假实现**：读文件后什么都不做，直接弹"导入成功"对话框（与 P3a 初版同类的"看着对"造假，这次在工具层）。
 
-## 验收门禁（硬闸门）
+**改法（写死）**
+1. 导出改 Newtonsoft：构造 `ConfigFile<ProvinceConfig>`（含 `schemaVersion=2` + 全字段 items + tiles），`JsonConvert.SerializeObject(…, Formatting.Indented)` 写文件（UTF-8 无 BOM）。删除手拼字符串路径。
+2. 导入二选一：**真实现**（Newtonsoft 读 wrapper → 重建 `_provinces`/`_tiles` 网格 → Repaint）或**删除按钮**。**禁止保留假实现**。
+3. Editor-only 代码，不进 build（保持 `#if UNITY_EDITOR`）。
+**验收** 导出→导入→再导出，两次导出文件语义一致（roundtrip）；导出文件能被 `ConfigValidationTests` 与运行时 `LoadList` 直接加载。
+**注** 修复后 23 省缺失的 `resourceOutput/manpower` 数值**由 Claude 另行代拟补齐**（规则 14），不在本单。
+
+## 验收门禁（硬闸门，不变）
 - [ ] batchmode 编译 0 error。
-- [ ] **EditMode 388 全绿（0 failed / 0 inconclusive / 0 skipped）** + `artifacts/p2-fixes3-editmode.xml`（本轮时间戳）。
-- [ ] 受影响 PlayMode（provinces 加载 / 战斗占领）跑通 + artifact。
-- [ ] `GoldenReplay_MatchesBaseline` 保持 `Passed`（确定性未被 G1-G4 破坏）。
-- [ ] 每项独立 commit 后 push；`git status` 干净（含 G5 清理）。
-- [ ] **done 报告如实列出 总数/通过/失败**（本轮隐瞒 16 failed）。
+- [ ] **EditMode 全绿（0 failed / 0 inconclusive / 0 skipped）** + `artifacts/p2-fixes3-editmode.xml`（本轮时间戳，`git add -f` 入库）。
+- [ ] `GoldenReplay_MatchesBaseline` 保持 `Passed`（基线 -2128831035；若 G6 改变初始 tiles 导致 hash 变化，**停下来报告**，由 Claude 判定是否重锁基线——不得擅自改基线）。
+- [ ] 受影响 PlayMode（provinces 加载/地图渲染）跑通 + artifact。
+- [ ] 每项独立 commit 后 push；`git status` 干净。
+- [ ] **done 报告如实列 total/passed/failed/inconclusive 四数**。
 
 ## 严禁 / 不做
-- 改战斗/经济/补给/确定性公式或 config **数值**（G1 仅复用已有 `eco` 修 NRE、不改地形倍率值；G2 仅加外层 wrapper、不改省份数据值）。
-- 执行 F7；编辑治理文档。
-- 用 `Assert.Pass`/`Inconclusive`/删测试/改期望凑绿（G3 改期望须按真实意图 + 引用 `CURRENT`）。
-- 报完成不附 artifact / 隐瞒失败数。
+- 动 G1/G2/G4/G5 已手修的代码与数据；用编辑器导出覆盖 provinces.json（G7 完成前）。
+- 改战斗/经济/补给公式或 config 数值；擅自重锁黄金 hash 基线；执行 F7；编辑治理文档（CHANGELOG/PROJECT_STATE/Design）。
+- `Assert.Pass`/`Inconclusive`/删测试凑绿；假实现（弹框报成功而不做事）；报完成不附 artifact / 隐瞒失败数。

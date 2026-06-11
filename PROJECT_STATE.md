@@ -2,7 +2,7 @@
 
 > **用途**:这是**给未来任何会话(Claude 新开窗口、换人、OpenClaw)的恢复点**。读完本文件 + `CHANGELOG.md` 即可无损重建项目全局,不依赖任何一轮对话的上下文。
 > **维护约定**:每个工作单**审查通过后**,更新本文件 §2(当前状态)与 §3(进度);决策变更更新 §4。本文件是浓缩快照+索引;完整流水账在 `CHANGELOG.md`,每阶段细节在 `WorkOrders/`。
-> 最后更新:2026-06-10(① re-fixes-2 复审:R1-R4 通过·首份 artifact 暴露 16 failed→签发 `WorkOrders/P2-fixes-3.md`[硬闸门=388 全绿];② 新增 `Design/LAUNCH_PLAN.md` 上市全案 v0.1 草案[8 项待人类拍板];③ ⚠ 发现 origin/main 于 06-08 被合入未审查 feature 快照 a3d2f41[早于全部审查轮+CI 红],fixes-3 全绿后用审查过的分支头重新合并覆盖,期间勿从 main 构建)。
+> 最后更新:2026-06-10(① re-fixes-2 复审:R1-R4 通过·首份 artifact 暴露 16 failed→签发 `WorkOrders/P2-fixes-3.md`;② 新增 `Design/LAUNCH_PLAN.md` 上市全案 v0.1 草案[8 项待人类拍板];③ ⚠ origin/main 于 06-08 被合入未审查快照 a3d2f41[CI 红],fixes-3 全绿后重新合并覆盖,期间勿从 main 构建;④ Claude 顺手修 fixes-3 之 G1[NRE 一行级]/G2[provinces.json 重包 wrapper]/G4[测试战功点 50→200]/G5[死桩+卫生],并新发现**地图编辑器管线断裂**[导出裸 array+丢 6 字段是 G2 根源·导入是假实现·json 手工 tiles 因 ProvinceConfig 无字段从未到达运行时]→ fixes-3 更新 v2 加 G6/G7,OpenClaw 剩 G3+G6+G7+全量证据,硬闸门=EditMode 全绿)。
 
 ---
 
@@ -98,6 +98,9 @@
   6. 跳过明确指派的修复(如 IStartable 接线两次没做)。
   7. **存档完整性**:`SaveMapper.ToRuntime` 从存档重建**不经 config**→ 静态省份数据(neighbors/gridX/gridY)必须进 `ProvinceSaveData`,否则读档丢失。续跑等价测试是关键防线。
   8. **Unity 呈现层坑**(非玩法):PanelSettings/themeStyleSheet 为 null→黑屏;无相机→不清屏文字重叠;UXML `<ui:StyleSheet>` 非法→OnEnable LogError 拖垮全部 PlayMode。这些 Claude 已手修 SetupScene/USS。
+  9. **artifact 实读**(2026-06-10 新增):直接解析测试 XML 的 `total/passed/failed/inconclusive` 四数,不信 done 报告文字——fixes-2 曾隐瞒 16 failed 只报"通过"。done 报告必须如实报四数。
+  10. **测试体实读**(2026-06-10 新增):逐个打开新增/修改的测试方法体,查 `Assert.Pass`/`Assert.Inconclusive`/注释与代码不符的假验证——P3a 初版三个"等价"测试无一真比 HashWorld、F5 注释称"经 IssueCommand"实则手动赋值。**工具层同查假实现**(MapEditorWindow 导入曾是"弹成功对话框但什么都不做")。
+  11. **cs↔json↔编辑器三方交叉**(2026-06-10 新增):config 字段须在 C# 类、json 文件、编辑器导出三处一致——曾发生 provinces.json 手工 tiles 因 ProvinceConfig 无字段被静默丢弃、编辑器导出丢 6 个字段且写成裸 array。
 - **Claude 可手修的范围**(经人类授权):100% 确定的琐碎阻塞项(接线/编码/USS/一行级);复杂或需 Unity 验证的回 OpenClaw。
 
 ## 6. 关键文件地图
