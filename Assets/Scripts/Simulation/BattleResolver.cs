@@ -164,9 +164,8 @@ namespace IronCrown.Simulation
             int defTotal = 0;
             foreach (var u in defenders) defTotal += SingleUnitDefensePower(u, eco, world);
             // P2.4: 地形防御修正 — 由格聚合主导地形 + config 倍率
-            var ecoDef = _config.Get<EconomyConfig>("global");
-            TerrainType combatTerrain = TerrainAggregator.GetProvinceCombatTerrain(province, world, ecoDef);
-            int terrainMult = GetTerrainDefenseMultiplierInt(combatTerrain, ecoDef);
+            TerrainType combatTerrain = TerrainAggregator.GetProvinceCombatTerrain(province, world, eco);
+            int terrainMult = GetTerrainDefenseMultiplierInt(combatTerrain, eco);
             defTotal = defTotal * terrainMult / 100;
 
             // --- 装甲修正 ---

@@ -19,3 +19,7 @@ Temp/
 Obj/
 Build/
 Logs/
+
+# editor backup debris (OpenClaw)
+*.bak
+*.bak.meta

@@ -764,8 +764,8 @@ namespace IronCrown.Application.Tests
             var events = new EventBus();
             var world = BuildWorldWithProvinces();
 
-            // 给 empire_north 50 张抽卡券
-            world.countries["empire_north"].gachaTickets = 50;
+            // P2.1: 给 empire_north 200 战功点（解锁 N10+R30+SR80=120，留余量。50 是抽卡时代旧值，不够第三张 SR → 曾致本测试红）
+            world.countries["empire_north"].gachaTickets = 200;
 
             var rng = new RandomService(42);
             var commanderResolver = new CommanderResolver(config);

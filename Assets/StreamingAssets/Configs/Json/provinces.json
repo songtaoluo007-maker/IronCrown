@@ -1,4 +1,6 @@
-[
+{
+  "schemaVersion": 2,
+  "items": [
   {
     "id": "ironhold_capital",
     "name": "铁堡",
@@ -242,3 +244,4 @@
     "neighbors": ["duststorm_capital", "duststorm_east", "stormwall_capital", "stormwall_west"]
   }
 ]
+}
